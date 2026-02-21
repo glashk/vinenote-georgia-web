@@ -1,0 +1,227 @@
+{
+  "nav": {
+    "home": "Home",
+    "support": "Support",
+    "privacy": "Privacy Policy",
+    "market": "Market"
+  },
+  "hero": {
+    "title": "VineNote Georgia",
+    "tagline": "Simple vineyard & qvevri management for Georgian winemakers",
+    "description": "Track your vineyards, manage harvests, monitor qvevri and tanks, and maintain a complete history of your wine batches all in one simple app."
+  },
+  "features": {
+    "title": "Everything You Need",
+    "vineyardTracking": {
+      "title": "Vineyard Tracking",
+      "description": "Keep detailed records of your vineyard plots, grape varieties, and growing conditions."
+    },
+    "harvestRecords": {
+      "title": "Harvest Records",
+      "description": "Document each harvest with dates, quantities, quality notes, and weather conditions."
+    },
+    "qvevriManagement": {
+      "title": "Qvevri & Tank Management",
+      "description": "Monitor your qvevri and tanks, track fermentation stages, and manage aging processes."
+    },
+    "wineBatchHistory": {
+      "title": "Wine Batch History",
+      "description": "Maintain a complete history of every wine batch from harvest to bottling."
+    },
+    "offlineMode": {
+      "title": "Offline Mode",
+      "description": "Work in your vineyard without internet. All data syncs when you're back online."
+    },
+    "simpleIntuitive": {
+      "title": "Simple & Intuitive",
+      "description": "Designed specifically for Georgian winemakers with an easy-to-use interface."
+    }
+  },
+  "perfectFor": {
+    "title": "Perfect For",
+    "smallWineries": {
+      "title": "Small & Medium Wineries",
+      "description": "Streamline operations and maintain professional records."
+    },
+    "familyVineyards": {
+      "title": "Family Vineyards",
+      "description": "Preserve your family's winemaking traditions and knowledge."
+    },
+    "qvevriWinemakers": {
+      "title": "Qvevri Winemakers",
+      "description": "Specialized tools for traditional Georgian qvevri winemaking."
+    }
+  },
+  "cta": {
+    "title": "Ready to Get Started?",
+    "subtitle": "Available on App Store & Google Play",
+    "comingSoon": "Coming soon",
+    "appStoreButton": "Download on the App Store",
+    "googlePlayComingSoon": "Google Play (coming soon)"
+  },
+  "common": {
+    "quantity": "Quantity",
+    "notes": "Notes"
+  },
+  "market": {
+    "title": "Market",
+    "subtitle": "Browse listings from VineNote users",
+    "listings": "listings",
+    "empty": "No listings yet",
+    "unknownListing": "Unknown listing",
+    "categoryGrapes": "Grapes",
+    "categoryWine": "Wine",
+    "categoryNobati": "Nobati",
+    "priceByAgreement": "By agreement",
+    "backToList": "Back to list",
+    "errorLoad": "Failed to load",
+    "contact": "Contact",
+    "sugarBrix": "Sugar °Brix",
+    "vintageYear": "Vintage year",
+    "harvestDate": "Harvest date",
+    "statusActive": "Active",
+    "statusReserved": "Reserved",
+    "statusSold": "Sold",
+    "statusExpired": "Expired",
+    "statusRemoved": "Removed",
+    "units": {
+      "kg": "kg",
+      "ton": "ton",
+      "l": "L",
+      "bottle": "bottle",
+      "qvevri": "qvevri"
+    }
+  },
+  "footer": {
+    "copyright": "© VineNote Georgia",
+    "email": "support@vinenote.app"
+  },
+  "support": {
+    "title": "Support",
+    "about": {
+      "title": "About VineNote Georgia",
+      "description1": "VineNote Georgia is a mobile application designed to help Georgian winemakers manage their vineyards and qvevri operations. The app provides tools for tracking vineyards, recording harvests, managing qvevri and tanks, and maintaining a complete history of wine batches.",
+      "description2": "The app works offline, allowing you to record data in your vineyard even without internet connectivity. All data syncs automatically when you're back online."
+    },
+    "contact": {
+      "title": "Contact Support",
+      "description": "If you need help with the app, have questions, or want to report an issue, please contact us at:"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "getStarted": {
+        "question": "How do I get started with the app?",
+        "answer": "After downloading the app, create an account using your email address. You can then start adding your vineyards, recording harvests, and managing your qvevri and tanks."
+      },
+      "offline": {
+        "question": "Does the app work offline?",
+        "answer": "Yes, VineNote Georgia works completely offline. You can record all your data in the vineyard without internet connectivity. When you're back online, the app will automatically sync your data."
+      },
+      "export": {
+        "question": "Can I export my data?",
+        "answer": "Yes, you can export your data at any time. The app allows you to download your records in various formats for backup or analysis purposes."
+      },
+      "security": {
+        "question": "Is my data secure?",
+        "answer": "Yes, we take data security seriously. Your data is encrypted and stored securely. We never share your information with third parties. For more details, please see our"
+      },
+      "devices": {
+        "question": "What devices are supported?",
+        "answer": "VineNote Georgia is available for iOS (iPhone and iPad) and Android devices. The app is optimized for mobile use and works best on smartphones and tablets."
+      },
+      "deleteAccount": {
+        "question": "How do I delete my account?",
+        "answer": "To delete your account and all associated data, please contact us at support@vinenote.app with your request. We will process your deletion request within 30 days."
+      }
+    }
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: January 2026",
+    "sections": {
+      "introduction": {
+        "title": "1. Introduction",
+        "content": "VineNote Georgia (\"we,\" \"our,\" or \"us\") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application (\"App\"). Please read this Privacy Policy carefully. If you do not agree with the terms of this Privacy Policy, please do not access or use the App."
+      },
+      "informationWeCollect": {
+        "title": "2. Information We Collect",
+        "intro": "We collect information that you provide directly to us and information that is automatically collected when you use the App:",
+        "youProvide": {
+          "title": "2.1 Information You Provide",
+          "email": "Email Address: We collect your email address when you create an account. This is used for account authentication, communication, and account recovery purposes.",
+          "userContent": "User-Generated Content: We collect all data you enter into the App, including but not limited to:",
+          "userContentItems": [
+            "Vineyard information and records",
+            "Harvest data and notes",
+            "Qvevri and tank management information",
+            "Wine batch history and records",
+            "Any notes, photos, or other content you add to the App"
+          ]
+        },
+        "automaticallyCollected": {
+          "title": "2.2 Automatically Collected Information",
+          "content": "We may automatically collect certain information about your device when you use the App, including device type, operating system, app version, and usage statistics. This information helps us improve the App and provide better service."
+        }
+      },
+      "howWeUse": {
+        "title": "3. How We Use Your Information",
+        "intro": "We use the information we collect to:",
+        "items": [
+          "Provide, maintain, and improve the App and its features",
+          "Authenticate your account and provide customer support",
+          "Sync your data across your devices",
+          "Send you important updates and notifications about the App",
+          "Respond to your inquiries and support requests",
+          "Analyze usage patterns to improve the App's functionality",
+          "Ensure the security and integrity of the App"
+        ]
+      },
+      "offlineUsage": {
+        "title": "4. Offline Usage",
+        "content": "VineNote Georgia is designed to work offline. When you use the App without an internet connection, all data is stored locally on your device. When you reconnect to the internet, your data is automatically synchronized with our servers to ensure it is backed up and accessible across your devices. No data is transmitted while you are offline."
+      },
+      "dataSharing": {
+        "title": "5. Data Sharing and Disclosure",
+        "intro": "We do not sell, trade, or rent your personal information to third parties. We do not share your data with any third parties except in the following limited circumstances:",
+        "serviceProviders": "Service Providers: We may share your information with third-party service providers who perform services on our behalf, such as cloud storage providers, analytics services, and customer support tools. These service providers are contractually obligated to protect your information and use it only for the purposes we specify.",
+        "legalRequirements": "Legal Requirements: We may disclose your information if required to do so by law or in response to valid requests by public authorities (e.g., a court or government agency).",
+        "businessTransfers": "Business Transfers: In the event of a merger, acquisition, or sale of assets, your information may be transferred as part of that transaction. We will notify you of any such change in ownership or control of your personal information."
+      },
+      "dataSecurity": {
+        "title": "6. Data Security",
+        "content": "We implement appropriate technical and organizational security measures to protect your information against unauthorized access, alteration, disclosure, or destruction. This includes encryption of data in transit and at rest, secure authentication mechanisms, and regular security assessments. However, no method of transmission over the internet or electronic storage is 100% secure, and we cannot guarantee absolute security."
+      },
+      "dataRetention": {
+        "title": "7. Data Retention",
+        "content": "We retain your information for as long as your account is active or as needed to provide you with the App. If you delete your account, we will delete or anonymize your personal information within 30 days, except where we are required to retain it for legal or regulatory purposes."
+      },
+      "yourRights": {
+        "title": "8. Your Rights and Choices",
+        "intro": "You have the following rights regarding your information:",
+        "access": "Access: You can access and review your personal information through the App at any time.",
+        "correction": "Correction: You can update or correct your information directly in the App.",
+        "deletion": "Deletion: You can request deletion of your account and all associated data by contacting us at",
+        "deletionNote": "We will process your deletion request within 30 days.",
+        "dataExport": "Data Export: You can export your data from the App at any time through the App's export functionality.",
+        "accountDeactivation": "Account Deactivation: You can deactivate your account at any time through the App settings."
+      },
+      "childrensPrivacy": {
+        "title": "9. Children's Privacy",
+        "content": "The App is not intended for children under the age of 13. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided us with personal information, please contact us immediately, and we will delete such information from our systems."
+      },
+      "internationalTransfers": {
+        "title": "10. International Data Transfers",
+        "content": "Your information may be transferred to and processed in countries other than your country of residence. These countries may have data protection laws that differ from those in your country. By using the App, you consent to the transfer of your information to these countries."
+      },
+      "changesToPolicy": {
+        "title": "11. Changes to This Privacy Policy",
+        "content": "We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the \"Last updated\" date. You are advised to review this Privacy Policy periodically for any changes. Changes to this Privacy Policy are effective when they are posted on this page."
+      },
+      "contactUs": {
+        "title": "12. Contact Us",
+        "content": "If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us at:",
+        "email": "Email:"
+      }
+    }
+  }
+}
