@@ -1,19 +1,31 @@
 {
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   },
   "hosting": {
     "public": "out",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "cleanUrls": true,
     "trailingSlash": false,
-
     "rewrites": [
-      { "source": "/support", "destination": "/support.html" },
-      { "source": "/privacy", "destination": "/privacy.html" },
-      { "source": "**", "destination": "/index.html" }
+      {
+        "source": "/support",
+        "destination": "/support.html"
+      },
+      {
+        "source": "/privacy",
+        "destination": "/privacy.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
     ],
-
     "headers": [
       {
         "source": "/index.html",
@@ -43,5 +55,8 @@
         ]
       }
     ]
+  },
+  "storage": {
+    "rules": "storage.rules"
   }
 }
