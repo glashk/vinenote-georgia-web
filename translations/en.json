@@ -73,7 +73,10 @@
     "error": "Error",
     "save": "Save",
     "status": "Status",
-    "datePlaceholder": "Select date"
+    "datePlaceholder": "Select date",
+    "all": "All",
+    "reset": "Reset",
+    "clear": "Clear"
   },
   "auth": {
     "signIn": {
@@ -125,6 +128,7 @@
     "title": "Market",
     "subtitle": "Browse listings from VineNote users",
     "listings": "listings",
+    "listingsFound": "Found {{count}} listings",
     "empty": "No listings yet",
     "unknownListing": "Unknown listing",
     "categoryGrapes": "Grapes",
@@ -133,6 +137,7 @@
     "categoryInventory": "Inventory",
     "categorySeedlings": "Seedlings",
     "product": "Product",
+    "description": "Description",
     "item": "Item",
     "priceByAgreement": "By agreement",
     "backToList": "Back to list",
@@ -161,8 +166,10 @@
     "statusRemoved": "Removed",
     "emptyFeed": "No listings yet",
     "emptyFeedSubtext": "Create your first listing to start selling.",
+    "listingsFromSeller": "Listings from this seller",
     "add": "Add",
     "addListing": "Add listing",
+    "editListing": "Edit listing",
     "createFirst": "Get the app",
     "createFirstHint": "Create listings from the VineNote app.",
     "removeListing": "Remove listing",
@@ -191,9 +198,27 @@
     "notesOptional": "Notes (optional)",
     "notesPlaceholder": "Additional details...",
     "addPhoto": "Add photo",
+    "photoUploadError": "Failed to upload photo",
     "publish": "Publish",
     "wineType": "Wine type",
     "wineTypePlaceholder": "e.g. Dry red",
+    "searchPlaceholder": "Search variety, region...",
+    "allRegions": "All regions",
+    "allVillages": "All villages",
+    "minPrice": "Min price",
+    "maxPrice": "Max price",
+    "maxPricePlaceholder": "₾",
+    "sortByLabel": "Sort by",
+    "sortBy": {
+      "newest": "Newest",
+      "price_asc": "Price ↑",
+      "price_desc": "Price ↓",
+      "brix_asc": "°Brix ↑",
+      "brix_desc": "°Brix ↓",
+      "vintage_asc": "Vintage ↑",
+      "vintage_desc": "Vintage ↓"
+    },
+    "moreImages": "+{{count}} images",
     "units": {
       "kg": "kg",
       "ton": "ton",
@@ -207,7 +232,9 @@
   },
   "footer": {
     "copyright": "© VineNote Georgia",
-    "email": "support@vinenote.app"
+    "email": "support@vinenote.app",
+    "links": "Links",
+    "tagline": "Simple vineyard & qvevri management for Georgian winemakers."
   },
   "support": {
     "title": "Support",

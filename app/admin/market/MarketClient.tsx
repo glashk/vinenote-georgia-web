@@ -117,52 +117,52 @@ export default function MarketClient() {
       const q = query(listingsRef, orderBy("createdAt", "desc"));
 
       unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const list: Listing[] = snapshot.docs.map((docSnap) => {
-          const data = docSnap.data();
-          return {
-            id: docSnap.id,
-            variety: data.variety,
-            title: data.title,
-            description: data.description,
-            price: typeof data.price === "number" ? data.price : undefined,
-            quantity: data.quantity,
-            unit: data.unit,
-            region: data.region,
-            village: data.village,
-            category: data.category,
-            harvestDate: data.harvestDate,
-            sugarBrix: data.sugarBrix,
-            vintageYear: data.vintageYear,
-            phone: data.phone,
-            contactName: data.contactName,
-            photoUrls: data.photoUrls,
-            imageUrl: data.imageUrl,
-            image: data.image,
-            photos: data.photos,
-            thumbnail: data.thumbnail,
-            hidden: data.hidden,
-            userId: data.userId,
-            createdAt: data.createdAt,
-          };
-        });
-        setListings(list);
-        setLoading(false);
-        setError(null);
-      },
-      (err) => {
-        setLoading(false);
-        if (
-          err?.code === "permission-denied" ||
-          err?.message?.includes("permission")
-        ) {
-          setError(ADMIN_DENIED_MESSAGE);
-        } else {
-          setError(err?.message ?? "შეცდომა მოხდა");
-        }
-      },
-    );
+        q,
+        (snapshot) => {
+          const list: Listing[] = snapshot.docs.map((docSnap) => {
+            const data = docSnap.data();
+            return {
+              id: docSnap.id,
+              variety: data.variety,
+              title: data.title,
+              description: data.description,
+              price: typeof data.price === "number" ? data.price : undefined,
+              quantity: data.quantity,
+              unit: data.unit,
+              region: data.region,
+              village: data.village,
+              category: data.category,
+              harvestDate: data.harvestDate,
+              sugarBrix: data.sugarBrix,
+              vintageYear: data.vintageYear,
+              phone: data.phone,
+              contactName: data.contactName,
+              photoUrls: data.photoUrls,
+              imageUrl: data.imageUrl,
+              image: data.image,
+              photos: data.photos,
+              thumbnail: data.thumbnail,
+              hidden: data.hidden,
+              userId: data.userId,
+              createdAt: data.createdAt,
+            };
+          });
+          setListings(list);
+          setLoading(false);
+          setError(null);
+        },
+        (err) => {
+          setLoading(false);
+          if (
+            err?.code === "permission-denied" ||
+            err?.message?.includes("permission")
+          ) {
+            setError(ADMIN_DENIED_MESSAGE);
+          } else {
+            setError(err?.message ?? "შეცდომა მოხდა");
+          }
+        },
+      );
     });
 
     return () => unsubscribe?.();
@@ -251,7 +251,7 @@ export default function MarketClient() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 py-12 px-4">
-        <div className="max-w-4xl mx-auto flex justify-center">
+        <div className="max-w-7xl mx-auto flex justify-center">
           <div className="w-10 h-10 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
@@ -260,7 +260,7 @@ export default function MarketClient() {
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">მარკეტი</h1>
@@ -330,6 +330,8 @@ export default function MarketClient() {
                             src={imgUrl}
                             alt=""
                             className="w-full h-full object-cover"
+                            loading="lazy"
+                            decoding="async"
                           />
                         ) : (
                           <span className="text-slate-400 text-xs">

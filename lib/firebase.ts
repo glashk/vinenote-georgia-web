@@ -37,6 +37,17 @@ export async function getDb(): Promise<Firestore | null> {
   return _db;
 }
 
+// Storage: lazy-load for image uploads
+let _storage: import("firebase/storage").FirebaseStorage | null = null;
+export async function getFirebaseStorage(): Promise<import("firebase/storage").FirebaseStorage | null> {
+  if (typeof window === "undefined") return null;
+  if (!app) return null;
+  if (_storage) return _storage;
+  const { getStorage } = await import("firebase/storage");
+  _storage = getStorage(app);
+  return _storage;
+}
+
 // Analytics: lazy-load to avoid blocking first paint
 let _analytics: Analytics | null = null;
 export async function getAnalyticsLazy(): Promise<Analytics | null> {

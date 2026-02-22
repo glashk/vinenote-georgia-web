@@ -286,7 +286,8 @@ export default function MyListingsClient() {
             alt="Vineyard"
             fill
             className="object-cover"
-            priority={false}
+            loading="lazy"
+            sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/25 to-transparent" />
         </div>
@@ -356,6 +357,8 @@ export default function MyListingsClient() {
                               src={photoUrl}
                               alt=""
                               className="w-full h-full object-cover"
+                              loading="lazy"
+                              decoding="async"
                             />
                           ) : (
                             <span className="text-slate-400 text-2xl">
@@ -422,7 +425,7 @@ export default function MyListingsClient() {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              router.push(`/market?id=${item.id}`);
+                              router.push(`/my-listings/edit/${item.id}`);
                             }}
                             className="p-2.5 text-vineyard-800 hover:bg-white/50 rounded-lg transition-colors"
                             aria-label={t("common.edit")}

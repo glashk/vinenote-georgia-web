@@ -46,7 +46,11 @@ export default function AdminShell({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      )
+        return;
       if (e.ctrlKey || e.metaKey) return;
 
       switch (e.key.toLowerCase()) {
@@ -77,7 +81,7 @@ export default function AdminShell({
           break;
       }
     },
-    [router]
+    [router],
   );
 
   useEffect(() => {
@@ -114,7 +118,8 @@ export default function AdminShell({
         </div>
         <nav className="flex-1 p-2 overflow-y-auto">
           {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            const isActive =
+              pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <Link
                 key={item.href}

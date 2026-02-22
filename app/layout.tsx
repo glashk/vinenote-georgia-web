@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://vinenote.ge"),
   title: "VineNote Georgia - Vineyard & Qvevri Management",
   description: "Simple vineyard & qvevri management for Georgian winemakers",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
   other: {
     // iOS Smart App Banner (Safari)
     "apple-itunes-app":
@@ -51,6 +55,12 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://firestore.googleapis.com" />
         <link rel="preconnect" href="https://www.gstatic.com" />
+        <link rel="preconnect" href="https://firebasestorage.googleapis.com" />
+        <link
+          rel="preload"
+          href="/Grapevines-scaled-e5b6bd5d-a447-4b5f-9da8-6c8c55461efd.png"
+          as="image"
+        />
       </head>
       <body className={`${inter.className} flex flex-col min-h-screen`}>
         <script

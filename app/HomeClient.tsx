@@ -124,7 +124,7 @@ export default function HomeClient() {
             fill
             className="object-cover"
             priority
-            quality={90}
+            sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/25 to-black/10" />
         </div>
@@ -272,6 +272,8 @@ export default function HomeClient() {
                       alt={feature.title}
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-500"
+                      loading="lazy"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-wine-900/60 to-transparent" />
                   </div>
@@ -314,6 +316,8 @@ export default function HomeClient() {
             alt="Vineyard background"
             fill
             className="object-cover"
+            loading="lazy"
+            sizes="100vw"
           />
         </div>
         <Container>
@@ -337,6 +341,8 @@ export default function HomeClient() {
                       alt={item.title}
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-500"
+                      loading="lazy"
+                      sizes="(max-width: 768px) 100vw, 33vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-wine-900/40 to-transparent" />
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -366,6 +372,8 @@ export default function HomeClient() {
             alt="Vineyard"
             fill
             className="object-cover opacity-20"
+            loading="lazy"
+            sizes="100vw"
           />
           <div className="absolute inset-0 bg-wine-900/90" />
         </div>

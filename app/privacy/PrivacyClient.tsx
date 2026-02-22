@@ -17,18 +17,23 @@ export default function PrivacyClient() {
       title: t("privacy.sections.informationWeCollect.title"),
       content: (
         <>
-          <p className="mb-3">{t("privacy.sections.informationWeCollect.intro")}</p>
+          <p className="mb-3">
+            {t("privacy.sections.informationWeCollect.intro")}
+          </p>
           <h3 className="text-xl font-semibold text-gray-900 mb-2 mt-4">
             {t("privacy.sections.informationWeCollect.youProvide.title")}
           </h3>
           <ul className="list-disc pl-6 space-y-2 mb-4">
             <li>
               {(() => {
-                const emailText = t("privacy.sections.informationWeCollect.youProvide.email");
+                const emailText = t(
+                  "privacy.sections.informationWeCollect.youProvide.email",
+                );
                 const parts = emailText.split(":");
                 return parts.length > 1 ? (
                   <>
-                    <strong>{parts[0]}:</strong> {parts.slice(1).join(":").trim()}
+                    <strong>{parts[0]}:</strong>{" "}
+                    {parts.slice(1).join(":").trim()}
                   </>
                 ) : (
                   emailText
@@ -37,13 +42,18 @@ export default function PrivacyClient() {
             </li>
             <li>
               {(() => {
-                const userContentText = t("privacy.sections.informationWeCollect.youProvide.userContent");
+                const userContentText = t(
+                  "privacy.sections.informationWeCollect.youProvide.userContent",
+                );
                 const parts = userContentText.split(":");
                 return parts.length > 1 ? (
                   <>
-                    <strong>{parts[0]}:</strong> {parts.slice(1).join(":").trim()}
+                    <strong>{parts[0]}:</strong>{" "}
+                    {parts.slice(1).join(":").trim()}
                     <ul className="list-circle pl-6 mt-2 space-y-1">
-                      {getArray("privacy.sections.informationWeCollect.youProvide.userContentItems").map((item: string, idx: number) => (
+                      {getArray(
+                        "privacy.sections.informationWeCollect.youProvide.userContentItems",
+                      ).map((item: string, idx: number) => (
                         <li key={idx}>{item}</li>
                       ))}
                     </ul>
@@ -52,7 +62,9 @@ export default function PrivacyClient() {
                   <>
                     {userContentText}
                     <ul className="list-circle pl-6 mt-2 space-y-1">
-                      {getArray("privacy.sections.informationWeCollect.youProvide.userContentItems").map((item: string, idx: number) => (
+                      {getArray(
+                        "privacy.sections.informationWeCollect.youProvide.userContentItems",
+                      ).map((item: string, idx: number) => (
                         <li key={idx}>{item}</li>
                       ))}
                     </ul>
@@ -62,9 +74,15 @@ export default function PrivacyClient() {
             </li>
           </ul>
           <h3 className="text-xl font-semibold text-gray-900 mb-2 mt-4">
-            {t("privacy.sections.informationWeCollect.automaticallyCollected.title")}
+            {t(
+              "privacy.sections.informationWeCollect.automaticallyCollected.title",
+            )}
           </h3>
-          <p>{t("privacy.sections.informationWeCollect.automaticallyCollected.content")}</p>
+          <p>
+            {t(
+              "privacy.sections.informationWeCollect.automaticallyCollected.content",
+            )}
+          </p>
         </>
       ),
     },
@@ -74,9 +92,11 @@ export default function PrivacyClient() {
         <>
           <p className="mb-3">{t("privacy.sections.howWeUse.intro")}</p>
           <ul className="list-disc pl-6 space-y-2">
-            {getArray("privacy.sections.howWeUse.items").map((item: string, idx: number) => (
-              <li key={idx}>{item}</li>
-            ))}
+            {getArray("privacy.sections.howWeUse.items").map(
+              (item: string, idx: number) => (
+                <li key={idx}>{item}</li>
+              ),
+            )}
           </ul>
         </>
       ),
@@ -102,7 +122,8 @@ export default function PrivacyClient() {
                 <li key={idx}>
                   {parts.length > 1 ? (
                     <>
-                      <strong>{parts[0]}:</strong> {parts.slice(1).join(":").trim()}
+                      <strong>{parts[0]}:</strong>{" "}
+                      {parts.slice(1).join(":").trim()}
                     </>
                   ) : (
                     text
@@ -134,7 +155,8 @@ export default function PrivacyClient() {
                 const parts = text.split(":");
                 return parts.length > 1 ? (
                   <>
-                    <strong>{parts[0]}:</strong> {parts.slice(1).join(":").trim()}
+                    <strong>{parts[0]}:</strong>{" "}
+                    {parts.slice(1).join(":").trim()}
                   </>
                 ) : (
                   text
@@ -147,7 +169,8 @@ export default function PrivacyClient() {
                 const parts = text.split(":");
                 return parts.length > 1 ? (
                   <>
-                    <strong>{parts[0]}:</strong> {parts.slice(1).join(":").trim()}
+                    <strong>{parts[0]}:</strong>{" "}
+                    {parts.slice(1).join(":").trim()}
                   </>
                 ) : (
                   text
@@ -162,12 +185,11 @@ export default function PrivacyClient() {
                   <>
                     {parts.length > 1 ? (
                       <>
-                        <strong>{parts[0]}:</strong> {parts.slice(1).join(":").trim()}{" "}
+                        <strong>{parts[0]}:</strong>{" "}
+                        {parts.slice(1).join(":").trim()}{" "}
                       </>
                     ) : (
-                      <>
-                        {text}{" "}
-                      </>
+                      <>{text} </>
                     )}
                     <a
                       href="mailto:support@vinenote.app"
@@ -186,7 +208,8 @@ export default function PrivacyClient() {
                 const parts = text.split(":");
                 return parts.length > 1 ? (
                   <>
-                    <strong>{parts[0]}:</strong> {parts.slice(1).join(":").trim()}
+                    <strong>{parts[0]}:</strong>{" "}
+                    {parts.slice(1).join(":").trim()}
                   </>
                 ) : (
                   text
@@ -195,11 +218,14 @@ export default function PrivacyClient() {
             </li>
             <li>
               {(() => {
-                const text = t("privacy.sections.yourRights.accountDeactivation");
+                const text = t(
+                  "privacy.sections.yourRights.accountDeactivation",
+                );
                 const parts = text.split(":");
                 return parts.length > 1 ? (
                   <>
-                    <strong>{parts[0]}:</strong> {parts.slice(1).join(":").trim()}
+                    <strong>{parts[0]}:</strong>{" "}
+                    {parts.slice(1).join(":").trim()}
                   </>
                 ) : (
                   text
@@ -251,12 +277,13 @@ export default function PrivacyClient() {
             alt="Grapevines"
             fill
             className="object-cover"
-            priority={false}
+            loading="lazy"
+            sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/25 to-transparent" />
         </div>
         <Container>
-          <div className="relative z-10 max-w-4xl mx-auto">
+          <div className="relative z-10 max-w-7xl mx-auto">
             <AnimatedSection>
               <div className="vn-glass-hero vn-card vn-card-pad text-center sm:text-left">
                 <div className="relative">

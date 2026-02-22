@@ -157,6 +157,7 @@ export default function ReportsClient() {
                           width={80}
                           height={80}
                           loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -342,6 +343,7 @@ function ReportDetailPanel({
                 width={400}
                 height={192}
                 loading="lazy"
+                decoding="async"
                 className="w-full max-h-48 object-cover rounded-lg"
               />
             )}

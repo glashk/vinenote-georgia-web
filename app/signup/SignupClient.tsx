@@ -74,7 +74,8 @@ export default function SignupClient() {
             alt="Vineyard"
             fill
             className="object-cover"
-            priority={false}
+            loading="lazy"
+            sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/25 to-transparent" />
         </div>

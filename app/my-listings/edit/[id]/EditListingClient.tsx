@@ -7,9 +7,9 @@ import Container from "@/components/Container";
 import { auth, getFirebaseStorage } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { getDb } from "@/lib/firebase";
-import { collection, addDoc, Timestamp } from "firebase/firestore";
+import { doc, getDoc, updateDoc, deleteField } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { Wine, Grape, Apple, Package, Sprout, Camera, Plus, X } from "lucide-react";
+import { Wine, Grape, Apple, Package, Sprout, Camera, Pencil, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type Category = "wine" | "grapes" | "nobati" | "inventory" | "seedlings";
@@ -41,12 +41,18 @@ function CategoryIcon({ category, active }: { category: Category; active: boolea
   );
 }
 
-export default function AddListingClient() {
+interface EditListingClientProps {
+  listingId: string;
+}
+
+export default function EditListingClient({ listingId }: EditListingClientProps) {
   const { t } = useLanguage();
   const router = useRouter();
   const [user, setUser] = useState(auth?.currentUser ?? null);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   const [category, setCategory] = useState<Category>("grapes");
   const [variety, setVariety] = useState("");
@@ -90,14 +96,56 @@ export default function AddListingClient() {
   }, []);
 
   useEffect(() => {
-    const defaultUnit =
-      category === "wine"
-        ? "l"
-        : category === "nobati" || category === "inventory" || category === "seedlings"
-          ? "pcs"
-          : "kg";
-    setUnit(units.includes(defaultUnit) ? defaultUnit : units[0]);
-  }, [category, units]);
+    if (!units.includes(unit)) setUnit(units[0]);
+  }, [category, units, unit]);
+
+  useEffect(() => {
+    if (!user || !listingId) return;
+    let cancelled = false;
+    const load = async () => {
+      const db = await getDb();
+      if (!db || cancelled) return;
+      try {
+        const snap = await getDoc(doc(db, "marketListings", listingId));
+        if (cancelled) return;
+        if (!snap.exists()) {
+          setLoadError(t("market.errorLoad"));
+          setInitialLoad(false);
+          return;
+        }
+        const data = snap.data();
+        if (data.userId !== user.uid) {
+          setLoadError(t("market.errorLoad"));
+          setInitialLoad(false);
+          return;
+        }
+        const cat = (data.category ?? "grapes") as Category;
+        setCategory(cat);
+        setVariety(data.variety ?? data.title ?? "");
+        setQuantity(String(data.quantity ?? ""));
+        setUnit(data.unit ?? "kg");
+        setPrice(data.price != null && data.price > 0 ? String(data.price) : "");
+        setRegion(data.region ?? "");
+        setVillage(data.village ?? "");
+        setHarvestDate(data.harvestDate ?? new Date().toISOString().split("T")[0]);
+        setSugarBrix(data.sugarBrix != null ? String(data.sugarBrix) : "");
+        setVintageYear(data.vintageYear != null ? String(data.vintageYear) : new Date().getFullYear().toString());
+        setWineType(data.wineType ?? "");
+        setPhone(data.phone ?? "");
+        setContactName(data.contactName ?? "");
+        setNotes(data.notes ?? "");
+        const urls = data.photoUrls ?? data.photos ?? [];
+        setPhotoUrls(Array.isArray(urls) ? urls : []);
+      } catch (err) {
+        console.error("Load listing error:", err);
+        if (!cancelled) setLoadError(t("market.errorLoad"));
+      } finally {
+        if (!cancelled) setInitialLoad(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [user, listingId, t]);
 
   const validate = (): { ok: boolean; message?: string } => {
     const productOrVariety = variety.trim();
@@ -205,17 +253,15 @@ export default function AddListingClient() {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const payload: Record<string, unknown> = {
-        userId: user.uid,
         category,
         variety: variety.trim(),
         quantity: Number(quantity),
         unit,
         region: region.trim(),
         phone: phone.trim(),
-        status: "active",
-        createdAt: Timestamp.now(),
       };
       if (price.trim()) payload.price = Number(price.replace(",", "."));
+      else payload.price = deleteField();
       if (village.trim()) payload.village = village.trim();
       if (category === "grapes" && harvestDate) payload.harvestDate = harvestDate;
       if (category === "grapes" && sugarBrix.trim()) payload.sugarBrix = Number(sugarBrix);
@@ -223,11 +269,11 @@ export default function AddListingClient() {
       if (category === "wine" && wineType.trim()) payload.wineType = wineType.trim();
       if (contactName.trim()) payload.contactName = contactName.trim();
       if (notes.trim()) payload.notes = notes.trim();
-      if (photoUrls.length > 0) payload.photoUrls = photoUrls;
-      await addDoc(collection(db, "marketListings"), payload);
+      payload.photoUrls = photoUrls;
+      await updateDoc(doc(db, "marketListings", listingId), payload);
       router.push("/my-listings");
     } catch (err: unknown) {
-      console.error("Add listing error:", err);
+      console.error("Update listing error:", err);
       const fbErr = err as { code?: string; message?: string };
       let msg = t("market.errorLoad");
       if (fbErr?.code === "permission-denied") {
@@ -271,14 +317,35 @@ export default function AddListingClient() {
     );
   }
 
+  if (initialLoad) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f5f4f0]">
+        <div className="w-10 h-10 border-2 border-vineyard-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f5f4f0]">
+        <div className="text-center px-6">
+          <p className="text-slate-600 mb-4">{loadError}</p>
+          <Link href="/my-listings" className="vn-btn vn-btn-primary">
+            ← {t("market.backToList")}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f5f4f0] py-14 sm:py-20">
       <Container>
         <div className="max-w-xl mx-auto px-4">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-2">
-              <Plus size={24} strokeWidth={2.5} />
-              {t("market.addListing")}
+              <Pencil size={24} strokeWidth={2.5} />
+              {t("market.editListing")}
             </h1>
             <Link
               href="/my-listings"
@@ -295,7 +362,6 @@ export default function AddListingClient() {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
               }}
             >
-              {/* Add photo */}
               <label className={labelBase}>{t("market.addPhoto")}</label>
               <input
                 ref={fileInputRef}
@@ -348,7 +414,6 @@ export default function AddListingClient() {
                 )}
               </div>
 
-              {/* Category chips */}
               <label className={labelBase}>{t("market.category")}</label>
               <div className="flex flex-wrap gap-2.5 mt-2">
                 {(["wine", "grapes", "nobati", "inventory", "seedlings"] as const).map((c) => {
@@ -372,7 +437,6 @@ export default function AddListingClient() {
                 })}
               </div>
 
-              {/* Variety / Product / Item */}
               <label className={labelBase}>{varietyLabel} *</label>
               <input
                 type="text"
@@ -383,7 +447,6 @@ export default function AddListingClient() {
                 required
               />
 
-              {/* Region */}
               <label className={labelBase}>{t("market.region")} *</label>
               <input
                 type="text"
@@ -394,7 +457,6 @@ export default function AddListingClient() {
                 required
               />
 
-              {/* Village */}
               <label className={labelBase}>{t("market.village")}</label>
               <input
                 type="text"
@@ -404,7 +466,6 @@ export default function AddListingClient() {
                 className={`${inputBase} placeholder-[#8a9a85]`}
               />
 
-              {/* Quantity + Unit row */}
               <div className="flex gap-3 mt-4">
                 <div className="flex-1">
                   <label className={labelBase}>{t("common.quantity")} *</label>
@@ -442,7 +503,6 @@ export default function AddListingClient() {
                 </div>
               </div>
 
-              {/* Grapes: sugar Brix + harvest date */}
               {category === "grapes" && (
                 <>
                   <label className={labelBase}>{t("market.sugarBrix")}</label>
@@ -464,7 +524,6 @@ export default function AddListingClient() {
                 </>
               )}
 
-              {/* Wine: wine type + vintage year */}
               {category === "wine" && (
                 <>
                   <label className={labelBase}>{t("market.wineType")}</label>
@@ -487,7 +546,6 @@ export default function AddListingClient() {
                 </>
               )}
 
-              {/* Contact */}
               <label className={labelBase}>{t("market.contactName")}</label>
               <input
                 type="text"
@@ -507,7 +565,6 @@ export default function AddListingClient() {
                 required
               />
 
-              {/* Price */}
               <label className={labelBase}>{t("market.price")}</label>
               <input
                 type="text"
@@ -518,7 +575,6 @@ export default function AddListingClient() {
                 className={`${inputBase} placeholder-[#8a9a85]`}
               />
 
-              {/* Notes */}
               <label className={labelBase}>{t("market.notesOptional")}</label>
               <textarea
                 value={notes}
@@ -532,7 +588,6 @@ export default function AddListingClient() {
                 <p className="mt-4 text-sm text-red-600">{error}</p>
               )}
 
-              {/* Save button */}
               <button
                 type="submit"
                 disabled={loading}
@@ -544,7 +599,7 @@ export default function AddListingClient() {
                 {loading ? (
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  t("market.publish")
+                  t("common.save")
                 )}
               </button>
             </div>

@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import enTranslations from "@/translations/en.json";
 import kaTranslations from "@/translations/ka.json";
 
@@ -18,19 +24,21 @@ interface LanguageContextType {
   getArray: (key: string) => string[];
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+const LanguageContext = createContext<LanguageContextType | undefined>(
+  undefined,
+);
 
 function getInitialLanguage(): Language {
-  if (typeof window === "undefined") return "en";
+  if (typeof window === "undefined") return "ka";
   const w = window as Window & { __LOCALE?: string };
-  return (w.__LOCALE === "ka" || w.__LOCALE === "en") ? w.__LOCALE : "en";
+  return w.__LOCALE === "ka" || w.__LOCALE === "en" ? w.__LOCALE : "ka";
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(getInitialLanguage);
 
   useEffect(() => {
-    const saved = (localStorage.getItem("language") as Language) || "en";
+    const saved = (localStorage.getItem("language") as Language) || "ka";
     if (saved === "en" || saved === "ka") setLanguageState(saved);
   }, []);
 
@@ -44,7 +52,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const t = (key: string): any => {
     const keys = key.split(".");
     let value: any = translations;
-    
+
     for (const k of keys) {
       if (value && typeof value === "object" && k in value) {
         value = value[k];
@@ -52,7 +60,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         return key; // Return key if translation not found
       }
     }
-    
+
     return value !== undefined ? value : key;
   };
 

@@ -15,12 +15,12 @@ export default function Logo({ size = 48, className = "", animated = true, style
 
   return (
     <div
-      className={`relative ${className} transition-transform duration-300 ${
+      className={`relative shrink-0 ${className} transition-transform duration-300 ${
         animated && isHovered ? "scale-110 rotate-3" : ""
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={style}
+      style={{ width: size, height: size, minWidth: size, minHeight: size, ...style }}
     >
       <Image
         src="/logo.png"
@@ -30,6 +30,7 @@ export default function Logo({ size = 48, className = "", animated = true, style
         className="drop-shadow-lg"
         style={{ width: '100%', height: '100%', objectFit: 'contain' }}
         priority
+        sizes={`${size}px`}
       />
       {animated && (
         <div

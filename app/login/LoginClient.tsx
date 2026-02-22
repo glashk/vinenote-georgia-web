@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Container from "@/components/Container";
@@ -27,6 +27,9 @@ function getAuthErrorMessage(code: string, t: (key: string) => string): string {
 
 export default function LoginClient() {
   const { t } = useLanguage();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") ?? "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -35,7 +38,6 @@ export default function LoginClient() {
   const [forgotMode, setForgotMode] = useState(false);
   const [forgotSuccess, setForgotSuccess] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
-  const router = useRouter();
 
   const handleForgotSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +70,7 @@ export default function LoginClient() {
     }
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.replace("/");
+      router.replace(redirect.startsWith("/") ? redirect : "/");
     } catch (err: unknown) {
       const e = err as { code?: string };
       setError(getAuthErrorMessage(e?.code ?? "", t));
@@ -86,7 +88,8 @@ export default function LoginClient() {
             alt="Vineyard"
             fill
             className="object-cover"
-            priority={false}
+            loading="lazy"
+            sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/25 to-transparent" />
         </div>

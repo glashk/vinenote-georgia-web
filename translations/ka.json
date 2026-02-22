@@ -73,7 +73,10 @@
     "error": "შეცდომა",
     "save": "შენახვა",
     "status": "სტატუსი",
-    "datePlaceholder": "აირჩიეთ თარიღი"
+    "datePlaceholder": "აირჩიეთ თარიღი",
+    "all": "ყველა",
+    "reset": "გასუფთავება",
+    "clear": "გასუფთავება"
   },
   "auth": {
     "signIn": {
@@ -136,6 +139,7 @@
     "title": "მარკეტი",
     "subtitle": "დაათვალიერეთ VineNote მომხმარებლების ჩანაწერები",
     "listings": "ჩანაწერი",
+    "listingsFound": "მოიძებნა {{count}} განცხადება",
     "empty": "განცხადებები ჯერ არ არის",
     "unknownListing": "უცნობი ჩანაწერი",
     "categoryGrapes": "ყურძენი",
@@ -144,6 +148,7 @@
     "categoryInventory": "ინვენტარი",
     "categorySeedlings": "ნერგები",
     "product": "პროდუქტი",
+    "description": "აღწერა",
     "item": "ნივთი",
     "priceByAgreement": "შეთანხმებით",
     "backToList": "უკან სიაში",
@@ -190,21 +195,41 @@
     "pricePlaceholder": "დატოვეთ ცარიელი შეთანხმებით",
     "notesOptional": "შენიშვნები (არასავალდებულო)",
     "notesPlaceholder": "დამატებითი დეტალები...",
+    "searchPlaceholder": "ძებნა ჯიში, რეგიონი...",
+    "allRegions": "ყველა რეგიონი",
+    "allVillages": "ყველა სოფელი",
+    "minPrice": "მინ. ფასი",
+    "maxPrice": "მაქს. ფასი",
+    "maxPricePlaceholder": "₾",
+    "sortByLabel": "სორტირება",
+    "sortBy": {
+      "newest": "ახალი",
+      "price_asc": "ფასი ↑",
+      "price_desc": "ფასი ↓",
+      "brix_asc": "°Brix ↑",
+      "brix_desc": "°Brix ↓",
+      "vintage_asc": "წლოვანება ↑",
+      "vintage_desc": "წლოვანება ↓"
+    },
     "addPhoto": "ფოტოს დამატება",
+    "photoUploadError": "ფოტოს ატვირთვა ვერ მოხერხდა",
     "publish": "გამოქვეყნება",
     "wineType": "ღვინის ტიპი",
     "wineTypePlaceholder": "მაგ. მშრალი წითელი",
     "emptyFeed": "ჩანაწერები ჯერ არ არის",
     "emptyFeedSubtext": "შექმენით პირველი ჩანაწერი გაყიდვის დასაწყებად.",
+    "listingsFromSeller": "ამ გამყიდველის ჩანაწერები",
     "add": "დამატება",
-    "addListing": "ჩანაწერის დამატება",
+    "addListing": "განცხადების დამატება",
+    "editListing": "განცხადების რედაქტირება",
     "createFirst": "ჩამოტვირთეთ აპლიკაცია",
     "createFirstHint": "ჩანაწერების შექმნა VineNote აპლიკაციიდან.",
     "removeListing": "ჩანაწერის მოხსნა",
-    "removeConfirm": "მოვხსნათ ეს ჩანაწერი მარკეტიდან?",
+    "removeConfirm": "მოვხსნათ ეს განცხადება მარკეტიდან?",
     "deleteListing": "სრულად წაშლა",
-    "deleteConfirm": "ამის გაუქმება შეუძლებელია. წავშალოთ ეს ჩანაწერი?",
+    "deleteConfirm": "ამის გაუქმება შეუძლებელია. წავშალოთ ეს განცხადება?",
     "daysLeft": "{{count}} დღე დარჩა",
+    "moreImages": "+{{count}} სურათი",
     "units": {
       "kg": "კგ",
       "ton": "ტონა",
@@ -218,7 +243,9 @@
   },
   "footer": {
     "copyright": "© VineNote Georgia",
-    "email": "support@vinenote.app"
+    "email": "support@vinenote.app",
+    "links": "ბმულები",
+    "tagline": "მარტივი ვენახისა და ქვევრის მართვა ქართველი მეღვინეებისთვის."
   },
   "support": {
     "title": "მხარდაჭერა",

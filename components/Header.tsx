@@ -72,8 +72,6 @@ export default function Header() {
   const navLinks = [
     { href: "/", label: t("nav.home") },
     { href: "/market", label: t("nav.market") },
-    { href: "/support", label: t("nav.support") },
-    { href: "/privacy", label: t("nav.privacy") },
   ];
 
   useEffect(() => {
