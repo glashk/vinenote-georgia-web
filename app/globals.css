@@ -304,17 +304,16 @@
     color: rgb(51, 65, 85);
   }
 
-  /* Market list view card: refined design */
+  /* Market list view card: ss.ge-style, white, clean */
   .market-list-card {
-    @apply rounded-2xl overflow-hidden bg-white;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 2px 8px rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    transition: transform 220ms ease, box-shadow 220ms ease, border-color 200ms ease;
+    @apply rounded-xl overflow-hidden bg-white;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    transition: box-shadow 220ms ease, border-color 200ms ease;
   }
   .market-list-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1), 0 2px 8px rgba(15, 23, 42, 0.06);
-    border-color: rgba(15, 23, 42, 0.12);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+    border-color: rgba(15, 23, 42, 0.1);
   }
 
   .vn-link {

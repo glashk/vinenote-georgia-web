@@ -29,11 +29,14 @@ import {
   MapPin,
   Calendar,
   Heart,
+  Share2,
   Square,
   Phone,
   Package,
 } from "lucide-react";
-import OptimizedListingImage, { ThumbnailImage } from "@/components/OptimizedListingImage";
+import OptimizedListingImage, {
+  ThumbnailImage,
+} from "@/components/OptimizedListingImage";
 import ListingCardSkeleton from "@/components/ListingCardSkeleton";
 
 type MarketCategory = "grapes" | "wine" | "nobati" | "inventory" | "seedlings";
@@ -193,12 +196,20 @@ function ListingDetailView({
   onBack,
   t,
   getUnitLabel,
+  onShare,
+  onToggleFavorite,
+  favoriteIds,
+  favoriteToggling,
 }: {
   listing: Listing | null;
   loading: boolean;
   onBack: () => void;
   t: (key: string) => string;
   getUnitLabel: (unit: string) => string;
+  onShare?: (listingId: string) => void;
+  onToggleFavorite?: (listingId: string, e: React.MouseEvent) => void;
+  favoriteIds?: Set<string>;
+  favoriteToggling?: string | null;
 }) {
   const [carouselIndex, setCarouselIndex] = useState(0);
 
@@ -249,8 +260,16 @@ function ListingDetailView({
               <div className="relative aspect-[4/3] bg-slate-200 overflow-hidden">
                 <OptimizedListingImage
                   src={photoUrls[carouselIndex] ?? photoUrls[0]!}
-                  image200={listing.photoUrls200?.[carouselIndex] ?? listing.photoUrls200?.[0] ?? listing.image200}
-                  image400={listing.photoUrls400?.[carouselIndex] ?? listing.photoUrls400?.[0] ?? listing.image400}
+                  image200={
+                    listing.photoUrls200?.[carouselIndex] ??
+                    listing.photoUrls200?.[0] ??
+                    listing.image200
+                  }
+                  image400={
+                    listing.photoUrls400?.[carouselIndex] ??
+                    listing.photoUrls400?.[0] ??
+                    listing.image400
+                  }
                   context="detail"
                   sizes="(max-width: 672px) 100vw, 672px"
                   fill
@@ -273,7 +292,9 @@ function ListingDetailView({
                       >
                         <ThumbnailImage
                           src={url}
-                          image200={listing.photoUrls200?.[i] ?? listing.image200}
+                          image200={
+                            listing.photoUrls200?.[i] ?? listing.image200
+                          }
                           className="object-cover"
                           fill
                         />
@@ -315,16 +336,55 @@ function ListingDetailView({
         </div>
 
         <div className="vn-glass vn-card vn-card-pad">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-            <h1 className="text-xl font-bold text-slate-900">{displayTitle}</h1>
-            <span
-              className="px-3 py-1 rounded-lg text-xs font-bold text-white"
-              style={{ backgroundColor: statusColor }}
-            >
-              {t(
-                `market.status${status.charAt(0).toUpperCase() + status.slice(1)}`,
-              )}
-            </span>
+          <div className="flex flex-wrap items-start justify-between gap-2 mb-4">
+            <h1 className="text-xl font-bold text-slate-900 flex-1">
+              {displayTitle}
+            </h1>
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-1">
+                {onToggleFavorite && favoriteIds && listing && (
+                  <button
+                    onClick={(e) => onToggleFavorite(listing.id, e)}
+                    disabled={favoriteToggling === listing.id}
+                    className={`p-2 rounded-lg transition-colors ${
+                      favoriteIds.has(listing.id)
+                        ? "text-rose-500"
+                        : "text-slate-400 hover:text-rose-500 hover:bg-rose-50/50"
+                    } ${favoriteToggling === listing.id ? "opacity-60" : ""}`}
+                    aria-label={
+                      favoriteIds.has(listing.id)
+                        ? "Remove from favorites"
+                        : "Add to favorites"
+                    }
+                  >
+                    <Heart
+                      size={20}
+                      strokeWidth={2}
+                      fill={
+                        favoriteIds.has(listing.id) ? "currentColor" : "none"
+                      }
+                    />
+                  </button>
+                )}
+                {onShare && listing && (
+                  <button
+                    onClick={() => onShare(listing.id)}
+                    className="p-2 rounded-lg transition-colors text-slate-400 hover:text-[#04AA6D] hover:bg-slate-50/50"
+                    aria-label={t("market.share")}
+                  >
+                    <Share2 size={20} strokeWidth={2} />
+                  </button>
+                )}
+              </div>
+              <span
+                className="px-3 py-1 rounded-lg text-xs font-bold text-white"
+                style={{ backgroundColor: statusColor }}
+              >
+                {t(
+                  `market.status${status.charAt(0).toUpperCase() + status.slice(1)}`,
+                )}
+              </span>
+            </div>
           </div>
 
           {locationText && (
@@ -442,10 +502,7 @@ function ListingDetailView({
 }
 
 function withViewTransition(cb: () => void) {
-  if (
-    typeof document !== "undefined" &&
-    "startViewTransition" in document
-  ) {
+  if (typeof document !== "undefined" && "startViewTransition" in document) {
     (
       document as Document & {
         startViewTransition: (cb: () => void | Promise<void>) => void;
@@ -468,7 +525,9 @@ export default function MarketClient() {
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"grid" | "card" | "detailed">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "card" | "detailed">(
+    "grid",
+  );
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth < 768) {
@@ -538,66 +597,67 @@ export default function MarketClient() {
         unsubscribe = onSnapshot(
           listingsRef,
           (snapshot) => {
-          const list: Listing[] = snapshot.docs
-            .map((docSnap) => {
-              const data = docSnap.data();
-              return {
-                id: docSnap.id,
-                variety: data.variety,
-                title: data.title,
-                description: data.description,
-                notes: data.notes,
-                price: typeof data.price === "number" ? data.price : undefined,
-                quantity: data.quantity,
-                unit: data.unit,
-                region: data.region,
-                village: data.village,
-                category: data.category,
-                harvestDate: data.harvestDate,
-                sugarBrix: data.sugarBrix,
-                vintageYear: data.vintageYear,
-                wineType: data.wineType,
-                phone: data.phone,
-                contactName: data.contactName,
-                photoUrls: data.photoUrls,
-                photoUrls200: data.photoUrls200,
-                photoUrls400: data.photoUrls400,
-                imageUrl: data.imageUrl,
-                image: data.image,
-                image200: data.image200,
-                image400: data.image400,
-                photos: data.photos,
-                thumbnail: data.thumbnail,
-                hidden: data.hidden,
-                userId: data.userId,
-                createdAt: data.createdAt,
-              };
-            })
-            .filter((l) => !l.hidden);
-          list.sort((a, b) => {
-            const aTime =
-              a.createdAt &&
-              typeof (a.createdAt as { seconds: number }).seconds === "number"
-                ? (a.createdAt as { seconds: number }).seconds * 1000
-                : 0;
-            const bTime =
-              b.createdAt &&
-              typeof (b.createdAt as { seconds: number }).seconds === "number"
-                ? (b.createdAt as { seconds: number }).seconds * 1000
-                : 0;
-            return bTime - aTime;
-          });
-          clearTimeout(timeout);
-          setListings(list);
-          setLoading(false);
-          setError(null);
-        },
-        (err) => {
-          clearTimeout(timeout);
-          setLoading(false);
-          setError(err?.message ?? "შეცდომა მოხდა");
-        },
-      );
+            const list: Listing[] = snapshot.docs
+              .map((docSnap) => {
+                const data = docSnap.data();
+                return {
+                  id: docSnap.id,
+                  variety: data.variety,
+                  title: data.title,
+                  description: data.description,
+                  notes: data.notes,
+                  price:
+                    typeof data.price === "number" ? data.price : undefined,
+                  quantity: data.quantity,
+                  unit: data.unit,
+                  region: data.region,
+                  village: data.village,
+                  category: data.category,
+                  harvestDate: data.harvestDate,
+                  sugarBrix: data.sugarBrix,
+                  vintageYear: data.vintageYear,
+                  wineType: data.wineType,
+                  phone: data.phone,
+                  contactName: data.contactName,
+                  photoUrls: data.photoUrls,
+                  photoUrls200: data.photoUrls200,
+                  photoUrls400: data.photoUrls400,
+                  imageUrl: data.imageUrl,
+                  image: data.image,
+                  image200: data.image200,
+                  image400: data.image400,
+                  photos: data.photos,
+                  thumbnail: data.thumbnail,
+                  hidden: data.hidden,
+                  userId: data.userId,
+                  createdAt: data.createdAt,
+                };
+              })
+              .filter((l) => !l.hidden);
+            list.sort((a, b) => {
+              const aTime =
+                a.createdAt &&
+                typeof (a.createdAt as { seconds: number }).seconds === "number"
+                  ? (a.createdAt as { seconds: number }).seconds * 1000
+                  : 0;
+              const bTime =
+                b.createdAt &&
+                typeof (b.createdAt as { seconds: number }).seconds === "number"
+                  ? (b.createdAt as { seconds: number }).seconds * 1000
+                  : 0;
+              return bTime - aTime;
+            });
+            clearTimeout(timeout);
+            setListings(list);
+            setLoading(false);
+            setError(null);
+          },
+          (err) => {
+            clearTimeout(timeout);
+            setLoading(false);
+            setError(err?.message ?? "შეცდომა მოხდა");
+          },
+        );
       })
       .catch(() => {
         clearTimeout(timeout);
@@ -662,6 +722,31 @@ export default function MarketClient() {
       }
     },
     [user, favoriteIds, router],
+  );
+
+  const handleShare = useCallback(
+    (listingId: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      const url =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/?id=${listingId}`
+          : `/?id=${listingId}`;
+      const title = "VineNote Georgia - Market";
+      if (navigator.share) {
+        navigator
+          .share({
+            title,
+            url,
+            text: title,
+          })
+          .catch(() => {
+            navigator.clipboard?.writeText(url);
+          });
+      } else {
+        navigator.clipboard?.writeText(url);
+      }
+    },
+    [],
   );
 
   const loadDetail = useCallback(async () => {
@@ -940,6 +1025,12 @@ export default function MarketClient() {
           const label = t(key);
           return label === key ? unit : label;
         }}
+        onShare={(id: string) =>
+          handleShare(id, { stopPropagation: () => {} } as React.MouseEvent)
+        }
+        onToggleFavorite={toggleFavorite}
+        favoriteIds={favoriteIds}
+        favoriteToggling={favoriteToggling}
       />
     );
   }
@@ -1027,12 +1118,12 @@ export default function MarketClient() {
                           key={value}
                           role="option"
                           aria-selected={sortBy === value}
-                        onClick={() => {
-                          withViewTransition(() => {
-                            setSortBy(value);
-                            setSortDropdownOpen(false);
-                          });
-                        }}
+                          onClick={() => {
+                            withViewTransition(() => {
+                              setSortBy(value);
+                              setSortDropdownOpen(false);
+                            });
+                          }}
                           className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors first:pt-3 last:pb-3 ${
                             sortBy === value
                               ? "bg-[#04AA6D]/10 text-[#04AA6D]"
@@ -1081,9 +1172,7 @@ export default function MarketClient() {
                   <button
                     type="button"
                     onClick={() =>
-                      withViewTransition(() =>
-                        setFavoritesOnly((v) => !v)
-                      )
+                      withViewTransition(() => setFavoritesOnly((v) => !v))
                     }
                     aria-pressed={favoritesOnly}
                     aria-label={t("market.favorites")}
@@ -1196,7 +1285,9 @@ export default function MarketClient() {
                       </label>
                       <div className="flex flex-wrap gap-2">
                         <button
-                          onClick={() => withViewTransition(() => setRegionFilter(""))}
+                          onClick={() =>
+                            withViewTransition(() => setRegionFilter(""))
+                          }
                           className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${!regionFilter ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
                         >
                           {t("market.allRegions")}
@@ -1204,7 +1295,9 @@ export default function MarketClient() {
                         {uniqueRegions.map((r) => (
                           <button
                             key={r}
-                            onClick={() => withViewTransition(() => setRegionFilter(r))}
+                            onClick={() =>
+                              withViewTransition(() => setRegionFilter(r))
+                            }
                             className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${regionFilter === r ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
                           >
                             {r}
@@ -1227,7 +1320,9 @@ export default function MarketClient() {
                           {uniqueVillages.map((v) => (
                             <button
                               key={v}
-                              onClick={() => withViewTransition(() => setVillageFilter(v))}
+                              onClick={() =>
+                                withViewTransition(() => setVillageFilter(v))
+                              }
                               className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${villageFilter === v ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
                             >
                               {v}
@@ -1387,14 +1482,26 @@ export default function MarketClient() {
                     e.key === "Enter" && router.push(`/?id=${listing.id}`)
                   }
                   className="vn-glass vn-card overflow-hidden cursor-pointer vn-card-hover group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] rounded-2xl market-item-transition"
-                  style={{ viewTransitionName: `listing-${listing.id}` } as React.CSSProperties}
+                  style={
+                    {
+                      viewTransitionName: `listing-${listing.id}`,
+                    } as React.CSSProperties
+                  }
                 >
                   <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
                     {imgUrl ? (
                       <OptimizedListingImage
                         src={imgUrl}
-                        image200={listing.image200 ?? listing.photoUrls200?.[selectedIdx] ?? listing.photoUrls200?.[0]}
-                        image400={listing.image400 ?? listing.photoUrls400?.[selectedIdx] ?? listing.photoUrls400?.[0]}
+                        image200={
+                          listing.image200 ??
+                          listing.photoUrls200?.[selectedIdx] ??
+                          listing.photoUrls200?.[0]
+                        }
+                        image400={
+                          listing.image400 ??
+                          listing.photoUrls400?.[selectedIdx] ??
+                          listing.photoUrls400?.[0]
+                        }
                         context="card"
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                         priority={index === 0}
@@ -1429,7 +1536,9 @@ export default function MarketClient() {
                           >
                             <ThumbnailImage
                               src={url}
-                              image200={listing.photoUrls200?.[i] ?? listing.image200}
+                              image200={
+                                listing.photoUrls200?.[i] ?? listing.image200
+                              }
                               fill
                               className="object-cover"
                             />
@@ -1437,24 +1546,33 @@ export default function MarketClient() {
                         ))}
                       </div>
                     )}
-                    <button
-                      onClick={(e) => toggleFavorite(listing.id, e)}
-                      disabled={favoriteToggling === listing.id}
-                      className={`absolute top-2.5 right-2.5 w-9 h-9 rounded-full bg-white/95 backdrop-blur flex items-center justify-center shadow-sm transition-colors ${
-                        favoriteIds.has(listing.id)
-                          ? "text-rose-500"
-                          : "text-slate-600 hover:text-rose-500"
-                      } ${favoriteToggling === listing.id ? "opacity-60" : ""}`}
-                      aria-label="Favorite"
-                    >
-                      <Heart
-                        size={17}
-                        strokeWidth={2}
-                        fill={
-                          favoriteIds.has(listing.id) ? "currentColor" : "none"
-                        }
-                      />
-                    </button>
+                    <div className="absolute top-2.5 right-2.5 flex flex-col gap-2">
+                      <button
+                        onClick={(e) => toggleFavorite(listing.id, e)}
+                        disabled={favoriteToggling === listing.id}
+                        className={`w-9 h-9 rounded-full bg-white/95 backdrop-blur flex items-center justify-center shadow-sm transition-colors ${
+                          favoriteIds.has(listing.id)
+                            ? "text-rose-500"
+                            : "text-slate-600 hover:text-rose-500"
+                        } ${favoriteToggling === listing.id ? "opacity-60" : ""}`}
+                        aria-label="Favorite"
+                      >
+                        <Heart
+                          size={17}
+                          strokeWidth={2}
+                          fill={
+                            favoriteIds.has(listing.id) ? "currentColor" : "none"
+                          }
+                        />
+                      </button>
+                      <button
+                        onClick={(e) => handleShare(listing.id, e)}
+                        className="w-9 h-9 rounded-full bg-white/95 backdrop-blur flex items-center justify-center shadow-sm transition-colors text-slate-600 hover:text-[#04AA6D]"
+                        aria-label={t("market.share")}
+                      >
+                        <Share2 size={17} strokeWidth={2} />
+                      </button>
+                    </div>
                   </div>
                   <div className="p-3 sm:p-4 flex flex-col">
                     <div className="mb-1.5">
@@ -1549,14 +1667,26 @@ export default function MarketClient() {
                     e.key === "Enter" && router.push(`/?id=${listing.id}`)
                   }
                   className="vn-glass vn-card overflow-hidden cursor-pointer vn-card-hover flex flex-col sm:flex-row group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] rounded-2xl market-item-transition"
-                  style={{ viewTransitionName: `listing-${listing.id}` } as React.CSSProperties}
+                  style={
+                    {
+                      viewTransitionName: `listing-${listing.id}`,
+                    } as React.CSSProperties
+                  }
                 >
                   <div className="relative w-full sm:w-2/5 sm:min-w-[160px] aspect-[4/3] bg-slate-100 overflow-hidden flex-shrink-0">
                     {imgUrl ? (
                       <OptimizedListingImage
                         src={imgUrl}
-                        image200={listing.image200 ?? listing.photoUrls200?.[selectedIdx] ?? listing.photoUrls200?.[0]}
-                        image400={listing.image400 ?? listing.photoUrls400?.[selectedIdx] ?? listing.photoUrls400?.[0]}
+                        image200={
+                          listing.image200 ??
+                          listing.photoUrls200?.[selectedIdx] ??
+                          listing.photoUrls200?.[0]
+                        }
+                        image400={
+                          listing.image400 ??
+                          listing.photoUrls400?.[selectedIdx] ??
+                          listing.photoUrls400?.[0]
+                        }
                         context="card"
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                         fill
@@ -1590,7 +1720,9 @@ export default function MarketClient() {
                           >
                             <ThumbnailImage
                               src={url}
-                              image200={listing.photoUrls200?.[i] ?? listing.image200}
+                              image200={
+                                listing.photoUrls200?.[i] ?? listing.image200
+                              }
                               fill
                               className="object-cover"
                             />
@@ -1604,26 +1736,35 @@ export default function MarketClient() {
                       <h3 className="font-semibold text-slate-900 line-clamp-2">
                         {displayTitle}
                       </h3>
-                      <button
-                        onClick={(e) => toggleFavorite(listing.id, e)}
-                        disabled={favoriteToggling === listing.id}
-                        className={`shrink-0 transition-colors ${
-                          favoriteIds.has(listing.id)
-                            ? "text-rose-500"
-                            : "text-slate-400 hover:text-rose-500"
-                        } ${favoriteToggling === listing.id ? "opacity-60" : ""}`}
-                        aria-label="Favorite"
-                      >
-                        <Heart
-                          size={18}
-                          strokeWidth={2}
-                          fill={
+                      <div className="flex flex-col gap-1 shrink-0">
+                        <button
+                          onClick={(e) => toggleFavorite(listing.id, e)}
+                          disabled={favoriteToggling === listing.id}
+                          className={`p-1.5 rounded-lg transition-colors ${
                             favoriteIds.has(listing.id)
-                              ? "currentColor"
-                              : "none"
-                          }
-                        />
-                      </button>
+                              ? "text-rose-500"
+                              : "text-slate-400 hover:text-rose-500"
+                          } ${favoriteToggling === listing.id ? "opacity-60" : ""}`}
+                          aria-label="Favorite"
+                        >
+                          <Heart
+                            size={18}
+                            strokeWidth={2}
+                            fill={
+                              favoriteIds.has(listing.id)
+                                ? "currentColor"
+                                : "none"
+                            }
+                          />
+                        </button>
+                        <button
+                          onClick={(e) => handleShare(listing.id, e)}
+                          className="p-1.5 rounded-lg transition-colors text-slate-400 hover:text-[#04AA6D]"
+                          aria-label={t("market.share")}
+                        >
+                          <Share2 size={18} strokeWidth={2} />
+                        </button>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-xl font-bold text-[#04AA6D] tracking-tight">
@@ -1680,8 +1821,8 @@ export default function MarketClient() {
             })}
           </div>
         ) : (
-          /* Detailed list view: improved card layout */
-          <div key="detailed" className="space-y-5 animate-fade-in">
+          /* Detailed list view: ss.ge-style layout */
+          <div key="detailed" className="space-y-4 animate-fade-in">
             {filteredListings.map((listing, index) => {
               const photoUrls = getPhotoUrls(listing);
               const selectedIdx = selectedImageByListing[listing.id] ?? 0;
@@ -1711,18 +1852,30 @@ export default function MarketClient() {
                   onKeyDown={(e) =>
                     e.key === "Enter" && router.push(`/?id=${listing.id}`)
                   }
-                  className="market-list-card group relative cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] market-item-transition"
-                  style={{ viewTransitionName: `listing-${listing.id}` } as React.CSSProperties}
+                  className="market-list-card group relative cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] market-item-transition rounded-2xl sm:rounded-xl overflow-hidden shadow-md sm:shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
+                  style={
+                    {
+                      viewTransitionName: `listing-${listing.id}`,
+                    } as React.CSSProperties
+                  }
                 >
                   <div className="flex flex-col sm:flex-row min-h-0">
-                    {/* Image: ~40% width, main + thumbnail strip */}
-                    <div className="sm:w-[40%] lg:w-[36%] flex-shrink-0 relative">
-                      <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden rounded-t-2xl sm:rounded-t-none sm:rounded-l-2xl">
+                    {/* Image: full width on mobile, ~40% on sm+ */}
+                    <div className="w-full sm:w-[42%] lg:w-[38%] flex-shrink-0 relative">
+                      <div className="relative aspect-[4/3] sm:aspect-[4/3] bg-slate-100 overflow-hidden">
                         {imgUrl ? (
                           <OptimizedListingImage
                             src={imgUrl}
-                            image200={listing.image200 ?? listing.photoUrls200?.[selectedIdx] ?? listing.photoUrls200?.[0]}
-                            image400={listing.image400 ?? listing.photoUrls400?.[selectedIdx] ?? listing.photoUrls400?.[0]}
+                            image200={
+                              listing.image200 ??
+                              listing.photoUrls200?.[selectedIdx] ??
+                              listing.photoUrls200?.[0]
+                            }
+                            image400={
+                              listing.image400 ??
+                              listing.photoUrls400?.[selectedIdx] ??
+                              listing.photoUrls400?.[0]
+                            }
                             context="card"
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                             fill
@@ -1734,9 +1887,9 @@ export default function MarketClient() {
                           </span>
                         )}
                         {/* Badge overlay top-left */}
-                        <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                        <div className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 flex items-center gap-1 sm:gap-1.5">
                           <span
-                            className="inline-flex w-fit items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-white"
+                            className="inline-flex w-fit items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold text-white"
                             style={{
                               backgroundColor: getCategoryColor(category),
                             }}
@@ -1746,7 +1899,7 @@ export default function MarketClient() {
                           </span>
                           {status !== "active" && (
                             <span
-                              className="px-2 py-1 rounded text-xs font-semibold text-white"
+                              className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold text-white"
                               style={{ backgroundColor: statusColor }}
                             >
                               {t(
@@ -1757,7 +1910,7 @@ export default function MarketClient() {
                         </div>
                       </div>
                       {photoUrls.length > 1 && (
-                        <div className="flex gap-1.5 p-2 bg-slate-50 border-t border-slate-100 overflow-x-auto z-10 relative">
+                        <div className="flex gap-1 sm:gap-1.5 p-1.5 sm:p-2 bg-slate-50 border-t border-slate-100 overflow-x-auto">
                           {photoUrls.map((url, i) => (
                             <button
                               key={i}
@@ -1767,8 +1920,7 @@ export default function MarketClient() {
                                 e.stopPropagation();
                                 setListingImage(listing.id, i);
                               }}
-                              onPointerDown={(e) => e.stopPropagation()}
-                              className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded overflow-hidden bg-slate-200 flex-shrink-0 transition-all touch-manipulation ${
+                              className={`relative w-11 h-11 sm:w-16 sm:h-16 rounded overflow-hidden bg-slate-200 flex-shrink-0 transition-all ${
                                 selectedIdx === i
                                   ? "ring-2 ring-[#04AA6D] ring-offset-1"
                                   : "opacity-80 hover:opacity-100"
@@ -1776,7 +1928,9 @@ export default function MarketClient() {
                             >
                               <ThumbnailImage
                                 src={url}
-                                image200={listing.photoUrls200?.[i] ?? listing.image200}
+                                image200={
+                                  listing.photoUrls200?.[i] ?? listing.image200
+                                }
                                 fill
                                 className="object-cover"
                               />
@@ -1786,40 +1940,51 @@ export default function MarketClient() {
                       )}
                     </div>
 
+                    {/* Main content + sidebar: side by side on mobile, row on sm+ */}
+                    <div className="flex flex-row sm:contents min-w-0">
                     {/* Main content: title, price, location, description, features row */}
-                    <div className="flex-1 flex flex-col min-w-0 p-4 sm:p-5 lg:p-6">
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-snug line-clamp-2 flex-1">
+                    <div className="flex-1 flex flex-col min-w-0 p-3 sm:p-5">
+                      <div className="flex items-start justify-between gap-2 sm:gap-3 mb-1.5 sm:mb-2">
+                        <h2 className="text-sm sm:text-[24px] font-bold text-slate-900 leading-snug line-clamp-2 flex-1">
                           {displayTitle}
                         </h2>
-                        <button
-                          onClick={(e) => toggleFavorite(listing.id, e)}
-                          disabled={favoriteToggling === listing.id}
-                          className={`shrink-0 p-2 rounded-lg transition-colors ${
-                            favoriteIds.has(listing.id)
-                              ? "text-rose-500"
-                              : "text-slate-400 hover:text-rose-500 hover:bg-rose-50/50"
-                          } ${favoriteToggling === listing.id ? "opacity-60" : ""}`}
-                          aria-label={
-                            favoriteIds.has(listing.id)
-                              ? "Remove from favorites"
-                              : "Add to favorites"
-                          }
-                        >
-                          <Heart
-                            size={20}
-                            strokeWidth={2}
-                            fill={
+                        <div className="flex flex-col gap-0.5 sm:gap-1 shrink-0">
+                          <button
+                            onClick={(e) => toggleFavorite(listing.id, e)}
+                            disabled={favoriteToggling === listing.id}
+                            className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                               favoriteIds.has(listing.id)
-                                ? "currentColor"
-                                : "none"
+                                ? "text-rose-500"
+                                : "text-slate-400 hover:text-rose-500 hover:bg-rose-50/50"
+                            } ${favoriteToggling === listing.id ? "opacity-60" : ""}`}
+                            aria-label={
+                              favoriteIds.has(listing.id)
+                                ? "Remove from favorites"
+                                : "Add to favorites"
                             }
-                          />
-                        </button>
+                          >
+                            <Heart
+                              size={18}
+                              strokeWidth={2}
+                              fill={
+                                favoriteIds.has(listing.id)
+                                  ? "currentColor"
+                                  : "none"
+                              }
+                            />
+                          </button>
+                          <button
+                            onClick={(e) => handleShare(listing.id, e)}
+                            className="p-1.5 sm:p-2 rounded-lg transition-colors text-slate-400 hover:text-[#04AA6D] hover:bg-slate-50/50"
+                            aria-label={t("market.share")}
+                          >
+                            <Share2 size={18} strokeWidth={2} />
+                          </button>
+                        </div>
                       </div>
 
-                      <div className="flex flex-wrap items-baseline gap-2 mb-3">
-                        <span className="text-xl sm:text-2xl font-bold text-[#04AA6D] tabular-nums">
+                      <div className="flex flex-wrap items-baseline gap-2 mb-1.5 sm:mb-2">
+                        <span className="text-lg sm:text-xl font-bold text-[#04AA6D] tabular-nums">
                           {listing.price != null && listing.price > 0
                             ? `${listing.price.toLocaleString()} ₾`
                             : t("market.priceByAgreement")}
@@ -1832,7 +1997,7 @@ export default function MarketClient() {
                       </div>
 
                       {locationText && (
-                        <p className="flex items-center gap-1.5 text-slate-600 text-sm mb-3">
+                        <p className="flex items-center gap-1.5 text-slate-600 text-xs sm:text-sm mb-2 sm:mb-3">
                           <MapPin
                             size={14}
                             className="shrink-0 text-slate-400"
@@ -1842,97 +2007,85 @@ export default function MarketClient() {
                       )}
 
                       {(listing.description || listing.notes) && (
-                        <p className="text-slate-600 text-sm sm:text-base leading-relaxed line-clamp-3 mb-3">
+                        <p className="text-slate-600 text-sm sm:text-base leading-relaxed line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-3 font-medium">
                           {listing.notes || listing.description}
                         </p>
                       )}
 
-                      {/* Features row: pill badges */}
-                      <div className="flex flex-wrap gap-2">
+                      {/* Features row: icon + text (like reference) */}
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-6 text-slate-600 text-xs sm:text-sm mt-auto">
                         {listing.quantity != null && unitLabel && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700">
-                            <Package size={12} className="shrink-0" />
+                          <span className="inline-flex items-center gap-1 sm:gap-1.5">
+                            <Package size={12} className="text-slate-400 shrink-0" />
                             {listing.quantity} {unitLabel}
                           </span>
                         )}
                         {listing.sugarBrix != null && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-800">
+                          <span className="inline-flex items-center gap-1.5">
                             {listing.sugarBrix} {t("market.brixUnit")}
                           </span>
                         )}
                         {listing.vintageYear != null && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-sky-50 text-sky-800">
-                            <Calendar size={12} className="shrink-0" />
+                          <span className="inline-flex items-center gap-1.5">
+                            <Calendar size={14} className="text-slate-400" />
                             {listing.vintageYear}
                           </span>
                         )}
                         {category === "wine" && listing.wineType && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-800">
+                          <span className="inline-flex items-center gap-1.5">
                             {listing.wineType}
                           </span>
                         )}
                         {listing.harvestDate && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700">
-                            <Calendar size={12} className="shrink-0" />
+                          <span className="inline-flex items-center gap-1.5">
+                            <Calendar size={14} className="text-slate-400" />
                             {formatHarvestDate(listing.harvestDate)}
                           </span>
                         )}
                       </div>
                     </div>
-                  </div>
 
-                  {/* Bottom section: name, phone, location, time, etc. side by side */}
-                  <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-6 gap-y-2 px-4 sm:px-5 lg:px-6 py-3 border-t border-slate-100 bg-slate-50/50">
-                    <span className="inline-flex items-center gap-1.5 text-slate-700 text-sm font-medium">
-                      <span
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                        style={{ backgroundColor: getCategoryColor(category) }}
-                      >
-                        {(listing.contactName || "?").charAt(0).toUpperCase()}
-                      </span>
-                      {listing.contactName || "—"}
-                    </span>
-                    {listing.phone && (
-                      <a
-                        href={`tel:${listing.phone}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1.5 text-[#04AA6D] font-semibold text-sm hover:text-[#039a5e] transition-colors"
-                      >
-                        <Phone size={14} />
-                        {listing.phone}
-                      </a>
-                    )}
-                    {locationText && (
-                      <span className="inline-flex items-center gap-1.5 text-slate-600 text-sm">
-                        <MapPin size={14} className="shrink-0 text-slate-400" />
-                        {locationText}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1.5 text-slate-500 text-sm">
-                      <Calendar size={14} className="shrink-0 text-slate-400" />
-                      {formatTimeAgo(listing.createdAt)}
-                    </span>
-                    {listing.quantity != null && unitLabel && (
-                      <span className="inline-flex items-center gap-1.5 text-slate-600 text-sm">
-                        <Package size={14} className="shrink-0 text-slate-400" />
-                        {listing.quantity} {unitLabel}
-                      </span>
-                    )}
-                    {listing.sugarBrix != null && (
-                      <span className="text-slate-600 text-sm">
-                        {listing.sugarBrix} {t("market.brixUnit")}
-                      </span>
-                    )}
-                    {listing.vintageYear != null && (
-                      <span className="text-slate-600 text-sm">
-                        {listing.vintageYear}
-                      </span>
-                    )}
-                    {category === "wine" && listing.wineType && (
-                      <span className="text-slate-600 text-sm">
-                        {listing.wineType}
-                      </span>
-                    )}
+                    {/* Right sidebar: avatar, contact, location, time (compact) - side by side on mobile */}
+                    <div className="w-[72px] sm:w-[140px] lg:w-[160px] flex-shrink-0 flex flex-col items-center justify-center sm:justify-between sm:items-center p-1.5 sm:p-4 sm:py-5 sm:px-4 border-l border-slate-100">
+                      <div className="flex flex-col items-center lg:items-center gap-1 sm:gap-2 text-center">
+                        <div
+                          className="w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base shrink-0"
+                          style={{
+                            backgroundColor: getCategoryColor(category),
+                          }}
+                        >
+                          {(listing.contactName || "?").charAt(0).toUpperCase()}
+                        </div>
+                        <p className="text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-400 font-semibold hidden sm:block">
+                          {t("market.contact")}
+                        </p>
+                        <p className="font-semibold text-slate-900 text-xs sm:text-sm truncate w-full">
+                          {listing.contactName || "—"}
+                        </p>
+                        {locationText && (
+                          <p className="text-slate-500 text-[10px] sm:text-xs truncate w-full hidden sm:block">
+                            {locationText}
+                          </p>
+                        )}
+
+                        {listing.phone && (
+                          <a
+                            href={`tel:${listing.phone}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center justify-center gap-1 sm:gap-1.5 w-full mt-1 sm:mt-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg font-semibold text-white bg-[#04AA6D] hover:bg-[#039a5e] text-[10px] sm:text-xs transition-colors"
+                          >
+                            <Phone size={12} className="shrink-0" />
+                            {listing.phone}
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1 mt-2 sm:mt-4 pt-2 sm:pt-4">
+                        <span className="text-slate-400 text-[10px] sm:text-xs">
+                          {formatTimeAgo(listing.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+                    </div>
                   </div>
                 </article>
               );
