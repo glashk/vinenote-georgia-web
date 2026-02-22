@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -25,6 +25,7 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  SlidersHorizontal,
   MapPin,
   Calendar,
   Heart,
@@ -455,6 +456,8 @@ export default function MarketClient() {
   const [maxPrice, setMaxPrice] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("newest");
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedImageByListing, setSelectedImageByListing] = useState<
     Record<string, number>
@@ -463,6 +466,21 @@ export default function MarketClient() {
   const setListingImage = (listingId: string, index: number) => {
     setSelectedImageByListing((prev) => ({ ...prev, [listingId]: index }));
   };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        sortDropdownRef.current &&
+        !sortDropdownRef.current.contains(e.target as Node)
+      ) {
+        setSortDropdownOpen(false);
+      }
+    };
+    if (sortDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [sortDropdownOpen]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -794,6 +812,10 @@ export default function MarketClient() {
     t,
   ]);
 
+  const hasActiveFilters = Boolean(
+    regionFilter || villageFilter || minPrice.trim() || maxPrice.trim(),
+  );
+
   const resetFilters = () => {
     setRegionFilter("");
     setVillageFilter("");
@@ -839,40 +861,77 @@ export default function MarketClient() {
   return (
     <div className="min-h-screen py-8 sm:py-12 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header: compact, scannable */}
-        <header className="mb-8">
-          {/* Search: primary action */}
-          <div className="relative l">
-            <Search
-              size={20}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-            />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("market.searchPlaceholder")}
-              aria-label={t("market.searchPlaceholder")}
-              className="w-full pl-12 pr-12 py-3.5 rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 text-base shadow-sm hover:border-slate-300 focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all duration-200"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                aria-label="Clear search"
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus-visible:ring-2 focus-visible:ring-[#04AA6D]/50"
+        {/* Header: unified modern UX */}
+        <header className="relative z-20 mb-8 vn-glass vn-card overflow-visible">
+          <div className="p-5 sm:p-6 space-y-5">
+            {/* Row 1: Search + Category chips */}
+            <div className="flex flex-col gap-4">
+              <div className="relative min-w-0 group">
+                <Search
+                  size={20}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none transition-colors duration-200 group-focus-within:text-[#04AA6D]"
+                />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t("market.searchPlaceholder")}
+                  aria-label={t("market.searchPlaceholder")}
+                  className="w-full pl-12 pr-12 py-3.5 rounded-2xl border-2 border-slate-200/80 bg-white/95 text-slate-900 placeholder-slate-400 text-base font-medium shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-slate-300 hover:shadow-md focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all duration-200"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    aria-label="Clear search"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all focus-visible:ring-2 focus-visible:ring-[#04AA6D]/50"
+                  >
+                    <X size={18} strokeWidth={2.5} />
+                  </button>
+                )}
+              </div>
+              <nav
+                className="flex gap-2 overflow-x-auto pb-1 -mx-1 scrollbar-hide"
+                aria-label="Filter by category"
               >
-                <X size={18} />
-              </button>
-            )}
-          </div>
-        </header>
+              {(
+                [
+                  "all",
+                  "grapes",
+                  "wine",
+                  "nobati",
+                  "inventory",
+                  "seedlings",
+                ] as const
+              ).map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setCategoryFilter(c)}
+                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border-2 shrink-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] ${
+                    categoryFilter === c
+                      ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-[0_4px_14px_rgba(4,170,109,0.35),0_2px_4px_rgba(0,0,0,0.06)]"
+                      : "bg-white/90 border-slate-200 text-slate-600 shadow-[0_1px_3px_rgba(15,23,42,0.08)] hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_4px_12px_rgba(15,23,42,0.12)]"
+                  }`}
+                >
+                  {c !== "all" && (
+                    <span className="text-base" aria-hidden>
+                      {CATEGORY_ICONS[c] ?? "📦"}
+                    </span>
+                  )}
+                  {c === "all"
+                    ? t("common.all")
+                    : t(
+                        `market.category${c.charAt(0).toUpperCase() + c.slice(1)}`,
+                      )}
+                </button>
+              ))}
+              </nav>
+            </div>
 
-        {/* Toolbar: unified controls (overflow-visible so select dropdown isn't clipped) */}
-        <div className="vn-glass vn-card vn-card-pad mb-5 overflow-visible">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex bg-slate-100/80 rounded-xl p-1 gap-0.5">
+            {/* Row 2: Toolbar (view, sort, filters, count) */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* View mode */}
+              <div className="flex bg-slate-100/90 rounded-xl p-1 gap-0.5 shadow-inner">
                 {[
                   { mode: "grid" as const, icon: LayoutGrid },
                   { mode: "card" as const, icon: LayoutList },
@@ -881,10 +940,10 @@ export default function MarketClient() {
                   <button
                     key={mode}
                     onClick={() => setViewMode(mode)}
-                    className={`p-2.5 rounded-lg transition-all duration-300 ease-out ${
+                    className={`p-2.5 rounded-lg transition-all duration-300 ${
                       viewMode === mode
-                        ? "bg-white text-[#04AA6D] shadow-sm"
-                        : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
+                        ? "bg-white text-[#04AA6D] shadow-md"
+                        : "text-slate-500 hover:text-slate-700 hover:bg-white/60"
                     }`}
                     aria-label={`${mode} view`}
                   >
@@ -892,214 +951,208 @@ export default function MarketClient() {
                   </button>
                 ))}
               </div>
-              <span className="text-slate-600 font-medium">
+              <div
+                className="hidden sm:block w-px h-8 bg-slate-200/80"
+                aria-hidden
+              />
+              {/* Sort dropdown */}
+              <div className="relative" ref={sortDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setSortDropdownOpen((v) => !v)}
+                  aria-expanded={sortDropdownOpen}
+                  aria-haspopup="listbox"
+                  aria-label={t("market.sortByLabel")}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-slate-200/80 bg-white text-slate-700 text-sm font-semibold hover:border-slate-300 focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all cursor-pointer"
+                >
+                  {t(`market.sortBy.${sortBy}`)}
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform duration-200 ${sortDropdownOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {sortDropdownOpen && (
+                  <div
+                    role="listbox"
+                    className="absolute right-0 top-full mb-1.5 min-w-[200px] py-1.5 rounded-xl border-2 border-slate-200/80 bg-white shadow-xl shadow-slate-200/40 z-[100] animate-fade-in overflow-hidden"
+                  >
+                    {(
+                      [
+                        "newest",
+                        "price_asc",
+                        "price_desc",
+                        "brix_asc",
+                        "brix_desc",
+                        "vintage_asc",
+                        "vintage_desc",
+                      ] as SortBy[]
+                    ).map((value) => (
+                      <button
+                        key={value}
+                        role="option"
+                        aria-selected={sortBy === value}
+                        onClick={() => {
+                          setSortBy(value);
+                          setSortDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors first:pt-3 last:pb-3 ${
+                          sortBy === value
+                            ? "bg-[#04AA6D]/10 text-[#04AA6D]"
+                            : "text-slate-700 hover:bg-slate-50"
+                        }`}
+                      >
+                        {t(`market.sortBy.${value}`)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div
+                className="hidden sm:block w-px h-8 bg-slate-200/80"
+                aria-hidden
+              />
+              {/* Filters */}
+              <button
+                onClick={() => setFiltersOpen((v) => !v)}
+                aria-expanded={filtersOpen}
+                aria-controls="market-filters"
+                className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
+                  filtersOpen
+                    ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-lg shadow-[#04AA6D]/25"
+                    : "bg-white border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                }`}
+              >
+                <SlidersHorizontal
+                  size={18}
+                  strokeWidth={2}
+                  className="shrink-0"
+                />
+                <span className="max-w-[120px] sm:max-w-[180px] truncate hidden sm:inline">
+                  {filterSummary}
+                </span>
+                {hasActiveFilters && !filtersOpen && (
+                  <span
+                    className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#04AA6D] ring-2 ring-white"
+                    aria-hidden
+                  />
+                )}
+                {filtersOpen ? (
+                  <ChevronUp size={18} className="shrink-0" />
+                ) : (
+                  <ChevronDown size={18} className="shrink-0" />
+                )}
+              </button>
+              <span className="px-3 py-1.5 rounded-xl bg-slate-100/90 text-slate-700 font-bold tabular-nums text-sm">
                 {t("market.listingsFound").replace(
                   "{{count}}",
                   String(filteredListings.length),
                 )}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500 text-sm hidden sm:inline">
-                {t("market.sortByLabel")}:
-              </span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortBy)}
-                aria-label={t("market.sortByLabel")}
-                className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:border-slate-300 focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all cursor-pointer"
+
+            {/* Row 3: Expanded filters */}
+            {filtersOpen && (
+              <div
+                id="market-filters"
+                className="pt-4 border-t border-slate-200/60 space-y-4 animate-fade-in"
+                role="region"
+                aria-label="Filters"
               >
-                <option value="newest">{t("market.sortBy.newest")}</option>
-                <option value="price_asc">
-                  {t("market.sortBy.price_asc")}
-                </option>
-                <option value="price_desc">
-                  {t("market.sortBy.price_desc")}
-                </option>
-                <option value="brix_asc">{t("market.sortBy.brix_asc")}</option>
-                <option value="brix_desc">
-                  {t("market.sortBy.brix_desc")}
-                </option>
-                <option value="vintage_asc">
-                  {t("market.sortBy.vintage_asc")}
-                </option>
-                <option value="vintage_desc">
-                  {t("market.sortBy.vintage_desc")}
-                </option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Category chips: clear affordance */}
-        <nav
-          className="flex flex-wrap gap-2 mb-4"
-          aria-label="Filter by category"
-        >
-          {(
-            [
-              "all",
-              "grapes",
-              "wine",
-              "nobati",
-              "inventory",
-              "seedlings",
-            ] as const
-          ).map((c) => (
-            <button
-              key={c}
-              onClick={() => setCategoryFilter(c)}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] ${
-                categoryFilter === c
-                  ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-lg shadow-[#04AA6D]/20"
-                  : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-              }`}
-            >
-              {c !== "all" && (
-                <span className="text-base" aria-hidden>
-                  {CATEGORY_ICONS[c] ?? "📦"}
-                </span>
-              )}
-              {c === "all"
-                ? t("common.all")
-                : t(`market.category${c.charAt(0).toUpperCase() + c.slice(1)}`)}
-            </button>
-          ))}
-        </nav>
-
-        {/* Filters toggle */}
-        <button
-          onClick={() => setFiltersOpen((v) => !v)}
-          aria-expanded={filtersOpen}
-          aria-controls="market-filters"
-          className="flex items-center gap-2 w-full py-3 px-4 rounded-xl bg-white border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all mb-6 focus-visible:ring-2 focus-visible:ring-[#04AA6D]/30 focus-visible:outline-none"
-        >
-          <span className="flex-1 text-left truncate font-medium">
-            {filterSummary}
-          </span>
-          {filtersOpen ? (
-            <ChevronUp size={18} className="text-slate-500 shrink-0" />
-          ) : (
-            <ChevronDown size={18} className="text-slate-500 shrink-0" />
-          )}
-        </button>
-
-        {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50/90 border border-red-200 text-red-700 text-sm">
-            {error}
-          </div>
-        )}
-
-        {/* Expanded filters */}
-        {filtersOpen && (
-          <div
-            id="market-filters"
-            className="mb-6 p-5 vn-glass vn-card vn-card-pad space-y-5 animate-fade-in"
-            role="region"
-            aria-label="Filters"
-          >
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">
-                {t("market.region")}
-              </label>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setRegionFilter("")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
-                    !regionFilter
-                      ? "bg-[#04AA6D] text-white"
-                      : "bg-slate-100 text-slate-700"
-                  }`}
-                >
-                  {t("market.allRegions")}
-                </button>
-                {uniqueRegions.map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setRegionFilter(r)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
-                      regionFilter === r
-                        ? "bg-[#04AA6D] text-white"
-                        : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {uniqueVillages.length > 0 && (
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  {t("market.village")}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setVillageFilter("")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
-                      !villageFilter
-                        ? "bg-[#04AA6D] text-white"
-                        : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {t("market.allVillages")}
-                  </button>
-                  {uniqueVillages.map((v) => (
-                    <button
-                      key={v}
-                      onClick={() => setVillageFilter(v)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
-                        villageFilter === v
-                          ? "bg-[#04AA6D] text-white"
-                          : "bg-slate-100 text-slate-700"
-                      }`}
-                    >
-                      {v}
-                    </button>
-                  ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
+                      {t("market.region")}
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setRegionFilter("")}
+                        className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${!regionFilter ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                      >
+                        {t("market.allRegions")}
+                      </button>
+                      {uniqueRegions.map((r) => (
+                        <button
+                          key={r}
+                          onClick={() => setRegionFilter(r)}
+                          className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${regionFilter === r ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {uniqueVillages.length > 0 && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
+                        {t("market.village")}
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => setVillageFilter("")}
+                          className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${!villageFilter ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                        >
+                          {t("market.allVillages")}
+                        </button>
+                        {uniqueVillages.map((v) => (
+                          <button
+                            key={v}
+                            onClick={() => setVillageFilter(v)}
+                            className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${villageFilter === v ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                          >
+                            {v}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
+                      {t("market.minPrice")}
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={minPrice}
+                      onChange={(e) =>
+                        setMinPrice(e.target.value.replace(/[^0-9.,]/g, ""))
+                      }
+                      placeholder={t("market.maxPricePlaceholder")}
+                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
+                      {t("market.maxPrice")}
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={maxPrice}
+                      onChange={(e) =>
+                        setMaxPrice(e.target.value.replace(/[^0-9.,]/g, ""))
+                      }
+                      placeholder={t("market.maxPricePlaceholder")}
+                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all"
+                    />
+                  </div>
                 </div>
+                <button
+                  onClick={resetFilters}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-[#04AA6D] transition-colors"
+                >
+                  <X size={16} />
+                  {t("common.reset")}
+                </button>
               </div>
             )}
-            <div className="flex flex-wrap gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  {t("market.minPrice")}
-                </label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={minPrice}
-                  onChange={(e) =>
-                    setMinPrice(e.target.value.replace(/[^0-9.,]/g, ""))
-                  }
-                  placeholder={t("market.maxPricePlaceholder")}
-                  className="w-full max-w-[100px] px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  {t("market.maxPrice")}
-                </label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={maxPrice}
-                  onChange={(e) =>
-                    setMaxPrice(e.target.value.replace(/[^0-9.,]/g, ""))
-                  }
-                  placeholder={t("market.maxPricePlaceholder")}
-                  className="w-full max-w-[100px] px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none"
-                />
-              </div>
-            </div>
-            <button
-              onClick={resetFilters}
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
-            >
-              {t("common.reset")}
-            </button>
           </div>
-        )}
+
+          {error && (
+            <div className="mx-5 sm:mx-6 mb-5 sm:mb-6 p-4 rounded-xl bg-red-50/90 border-2 border-red-200 text-red-700 text-sm font-medium">
+              {error}
+            </div>
+          )}
+        </header>
 
         {filteredListings.length === 0 ? (
           <div
