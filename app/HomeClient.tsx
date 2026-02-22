@@ -174,7 +174,7 @@ export default function HomeClient() {
                           {t("cta.appStoreButton")}
                         </a>
 
-                        <Link href="/market" className="vn-btn vn-btn-ghost">
+                        <Link href="/" className="vn-btn vn-btn-ghost">
                           {t("nav.market")}
                         </Link>
 
@@ -429,7 +429,7 @@ export default function HomeClient() {
                     </a>
 
                     <Link
-                      href="/market"
+                      href="/"
                       className="vn-btn bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors"
                     >
                       {t("nav.market")}

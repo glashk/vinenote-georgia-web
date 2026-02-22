@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { getThumbUrl } from "@/lib/imageUtils";
 import {
   useListings,
   type ListingFilter,
@@ -267,15 +269,16 @@ function ListingTableRow({
       <td className="p-3">
         <div className="flex items-center gap-2">
           {imgUrl && (
-            <img
-              src={imgUrl}
-              alt=""
-              width={40}
-              height={40}
-              loading="lazy"
-              decoding="async"
-              className="w-10 h-10 rounded object-cover"
-            />
+            <div className="relative w-10 h-10 rounded overflow-hidden flex-shrink-0">
+              <Image
+                src={getThumbUrl(imgUrl, 200) ?? imgUrl}
+                alt=""
+                fill
+                sizes="40px"
+                className="object-cover"
+                unoptimized
+              />
+            </div>
           )}
           <span className="truncate max-w-[200px]">{title}</span>
         </div>
@@ -371,14 +374,13 @@ function ListingCard({
     >
       <div className="aspect-video bg-slate-200 dark:bg-slate-600 relative">
         {imgUrl ? (
-          <img
-            src={imgUrl}
+          <Image
+            src={getThumbUrl(imgUrl, 400) ?? imgUrl}
             alt=""
-            width={400}
-            height={225}
-            loading="lazy"
-            decoding="async"
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 640px) 100vw, 400px"
+            className="object-cover"
+            unoptimized
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-slate-400">

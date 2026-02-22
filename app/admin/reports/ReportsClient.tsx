@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { getThumbUrl } from "@/lib/imageUtils";
 import { useReports } from "@/modules/admin/hooks/useReports";
 import { useAdminActions } from "@/modules/admin/hooks/useAdminActions";
 import { formatTimeAgo, getListingImageUrl } from "@/modules/admin/utils";
@@ -149,16 +151,15 @@ export default function ReportsClient() {
                   } ${isDismissed ? "opacity-60" : ""}`}
                 >
                   <div className="p-4 flex gap-4">
-                    <div className="w-20 h-20 rounded-lg bg-slate-200 dark:bg-slate-600 overflow-hidden flex-shrink-0">
+                    <div className="relative w-20 h-20 rounded-lg bg-slate-200 dark:bg-slate-600 overflow-hidden flex-shrink-0">
                       {imgUrl ? (
-                        <img
-                          src={imgUrl}
+                        <Image
+                          src={getThumbUrl(imgUrl, 200) ?? imgUrl}
                           alt=""
-                          width={80}
-                          height={80}
-                          loading="lazy"
-                          decoding="async"
-                          className="w-full h-full object-cover"
+                          fill
+                          sizes="80px"
+                          className="object-cover"
+                          unoptimized
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
@@ -201,7 +202,7 @@ export default function ReportsClient() {
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(
-                            `/market?highlight=${report.listingId}`,
+                            `/?highlight=${report.listingId}`,
                             "_blank",
                             "noopener,noreferrer"
                           );
@@ -337,15 +338,16 @@ function ReportDetailPanel({
           </h3>
           <div className="space-y-3">
             {imgUrl && (
-              <img
-                src={imgUrl}
-                alt=""
-                width={400}
-                height={192}
-                loading="lazy"
-                decoding="async"
-                className="w-full max-h-48 object-cover rounded-lg"
-              />
+              <div className="relative w-full h-48 rounded-lg overflow-hidden">
+                <Image
+                  src={getThumbUrl(imgUrl, 400) ?? imgUrl}
+                  alt=""
+                  fill
+                  sizes="(max-width: 640px) 100vw, 400px"
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
             )}
             <div>
               <div className="font-medium">
@@ -408,7 +410,7 @@ function ReportDetailPanel({
       <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex flex-wrap gap-2">
         <button
           onClick={() =>
-            window.open(`/market?highlight=${report.listingId}`, "_blank", "noopener,noreferrer")
+            window.open(`/?highlight=${report.listingId}`, "_blank", "noopener,noreferrer")
           }
           className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
         >

@@ -211,6 +211,10 @@
     "minPrice": "Min price",
     "maxPrice": "Max price",
     "maxPricePlaceholder": "₾",
+    "minBrix": "Min °Brix",
+    "maxBrix": "Max °Brix",
+    "brixPlaceholder": "°Brix",
+    "favorites": "Favorites",
     "sortByLabel": "Sort by",
     "sortBy": {
       "newest": "Newest",

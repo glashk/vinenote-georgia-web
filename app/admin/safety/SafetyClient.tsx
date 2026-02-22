@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { getThumbUrl } from "@/lib/imageUtils";
 import { getDb } from "@/lib/firebase";
 import {
   collection,
@@ -180,14 +182,15 @@ export default function SafetyClient() {
                   key={listing.id}
                   className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex gap-4"
                 >
-                  <div className="w-20 h-20 rounded-lg bg-slate-200 dark:bg-slate-600 overflow-hidden flex-shrink-0">
+                  <div className="relative w-20 h-20 rounded-lg bg-slate-200 dark:bg-slate-600 overflow-hidden flex-shrink-0">
                     {imgUrl ? (
-                      <img
-                        src={imgUrl}
+                      <Image
+                        src={getThumbUrl(imgUrl, 200) ?? imgUrl}
                         alt=""
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                        decoding="async"
+                        fill
+                        sizes="80px"
+                        className="object-cover"
+                        unoptimized
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Container from "@/components/Container";
 import { auth, getFirebaseStorage } from "@/lib/firebase";
@@ -402,13 +403,16 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
                       draggedPhotoIndex === idx ? "opacity-60" : ""
                     }`}
                   >
-                    <img
-                      src={url}
-                      alt=""
-                      className="w-20 h-20 rounded-[14px] object-cover bg-[#ebe9e4] pointer-events-none"
-                      loading="eager"
-                      decoding="async"
-                    />
+                    <div className="relative w-20 h-20 rounded-[14px] overflow-hidden bg-[#ebe9e4] pointer-events-none">
+                      <Image
+                        src={url}
+                        alt=""
+                        fill
+                        sizes="80px"
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
                     {idx === 0 && (
                       <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#04AA6D] text-white">
                         {t("market.mainImage")}

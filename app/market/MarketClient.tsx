@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { flushSync } from "react-dom";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getDb, auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -33,6 +33,8 @@ import {
   Phone,
   Package,
 } from "lucide-react";
+import OptimizedListingImage, { ThumbnailImage } from "@/components/OptimizedListingImage";
+import ListingCardSkeleton from "@/components/ListingCardSkeleton";
 
 type MarketCategory = "grapes" | "wine" | "nobati" | "inventory" | "seedlings";
 type CategoryFilter = "all" | MarketCategory;
@@ -90,8 +92,12 @@ interface Listing {
   phone?: string;
   contactName?: string;
   photoUrls?: string[];
+  photoUrls200?: string[];
+  photoUrls400?: string[];
   imageUrl?: string;
   image?: string;
+  image200?: string;
+  image400?: string;
   photos?: string[];
   thumbnail?: string;
   hidden?: boolean;
@@ -241,13 +247,14 @@ function ListingDetailView({
           {photoUrls.length > 0 ? (
             <div className="relative">
               <div className="relative aspect-[4/3] bg-slate-200 overflow-hidden">
-                <Image
+                <OptimizedListingImage
                   src={photoUrls[carouselIndex] ?? photoUrls[0]!}
-                  alt=""
-                  fill
-                  className="object-cover"
+                  image200={listing.photoUrls200?.[carouselIndex] ?? listing.photoUrls200?.[0] ?? listing.image200}
+                  image400={listing.photoUrls400?.[carouselIndex] ?? listing.photoUrls400?.[0] ?? listing.image400}
+                  context="detail"
                   sizes="(max-width: 672px) 100vw, 672px"
-                  unoptimized
+                  fill
+                  objectFit="cover"
                 />
               </div>
               {photoUrls.length > 1 && (
@@ -258,16 +265,17 @@ function ListingDetailView({
                         key={i}
                         type="button"
                         onClick={() => setCarouselIndex(i)}
-                        className={`w-16 h-16 rounded-lg overflow-hidden bg-slate-200 flex-shrink-0 transition-all ${
+                        className={`relative w-16 h-16 rounded-lg overflow-hidden bg-slate-200 flex-shrink-0 transition-all ${
                           i === carouselIndex
                             ? "ring-2 ring-[#04AA6D] ring-offset-1"
                             : "opacity-80 hover:opacity-100"
                         }`}
                       >
-                        <img
+                        <ThumbnailImage
                           src={url}
-                          alt=""
-                          className="w-full h-full object-cover"
+                          image200={listing.photoUrls200?.[i] ?? listing.image200}
+                          className="object-cover"
+                          fill
                         />
                       </button>
                     ))}
@@ -433,6 +441,23 @@ function ListingDetailView({
   );
 }
 
+function withViewTransition(cb: () => void) {
+  if (
+    typeof document !== "undefined" &&
+    "startViewTransition" in document
+  ) {
+    (
+      document as Document & {
+        startViewTransition: (cb: () => void | Promise<void>) => void;
+      }
+    ).startViewTransition(() => {
+      flushSync(cb);
+    });
+  } else {
+    cb();
+  }
+}
+
 export default function MarketClient() {
   const { t } = useLanguage();
   const router = useRouter();
@@ -443,9 +468,13 @@ export default function MarketClient() {
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"grid" | "card" | "detailed">(
-    "card",
-  );
+  const [viewMode, setViewMode] = useState<"grid" | "card" | "detailed">("grid");
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setViewMode("grid");
+    }
+  }, []);
   const [user, setUser] = useState(auth?.currentUser ?? null);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [favoriteToggling, setFavoriteToggling] = useState<string | null>(null);
@@ -455,6 +484,9 @@ export default function MarketClient() {
   const [villageFilter, setVillageFilter] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [minPrice, setMinPrice] = useState("");
+  const [minBrix, setMinBrix] = useState("");
+  const [maxBrix, setMaxBrix] = useState("");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>("newest");
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
@@ -489,18 +521,23 @@ export default function MarketClient() {
     }
 
     let unsubscribe: (() => void) | undefined;
+    const timeout = setTimeout(() => {
+      setLoading(false);
+      setError("დატვირთვა ვერ მოხერხდა");
+    }, 10000);
 
-    getDb().then((db) => {
-      if (!db) {
-        setLoading(false);
-        return;
-      }
+    getDb()
+      .then((db) => {
+        if (!db) {
+          setLoading(false);
+          return;
+        }
 
-      const listingsRef = collection(db, "marketListings");
+        const listingsRef = collection(db, "marketListings");
 
-      unsubscribe = onSnapshot(
-        listingsRef,
-        (snapshot) => {
+        unsubscribe = onSnapshot(
+          listingsRef,
+          (snapshot) => {
           const list: Listing[] = snapshot.docs
             .map((docSnap) => {
               const data = docSnap.data();
@@ -523,8 +560,12 @@ export default function MarketClient() {
                 phone: data.phone,
                 contactName: data.contactName,
                 photoUrls: data.photoUrls,
+                photoUrls200: data.photoUrls200,
+                photoUrls400: data.photoUrls400,
                 imageUrl: data.imageUrl,
                 image: data.image,
+                image200: data.image200,
+                image400: data.image400,
                 photos: data.photos,
                 thumbnail: data.thumbnail,
                 hidden: data.hidden,
@@ -546,18 +587,28 @@ export default function MarketClient() {
                 : 0;
             return bTime - aTime;
           });
+          clearTimeout(timeout);
           setListings(list);
           setLoading(false);
           setError(null);
         },
         (err) => {
+          clearTimeout(timeout);
           setLoading(false);
           setError(err?.message ?? "შეცდომა მოხდა");
         },
       );
-    });
+      })
+      .catch(() => {
+        clearTimeout(timeout);
+        setLoading(false);
+        setError("შეცდომა მოხდა");
+      });
 
-    return () => unsubscribe?.();
+    return () => {
+      clearTimeout(timeout);
+      unsubscribe?.();
+    };
   }, []);
 
   useEffect(() => {
@@ -588,7 +639,7 @@ export default function MarketClient() {
     async (listingId: string, e: React.MouseEvent) => {
       e.stopPropagation();
       if (!user) {
-        router.push("/login?redirect=/market");
+        router.push("/login?redirect=/");
         return;
       }
       const db = await getDb();
@@ -615,10 +666,13 @@ export default function MarketClient() {
 
   const loadDetail = useCallback(async () => {
     if (!detailId) return;
-    const db = await getDb();
-    if (!db) return;
     setDetailLoading(true);
     try {
+      const db = await getDb();
+      if (!db) {
+        setListingDetail(null);
+        return;
+      }
       const snap = await getDoc(doc(db, "marketListings", detailId));
       if (snap.exists()) {
         const data = snap.data();
@@ -641,8 +695,12 @@ export default function MarketClient() {
           phone: data.phone,
           contactName: data.contactName,
           photoUrls: data.photoUrls,
+          photoUrls200: data.photoUrls200,
+          photoUrls400: data.photoUrls400,
           imageUrl: data.imageUrl,
           image: data.image,
+          image200: data.image200,
+          image400: data.image400,
           photos: data.photos,
           thumbnail: data.thumbnail,
           hidden: data.hidden,
@@ -666,7 +724,7 @@ export default function MarketClient() {
   }, [detailId, loadDetail]);
 
   const closeDetail = useCallback(() => {
-    router.push("/market");
+    router.push("/");
   }, [router]);
 
   const uniqueRegions = useMemo(() => {
@@ -741,6 +799,30 @@ export default function MarketClient() {
       }
     }
 
+    if (maxBrix.trim()) {
+      const max = Number(maxBrix.replace(",", ".").trim());
+      if (!Number.isNaN(max) && max >= 0) {
+        result = result.filter((l) => {
+          const b = l.sugarBrix ?? 0;
+          return b > 0 && b <= max;
+        });
+      }
+    }
+
+    if (minBrix.trim()) {
+      const min = Number(minBrix.replace(",", ".").trim());
+      if (!Number.isNaN(min) && min >= 0) {
+        result = result.filter((l) => {
+          const b = l.sugarBrix ?? 0;
+          return b >= min;
+        });
+      }
+    }
+
+    if (favoritesOnly && user) {
+      result = result.filter((l) => favoriteIds.has(l.id));
+    }
+
     const sorted = [...result];
     switch (sortBy) {
       case "price_asc":
@@ -785,6 +867,11 @@ export default function MarketClient() {
     villageFilter,
     maxPrice,
     minPrice,
+    minBrix,
+    maxBrix,
+    favoritesOnly,
+    user,
+    favoriteIds,
     sortBy,
   ]);
 
@@ -800,6 +887,11 @@ export default function MarketClient() {
     if (villageFilter) parts.push(villageFilter);
     if (minPrice.trim()) parts.push(`≥ ${minPrice.trim()} ₾`);
     if (maxPrice.trim()) parts.push(`≤ ${maxPrice.trim()} ₾`);
+    if (minBrix.trim())
+      parts.push(`≥ ${minBrix.trim()} ${t("market.brixUnit")}`);
+    if (maxBrix.trim())
+      parts.push(`≤ ${maxBrix.trim()} ${t("market.brixUnit")}`);
+    if (favoritesOnly) parts.push(t("market.favorites"));
     if (sortBy !== "newest") parts.push(t(`market.sortBy.${sortBy}`));
     return parts.length > 0 ? parts.join(" • ") : t("common.all");
   }, [
@@ -808,12 +900,21 @@ export default function MarketClient() {
     villageFilter,
     minPrice,
     maxPrice,
+    minBrix,
+    maxBrix,
+    favoritesOnly,
     sortBy,
     t,
   ]);
 
   const hasActiveFilters = Boolean(
-    regionFilter || villageFilter || minPrice.trim() || maxPrice.trim(),
+    regionFilter ||
+    villageFilter ||
+    minPrice.trim() ||
+    maxPrice.trim() ||
+    minBrix.trim() ||
+    maxBrix.trim() ||
+    favoritesOnly,
   );
 
   const resetFilters = () => {
@@ -821,6 +922,9 @@ export default function MarketClient() {
     setVillageFilter("");
     setMinPrice("");
     setMaxPrice("");
+    setMinBrix("");
+    setMaxBrix("");
+    setFavoritesOnly(false);
     setSortBy("newest");
   };
 
@@ -842,18 +946,14 @@ export default function MarketClient() {
 
   if (loading) {
     return (
-      <div
-        className="min-h-screen py-24 flex flex-col items-center justify-center"
-        role="status"
-        aria-live="polite"
-      >
-        <div
-          className="w-10 h-10 border-2 border-[#04AA6D] border-t-transparent rounded-full animate-spin"
-          aria-hidden
-        />
-        <p className="mt-4 text-slate-500 text-sm font-medium">
-          {t("market.subtitle")}
-        </p>
+      <div className="min-h-screen py-8 sm:py-12 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 market-grid-transition">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <ListingCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -863,10 +963,10 @@ export default function MarketClient() {
       <div className="max-w-7xl mx-auto">
         {/* Header: unified modern UX */}
         <header className="relative z-20 mb-8 vn-glass vn-card overflow-visible">
-          <div className="p-5 sm:p-6 space-y-5">
-            {/* Row 1: Search + Category chips */}
-            <div className="flex flex-col gap-4">
-              <div className="relative min-w-0 group">
+          <div className="p-4 sm:p-4 space-y-5">
+            {/* Row 1: Search + Sort + Filter */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative min-w-0 flex-1 group">
                 <Search
                   size={20}
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none transition-colors duration-200 group-focus-within:text-[#04AA6D]"
@@ -877,7 +977,7 @@ export default function MarketClient() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t("market.searchPlaceholder")}
                   aria-label={t("market.searchPlaceholder")}
-                  className="w-full pl-12 pr-12 py-3.5 rounded-2xl border-2 border-slate-200/80 bg-white/95 text-slate-900 placeholder-slate-400 text-base font-medium shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-slate-300 hover:shadow-md focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all duration-200"
+                  className="search-no-native-clear w-full pl-12 pr-12 py-3.5 rounded-2xl border-2 border-slate-200/80 text-slate-900 placeholder-slate-400 text-base font-normal shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-slate-300 hover:shadow-md focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all duration-200 bg-white"
                 />
                 {searchQuery && (
                   <button
@@ -890,255 +990,319 @@ export default function MarketClient() {
                   </button>
                 )}
               </div>
-              <nav
-                className="flex gap-2 overflow-x-auto pb-1 -mx-1 scrollbar-hide"
-                aria-label="Filter by category"
-              >
-              {(
-                [
-                  "all",
-                  "grapes",
-                  "wine",
-                  "nobati",
-                  "inventory",
-                  "seedlings",
-                ] as const
-              ).map((c) => (
+              <div className="flex items-center gap-2 shrink-0 flex-2">
+                {/* Sort dropdown */}
+                <div className="relative" ref={sortDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setSortDropdownOpen((v) => !v)}
+                    aria-expanded={sortDropdownOpen}
+                    aria-haspopup="listbox"
+                    aria-label={t("market.sortByLabel")}
+                    className="flex items-center gap-2 px-4 py-3.5 rounded-2xl border-2 border-slate-200/80 bg-white text-slate-700 text-sm font-semibold shadow-[0_2px_6px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:shadow-[0_4px_12px_rgba(15,23,42,0.1),0_2px_4px_rgba(15,23,42,0.06)] focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all cursor-pointer h-[52px]"
+                  >
+                    {t(`market.sortBy.${sortBy}`)}
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform duration-200 ${sortDropdownOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {sortDropdownOpen && (
+                    <div
+                      role="listbox"
+                      className="absolute right-0 top-full mt-1.5 min-w-[200px] py-1.5 rounded-xl border-2 border-slate-200/80 bg-white shadow-xl shadow-slate-200/40 z-[100] animate-fade-in overflow-hidden"
+                    >
+                      {(
+                        [
+                          "newest",
+                          "price_asc",
+                          "price_desc",
+                          "brix_asc",
+                          "brix_desc",
+                          "vintage_asc",
+                          "vintage_desc",
+                        ] as SortBy[]
+                      ).map((value) => (
+                        <button
+                          key={value}
+                          role="option"
+                          aria-selected={sortBy === value}
+                        onClick={() => {
+                          withViewTransition(() => {
+                            setSortBy(value);
+                            setSortDropdownOpen(false);
+                          });
+                        }}
+                          className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors first:pt-3 last:pb-3 ${
+                            sortBy === value
+                              ? "bg-[#04AA6D]/10 text-[#04AA6D]"
+                              : "text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          {t(`market.sortBy.${value}`)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Filters */}
                 <button
-                  key={c}
-                  onClick={() => setCategoryFilter(c)}
-                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border-2 shrink-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] ${
-                    categoryFilter === c
-                      ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-[0_4px_14px_rgba(4,170,109,0.35),0_2px_4px_rgba(0,0,0,0.06)]"
-                      : "bg-white/90 border-slate-200 text-slate-600 shadow-[0_1px_3px_rgba(15,23,42,0.08)] hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_4px_12px_rgba(15,23,42,0.12)]"
+                  onClick={() => setFiltersOpen((v) => !v)}
+                  aria-expanded={filtersOpen}
+                  aria-controls="market-filters"
+                  className={`relative flex items-center gap-2 px-4 py-3.5 rounded-2xl text-sm font-semibold border-2 transition-all h-[52px] ${
+                    filtersOpen
+                      ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-[0_2px_8px_rgba(4,170,109,0.3),0_4px_12px_rgba(0,0,0,0.08)]"
+                      : "bg-white border-slate-200/80 text-slate-600 shadow-[0_2px_6px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_4px_12px_rgba(15,23,42,0.1),0_2px_4px_rgba(15,23,42,0.06)]"
                   }`}
                 >
-                  {c !== "all" && (
-                    <span className="text-base" aria-hidden>
-                      {CATEGORY_ICONS[c] ?? "📦"}
-                    </span>
+                  <SlidersHorizontal
+                    size={18}
+                    strokeWidth={2}
+                    className="shrink-0"
+                  />
+                  <span className="max-w-[100px] sm:max-w-[140px] truncate hidden sm:inline">
+                    {filterSummary}
+                  </span>
+                  {hasActiveFilters && !filtersOpen && (
+                    <span
+                      className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#04AA6D] ring-2 ring-white"
+                      aria-hidden
+                    />
                   )}
-                  {c === "all"
-                    ? t("common.all")
-                    : t(
-                        `market.category${c.charAt(0).toUpperCase() + c.slice(1)}`,
-                      )}
+                  {filtersOpen ? (
+                    <ChevronUp size={18} className="shrink-0" />
+                  ) : (
+                    <ChevronDown size={18} className="shrink-0" />
+                  )}
                 </button>
-              ))}
-              </nav>
+                {user && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      withViewTransition(() =>
+                        setFavoritesOnly((v) => !v)
+                      )
+                    }
+                    aria-pressed={favoritesOnly}
+                    aria-label={t("market.favorites")}
+                    className={`flex items-center gap-2 px-4 py-3.5 rounded-2xl text-sm font-semibold border-2 transition-all h-[52px] ${
+                      favoritesOnly
+                        ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]"
+                        : "bg-white border-slate-200/80 text-slate-600 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
+                    }`}
+                  >
+                    <Heart
+                      size={18}
+                      strokeWidth={2}
+                      fill={favoritesOnly ? "currentColor" : "none"}
+                      className="shrink-0"
+                    />
+                    <span className="hidden sm:inline">
+                      {t("market.favorites")}
+                    </span>
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Row 2: Toolbar (view, sort, filters, count) */}
-            <div className="flex flex-wrap items-center gap-3">
-              {/* View mode */}
-              <div className="flex bg-slate-100/90 rounded-xl p-1 gap-0.5 shadow-inner">
-                {[
-                  { mode: "grid" as const, icon: LayoutGrid },
-                  { mode: "card" as const, icon: LayoutList },
-                  { mode: "detailed" as const, icon: List },
-                ].map(({ mode, icon: Icon }) => (
+            {/* Row 2: Category chips + Listing counter + Grid switch */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+              <nav
+                className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide min-w-0"
+                aria-label="Filter by category"
+              >
+                {(
+                  [
+                    "all",
+                    "grapes",
+                    "wine",
+                    "nobati",
+                    "inventory",
+                    "seedlings",
+                  ] as const
+                ).map((c) => (
                   <button
-                    key={mode}
-                    onClick={() => setViewMode(mode)}
-                    className={`p-2.5 rounded-lg transition-all duration-300 ${
-                      viewMode === mode
-                        ? "bg-white text-[#04AA6D] shadow-md"
-                        : "text-slate-500 hover:text-slate-700 hover:bg-white/60"
+                    key={c}
+                    onClick={() =>
+                      withViewTransition(() => setCategoryFilter(c))
+                    }
+                    className={`inline-flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold border-2 shrink-0 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] ${
+                      categoryFilter === c
+                        ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]"
+                        : "bg-white border-slate-200/80 text-slate-600 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
                     }`}
-                    aria-label={`${mode} view`}
                   >
-                    <Icon size={18} strokeWidth={2} />
+                    {c !== "all" && (
+                      <span className="text-base" aria-hidden>
+                        {CATEGORY_ICONS[c] ?? "📦"}
+                      </span>
+                    )}
+                    {c === "all"
+                      ? t("common.all")
+                      : t(
+                          `market.category${c.charAt(0).toUpperCase() + c.slice(1)}`,
+                        )}
                   </button>
                 ))}
-              </div>
-              <div
-                className="hidden sm:block w-px h-8 bg-slate-200/80"
-                aria-hidden
-              />
-              {/* Sort dropdown */}
-              <div className="relative" ref={sortDropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setSortDropdownOpen((v) => !v)}
-                  aria-expanded={sortDropdownOpen}
-                  aria-haspopup="listbox"
-                  aria-label={t("market.sortByLabel")}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-slate-200/80 bg-white text-slate-700 text-sm font-semibold hover:border-slate-300 focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all cursor-pointer"
-                >
-                  {t(`market.sortBy.${sortBy}`)}
-                  <ChevronDown
-                    size={16}
-                    className={`transition-transform duration-200 ${sortDropdownOpen ? "rotate-180" : ""}`}
-                  />
-                </button>
-                {sortDropdownOpen && (
-                  <div
-                    role="listbox"
-                    className="absolute right-0 top-full mb-1.5 min-w-[200px] py-1.5 rounded-xl border-2 border-slate-200/80 bg-white shadow-xl shadow-slate-200/40 z-[100] animate-fade-in overflow-hidden"
-                  >
-                    {(
-                      [
-                        "newest",
-                        "price_asc",
-                        "price_desc",
-                        "brix_asc",
-                        "brix_desc",
-                        "vintage_asc",
-                        "vintage_desc",
-                      ] as SortBy[]
-                    ).map((value) => (
-                      <button
-                        key={value}
-                        role="option"
-                        aria-selected={sortBy === value}
-                        onClick={() => {
-                          setSortBy(value);
-                          setSortDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors first:pt-3 last:pb-3 ${
-                          sortBy === value
-                            ? "bg-[#04AA6D]/10 text-[#04AA6D]"
-                            : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                      >
-                        {t(`market.sortBy.${value}`)}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div
-                className="hidden sm:block w-px h-8 bg-slate-200/80"
-                aria-hidden
-              />
-              {/* Filters */}
-              <button
-                onClick={() => setFiltersOpen((v) => !v)}
-                aria-expanded={filtersOpen}
-                aria-controls="market-filters"
-                className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
-                  filtersOpen
-                    ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-lg shadow-[#04AA6D]/25"
-                    : "bg-white border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                }`}
-              >
-                <SlidersHorizontal
-                  size={18}
-                  strokeWidth={2}
-                  className="shrink-0"
-                />
-                <span className="max-w-[120px] sm:max-w-[180px] truncate hidden sm:inline">
-                  {filterSummary}
+              </nav>
+              <div className="flex items-center justify-between gap-3 w-full md:w-unset">
+                <span className="px-3 py-2 rounded-xl bg-slate-100/90 text-slate-700 font-bold tabular-nums text-sm shadow-[0_1px_4px_rgba(15,23,42,0.05)]">
+                  {t("market.listingsFound").replace(
+                    "{{count}}",
+                    String(filteredListings.length),
+                  )}
                 </span>
-                {hasActiveFilters && !filtersOpen && (
-                  <span
-                    className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#04AA6D] ring-2 ring-white"
-                    aria-hidden
-                  />
-                )}
-                {filtersOpen ? (
-                  <ChevronUp size={18} className="shrink-0" />
-                ) : (
-                  <ChevronDown size={18} className="shrink-0" />
-                )}
-              </button>
-              <span className="px-3 py-1.5 rounded-xl bg-slate-100/90 text-slate-700 font-bold tabular-nums text-sm">
-                {t("market.listingsFound").replace(
-                  "{{count}}",
-                  String(filteredListings.length),
-                )}
-              </span>
+                {/* View mode */}
+                <div className="flex bg-slate-100/90 rounded-xl p-1 gap-0.5 shadow-inner">
+                  {[
+                    { mode: "grid" as const, icon: LayoutGrid },
+                    { mode: "card" as const, icon: LayoutList },
+                    { mode: "detailed" as const, icon: List },
+                  ].map(({ mode, icon: Icon }) => (
+                    <button
+                      key={mode}
+                      onClick={() =>
+                        withViewTransition(() => setViewMode(mode))
+                      }
+                      className={`p-2.5 rounded-lg transition-all duration-300 ${
+                        viewMode === mode
+                          ? "bg-white text-[#04AA6D] shadow-md"
+                          : "text-slate-500 hover:text-slate-700 hover:bg-white/60"
+                      } ${mode === "card" ? "hidden md:flex" : ""}`}
+                      aria-label={`${mode} view`}
+                    >
+                      <Icon size={18} strokeWidth={2} />
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Row 3: Expanded filters */}
             {filtersOpen && (
               <div
                 id="market-filters"
-                className="pt-4 border-t border-slate-200/60 space-y-4 animate-fade-in"
+                className="pt-4 border-t border-slate-200/60 space-y-4 animate-fade-in "
                 role="region"
                 aria-label="Filters"
               >
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
-                      {t("market.region")}
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => setRegionFilter("")}
-                        className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${!regionFilter ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
-                      >
-                        {t("market.allRegions")}
-                      </button>
-                      {uniqueRegions.map((r) => (
-                        <button
-                          key={r}
-                          onClick={() => setRegionFilter(r)}
-                          className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${regionFilter === r ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
-                        >
-                          {r}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  {uniqueVillages.length > 0 && (
+                <div className="flex flex-col lg:flex-row lg:items-start gap-5 justify-between">
+                  <div className="flex-3 min-w-0 space-y-5">
                     <div>
                       <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
-                        {t("market.village")}
+                        {t("market.region")}
                       </label>
                       <div className="flex flex-wrap gap-2">
                         <button
-                          onClick={() => setVillageFilter("")}
-                          className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${!villageFilter ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                          onClick={() => withViewTransition(() => setRegionFilter(""))}
+                          className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${!regionFilter ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
                         >
-                          {t("market.allVillages")}
+                          {t("market.allRegions")}
                         </button>
-                        {uniqueVillages.map((v) => (
+                        {uniqueRegions.map((r) => (
                           <button
-                            key={v}
-                            onClick={() => setVillageFilter(v)}
-                            className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${villageFilter === v ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                            key={r}
+                            onClick={() => withViewTransition(() => setRegionFilter(r))}
+                            className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${regionFilter === r ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
                           >
-                            {v}
+                            {r}
                           </button>
                         ))}
                       </div>
                     </div>
-                  )}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
-                      {t("market.minPrice")}
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={minPrice}
-                      onChange={(e) =>
-                        setMinPrice(e.target.value.replace(/[^0-9.,]/g, ""))
-                      }
-                      placeholder={t("market.maxPricePlaceholder")}
-                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all"
-                    />
+                    {uniqueVillages.length > 0 && (
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
+                          {t("market.village")}
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => setVillageFilter("")}
+                            className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${!villageFilter ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                          >
+                            {t("market.allVillages")}
+                          </button>
+                          {uniqueVillages.map((v) => (
+                            <button
+                              key={v}
+                              onClick={() => withViewTransition(() => setVillageFilter(v))}
+                              className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${villageFilter === v ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                            >
+                              {v}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
-                      {t("market.maxPrice")}
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={maxPrice}
-                      onChange={(e) =>
-                        setMaxPrice(e.target.value.replace(/[^0-9.,]/g, ""))
-                      }
-                      placeholder={t("market.maxPricePlaceholder")}
-                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all"
-                    />
+                  <div className="lg:shrink-0 grid grid-cols-2 sm:grid-cols-4 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
+                        {t("market.minPrice")}
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={minPrice}
+                        onChange={(e) =>
+                          setMinPrice(e.target.value.replace(/[^0-9.,]/g, ""))
+                        }
+                        placeholder={t("market.maxPricePlaceholder")}
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
+                        {t("market.maxPrice")}
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={maxPrice}
+                        onChange={(e) =>
+                          setMaxPrice(e.target.value.replace(/[^0-9.,]/g, ""))
+                        }
+                        placeholder={t("market.maxPricePlaceholder")}
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
+                        {t("market.minBrix")}
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={minBrix}
+                        onChange={(e) =>
+                          setMinBrix(e.target.value.replace(/[^0-9.,]/g, ""))
+                        }
+                        placeholder={t("market.brixPlaceholder")}
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
+                        {t("market.maxBrix")}
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={maxBrix}
+                        onChange={(e) =>
+                          setMaxBrix(e.target.value.replace(/[^0-9.,]/g, ""))
+                        }
+                        placeholder={t("market.brixPlaceholder")}
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all"
+                      />
+                    </div>
                   </div>
                 </div>
                 <button
-                  onClick={resetFilters}
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-[#04AA6D] transition-colors"
+                  onClick={() => withViewTransition(resetFilters)}
+                  className="inline-flex items-center gap-2 mt-4 text-sm  bg-red-100/90 rounded-xl px-4 py-2 font-semibold text-slate-600 hover:text-[#04AA6D] transition-colors"
                 >
                   <X size={16} />
                   {t("common.reset")}
@@ -1171,9 +1335,11 @@ export default function MarketClient() {
             <div className="flex flex-wrap justify-center gap-3">
               <button
                 onClick={() => {
-                  setCategoryFilter("all");
-                  setSearchQuery("");
-                  setFiltersOpen(false);
+                  withViewTransition(() => {
+                    setCategoryFilter("all");
+                    setSearchQuery("");
+                    setFiltersOpen(false);
+                  });
                 }}
                 className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
               >
@@ -1188,8 +1354,8 @@ export default function MarketClient() {
             </div>
           </div>
         ) : viewMode === "grid" ? (
-          /* Grid view: 4-column compact cards */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+          /* Grid view: 2 on mobile, 3 on tablet, 4 on desktop */
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 market-grid-transition">
             {filteredListings.map((listing, index) => {
               const photoUrls = getPhotoUrls(listing);
               const selectedIdx = selectedImageByListing[listing.id] ?? 0;
@@ -1216,19 +1382,24 @@ export default function MarketClient() {
                   key={listing.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => router.push(`/market?id=${listing.id}`)}
+                  onClick={() => router.push(`/?id=${listing.id}`)}
                   onKeyDown={(e) =>
-                    e.key === "Enter" && router.push(`/market?id=${listing.id}`)
+                    e.key === "Enter" && router.push(`/?id=${listing.id}`)
                   }
-                  className="vn-glass vn-card overflow-hidden cursor-pointer vn-card-hover group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] rounded-2xl animate-fade-in-stagger"
-                  style={{ animationDelay: `${Math.min(index * 40, 300)}ms` }}
+                  className="vn-glass vn-card overflow-hidden cursor-pointer vn-card-hover group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] rounded-2xl market-item-transition"
+                  style={{ viewTransitionName: `listing-${listing.id}` } as React.CSSProperties}
                 >
                   <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
                     {imgUrl ? (
-                      <img
+                      <OptimizedListingImage
                         src={imgUrl}
-                        alt=""
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        image200={listing.image200 ?? listing.photoUrls200?.[selectedIdx] ?? listing.photoUrls200?.[0]}
+                        image400={listing.image400 ?? listing.photoUrls400?.[selectedIdx] ?? listing.photoUrls400?.[0]}
+                        context="card"
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                        priority={index === 0}
+                        fill
+                        className="transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
                       <span className="absolute inset-0 flex items-center justify-center text-slate-300 text-4xl">
@@ -1237,24 +1408,30 @@ export default function MarketClient() {
                     )}
                     {photoUrls.length > 1 && (
                       <div
-                        className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 px-2"
+                        className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 px-2 z-10"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {photoUrls.slice(0, 5).map((url, i) => (
                           <button
                             key={i}
                             type="button"
-                            onClick={() => setListingImage(listing.id, i)}
-                            className={`w-8 h-8 rounded overflow-hidden bg-white/95 shadow-sm flex-shrink-0 transition-all ${
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setListingImage(listing.id, i);
+                            }}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            className={`relative w-8 h-8 rounded overflow-hidden bg-white/95 shadow-sm flex-shrink-0 transition-all touch-manipulation ${
                               selectedIdx === i
                                 ? "ring-2 ring-[#04AA6D] ring-offset-1"
                                 : "opacity-80 hover:opacity-100"
                             }`}
                           >
-                            <img
+                            <ThumbnailImage
                               src={url}
-                              alt=""
-                              className="w-full h-full object-cover"
+                              image200={listing.photoUrls200?.[i] ?? listing.image200}
+                              fill
+                              className="object-cover"
                             />
                           </button>
                         ))}
@@ -1279,9 +1456,9 @@ export default function MarketClient() {
                       />
                     </button>
                   </div>
-                  <div className="p-4 flex flex-col">
-                    <div className="mb-2">
-                      <span className="text-lg font-bold text-[#04AA6D] tabular-nums">
+                  <div className="p-3 sm:p-4 flex flex-col">
+                    <div className="mb-1.5">
+                      <span className="text-base sm:text-lg font-bold text-[#04AA6D] tabular-nums">
                         {listing.price != null && listing.price > 0
                           ? `${listing.price.toLocaleString()} ₾`
                           : t("market.priceByAgreement")}
@@ -1339,7 +1516,7 @@ export default function MarketClient() {
           /* Card view: 2-column grid, image left, details right */
           <div
             key="card"
-            className="grid grid-cols-1 lg:grid-cols-2 gap-5 animate-fade-in"
+            className="grid grid-cols-1 lg:grid-cols-2 gap-5 animate-fade-in market-grid-transition"
           >
             {filteredListings.map((listing) => {
               const photoUrls = getPhotoUrls(listing);
@@ -1367,18 +1544,23 @@ export default function MarketClient() {
                   key={listing.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => router.push(`/market?id=${listing.id}`)}
+                  onClick={() => router.push(`/?id=${listing.id}`)}
                   onKeyDown={(e) =>
-                    e.key === "Enter" && router.push(`/market?id=${listing.id}`)
+                    e.key === "Enter" && router.push(`/?id=${listing.id}`)
                   }
-                  className="vn-glass vn-card overflow-hidden cursor-pointer vn-card-hover flex flex-col sm:flex-row group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] rounded-2xl"
+                  className="vn-glass vn-card overflow-hidden cursor-pointer vn-card-hover flex flex-col sm:flex-row group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] rounded-2xl market-item-transition"
+                  style={{ viewTransitionName: `listing-${listing.id}` } as React.CSSProperties}
                 >
                   <div className="relative w-full sm:w-2/5 sm:min-w-[160px] aspect-[4/3] bg-slate-100 overflow-hidden flex-shrink-0">
                     {imgUrl ? (
-                      <img
+                      <OptimizedListingImage
                         src={imgUrl}
-                        alt=""
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        image200={listing.image200 ?? listing.photoUrls200?.[selectedIdx] ?? listing.photoUrls200?.[0]}
+                        image400={listing.image400 ?? listing.photoUrls400?.[selectedIdx] ?? listing.photoUrls400?.[0]}
+                        context="card"
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                        fill
+                        className="transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
                       <span className="absolute inset-0 flex items-center justify-center text-slate-300 text-3xl">
@@ -1387,24 +1569,30 @@ export default function MarketClient() {
                     )}
                     {photoUrls.length > 1 && (
                       <div
-                        className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 px-2"
+                        className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 px-2 z-10"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {photoUrls.slice(0, 5).map((url, i) => (
                           <button
                             key={i}
                             type="button"
-                            onClick={() => setListingImage(listing.id, i)}
-                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded overflow-hidden bg-white/95 shadow-sm flex-shrink-0 transition-all ${
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setListingImage(listing.id, i);
+                            }}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded overflow-hidden bg-white/95 shadow-sm flex-shrink-0 transition-all touch-manipulation ${
                               selectedIdx === i
                                 ? "ring-2 ring-[#04AA6D] ring-offset-1"
                                 : "opacity-80 hover:opacity-100"
                             }`}
                           >
-                            <img
+                            <ThumbnailImage
                               src={url}
-                              alt=""
-                              className="w-full h-full object-cover"
+                              image200={listing.photoUrls200?.[i] ?? listing.image200}
+                              fill
+                              className="object-cover"
                             />
                           </button>
                         ))}
@@ -1492,8 +1680,8 @@ export default function MarketClient() {
             })}
           </div>
         ) : (
-          /* Detailed list view: ss.ge-style layout */
-          <div key="detailed" className="space-y-4 animate-fade-in">
+          /* Detailed list view: improved card layout */
+          <div key="detailed" className="space-y-5 animate-fade-in">
             {filteredListings.map((listing, index) => {
               const photoUrls = getPhotoUrls(listing);
               const selectedIdx = selectedImageByListing[listing.id] ?? 0;
@@ -1519,22 +1707,26 @@ export default function MarketClient() {
                   key={listing.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => router.push(`/market?id=${listing.id}`)}
+                  onClick={() => router.push(`/?id=${listing.id}`)}
                   onKeyDown={(e) =>
-                    e.key === "Enter" && router.push(`/market?id=${listing.id}`)
+                    e.key === "Enter" && router.push(`/?id=${listing.id}`)
                   }
-                  className="market-list-card group relative cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] animate-fade-in-stagger"
-                  style={{ animationDelay: `${Math.min(index * 40, 350)}ms` }}
+                  className="market-list-card group relative cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] market-item-transition"
+                  style={{ viewTransitionName: `listing-${listing.id}` } as React.CSSProperties}
                 >
                   <div className="flex flex-col sm:flex-row min-h-0">
                     {/* Image: ~40% width, main + thumbnail strip */}
-                    <div className="sm:w-[42%] lg:w-[38%] flex-shrink-0 relative">
-                      <div className="relative aspect-[4/3] sm:aspect-[4/3] bg-slate-100 overflow-hidden">
+                    <div className="sm:w-[40%] lg:w-[36%] flex-shrink-0 relative">
+                      <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden rounded-t-2xl sm:rounded-t-none sm:rounded-l-2xl">
                         {imgUrl ? (
-                          <img
+                          <OptimizedListingImage
                             src={imgUrl}
-                            alt=""
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                            image200={listing.image200 ?? listing.photoUrls200?.[selectedIdx] ?? listing.photoUrls200?.[0]}
+                            image400={listing.image400 ?? listing.photoUrls400?.[selectedIdx] ?? listing.photoUrls400?.[0]}
+                            context="card"
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                            fill
+                            className="transition-transform duration-300 group-hover:scale-[1.02]"
                           />
                         ) : (
                           <span className="absolute inset-0 flex items-center justify-center text-slate-300 text-4xl select-none">
@@ -1565,25 +1757,28 @@ export default function MarketClient() {
                         </div>
                       </div>
                       {photoUrls.length > 1 && (
-                        <div className="flex gap-1.5 p-2 bg-slate-50 border-t border-slate-100 overflow-x-auto">
+                        <div className="flex gap-1.5 p-2 bg-slate-50 border-t border-slate-100 overflow-x-auto z-10 relative">
                           {photoUrls.map((url, i) => (
                             <button
                               key={i}
                               type="button"
                               onClick={(e) => {
+                                e.preventDefault();
                                 e.stopPropagation();
                                 setListingImage(listing.id, i);
                               }}
-                              className={`w-14 h-14 sm:w-16 sm:h-16 rounded overflow-hidden bg-slate-200 flex-shrink-0 transition-all ${
+                              onPointerDown={(e) => e.stopPropagation()}
+                              className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded overflow-hidden bg-slate-200 flex-shrink-0 transition-all touch-manipulation ${
                                 selectedIdx === i
                                   ? "ring-2 ring-[#04AA6D] ring-offset-1"
                                   : "opacity-80 hover:opacity-100"
                               }`}
                             >
-                              <img
+                              <ThumbnailImage
                                 src={url}
-                                alt=""
-                                className="w-full h-full object-cover"
+                                image200={listing.photoUrls200?.[i] ?? listing.image200}
+                                fill
+                                className="object-cover"
                               />
                             </button>
                           ))}
@@ -1592,9 +1787,9 @@ export default function MarketClient() {
                     </div>
 
                     {/* Main content: title, price, location, description, features row */}
-                    <div className="flex-1 flex flex-col min-w-0 p-4 sm:p-5">
+                    <div className="flex-1 flex flex-col min-w-0 p-4 sm:p-5 lg:p-6">
                       <div className="flex items-start justify-between gap-3 mb-2">
-                        <h2 className="text-base sm:text-[24px] font-bold text-slate-900 leading-snug line-clamp-2 flex-1">
+                        <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-snug line-clamp-2 flex-1">
                           {displayTitle}
                         </h2>
                         <button
@@ -1623,8 +1818,8 @@ export default function MarketClient() {
                         </button>
                       </div>
 
-                      <div className="flex flex-wrap items-baseline gap-2 mb-2">
-                        <span className="text-xl font-bold text-[#04AA6D] tabular-nums">
+                      <div className="flex flex-wrap items-baseline gap-2 mb-3">
+                        <span className="text-xl sm:text-2xl font-bold text-[#04AA6D] tabular-nums">
                           {listing.price != null && listing.price > 0
                             ? `${listing.price.toLocaleString()} ₾`
                             : t("market.priceByAgreement")}
@@ -1647,87 +1842,97 @@ export default function MarketClient() {
                       )}
 
                       {(listing.description || listing.notes) && (
-                        <p className="text-slate-600 text-base leading-relaxed line-clamp-3 mb-3 font-medium">
+                        <p className="text-slate-600 text-sm sm:text-base leading-relaxed line-clamp-3 mb-3">
                           {listing.notes || listing.description}
                         </p>
                       )}
 
-                      {/* Features row: icon + text (like reference) */}
-                      <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-slate-600 text-sm mt-auto">
+                      {/* Features row: pill badges */}
+                      <div className="flex flex-wrap gap-2">
                         {listing.quantity != null && unitLabel && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <Package size={14} className="text-slate-400" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700">
+                            <Package size={12} className="shrink-0" />
                             {listing.quantity} {unitLabel}
                           </span>
                         )}
                         {listing.sugarBrix != null && (
-                          <span className="inline-flex items-center gap-1.5">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-800">
                             {listing.sugarBrix} {t("market.brixUnit")}
                           </span>
                         )}
                         {listing.vintageYear != null && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <Calendar size={14} className="text-slate-400" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-sky-50 text-sky-800">
+                            <Calendar size={12} className="shrink-0" />
                             {listing.vintageYear}
                           </span>
                         )}
                         {category === "wine" && listing.wineType && (
-                          <span className="inline-flex items-center gap-1.5">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-800">
                             {listing.wineType}
                           </span>
                         )}
                         {listing.harvestDate && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <Calendar size={14} className="text-slate-400" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700">
+                            <Calendar size={12} className="shrink-0" />
                             {formatHarvestDate(listing.harvestDate)}
                           </span>
                         )}
                       </div>
                     </div>
+                  </div>
 
-                    {/* Right sidebar: avatar, contact, location, time (compact) */}
-                    <div className="sm:w-[140px] lg:w-[160px] flex-shrink-0 flex flex-col items-center  justify-between sm:items-center p-4 sm:py-5 sm:px-4 border-t sm:border-t-0 sm:border-l border-slate-100">
-                      <div className="flex flex-col items-center lg:items-center gap-2 text-center">
-                        <div
-                          className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-base shrink-0"
-                          style={{
-                            backgroundColor: getCategoryColor(category),
-                          }}
-                        >
-                          {(listing.contactName || "?").charAt(0).toUpperCase()}
-                        </div>
-                        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-                          {t("market.contact")}
-                        </p>
-                        <p className="font-semibold text-slate-900 text-sm truncate w-full">
-                          {listing.contactName || "—"}
-                        </p>
-                        {locationText && (
-                          <p className="text-slate-500 text-xs truncate w-full">
-                            {locationText}
-                          </p>
-                        )}
-                        <p className="text-slate-400 text-xs">
-                          {formatTimeAgo(listing.createdAt)}
-                        </p>
-                        {listing.phone && (
-                          <a
-                            href={`tel:${listing.phone}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center justify-center gap-1.5 w-full mt-2 px-3 py-2 rounded-lg font-semibold text-white bg-[#04AA6D] hover:bg-[#039a5e] text-xs transition-colors"
-                          >
-                            <Phone size={14} />
-                            {listing.phone}
-                          </a>
-                        )}
-                      </div>
-                      {/* Favorite + publish time at bottom */}
-                      <div className="flex flex-col items-end gap-1 mt-4 pt-4">
-                        <span className="text-slate-400 text-xs">
-                          {formatTimeAgo(listing.createdAt)}
-                        </span>
-                      </div>
-                    </div>
+                  {/* Bottom section: name, phone, location, time, etc. side by side */}
+                  <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-6 gap-y-2 px-4 sm:px-5 lg:px-6 py-3 border-t border-slate-100 bg-slate-50/50">
+                    <span className="inline-flex items-center gap-1.5 text-slate-700 text-sm font-medium">
+                      <span
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                        style={{ backgroundColor: getCategoryColor(category) }}
+                      >
+                        {(listing.contactName || "?").charAt(0).toUpperCase()}
+                      </span>
+                      {listing.contactName || "—"}
+                    </span>
+                    {listing.phone && (
+                      <a
+                        href={`tel:${listing.phone}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1.5 text-[#04AA6D] font-semibold text-sm hover:text-[#039a5e] transition-colors"
+                      >
+                        <Phone size={14} />
+                        {listing.phone}
+                      </a>
+                    )}
+                    {locationText && (
+                      <span className="inline-flex items-center gap-1.5 text-slate-600 text-sm">
+                        <MapPin size={14} className="shrink-0 text-slate-400" />
+                        {locationText}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1.5 text-slate-500 text-sm">
+                      <Calendar size={14} className="shrink-0 text-slate-400" />
+                      {formatTimeAgo(listing.createdAt)}
+                    </span>
+                    {listing.quantity != null && unitLabel && (
+                      <span className="inline-flex items-center gap-1.5 text-slate-600 text-sm">
+                        <Package size={14} className="shrink-0 text-slate-400" />
+                        {listing.quantity} {unitLabel}
+                      </span>
+                    )}
+                    {listing.sugarBrix != null && (
+                      <span className="text-slate-600 text-sm">
+                        {listing.sugarBrix} {t("market.brixUnit")}
+                      </span>
+                    )}
+                    {listing.vintageYear != null && (
+                      <span className="text-slate-600 text-sm">
+                        {listing.vintageYear}
+                      </span>
+                    )}
+                    {category === "wine" && listing.wineType && (
+                      <span className="text-slate-600 text-sm">
+                        {listing.wineType}
+                      </span>
+                    )}
                   </div>
                 </article>
               );

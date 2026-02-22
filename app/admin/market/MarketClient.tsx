@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { getThumbUrl } from "@/lib/imageUtils";
 import { getDb } from "@/lib/firebase";
 import {
   collection,
@@ -324,14 +326,15 @@ export default function MarketClient() {
                 >
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex-shrink-0">
-                      <div className="w-24 h-24 rounded-xl bg-slate-200 overflow-hidden flex items-center justify-center">
+                      <div className="relative w-24 h-24 rounded-xl bg-slate-200 overflow-hidden flex items-center justify-center">
                         {imgUrl ? (
-                          <img
-                            src={imgUrl}
+                          <Image
+                            src={getThumbUrl(imgUrl, 200) ?? imgUrl}
                             alt=""
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            decoding="async"
+                            fill
+                            sizes="96px"
+                            className="object-cover"
+                            unoptimized
                           />
                         ) : (
                           <span className="text-slate-400 text-xs">

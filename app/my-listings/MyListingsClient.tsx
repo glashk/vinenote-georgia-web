@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { getThumbUrl } from "@/lib/imageUtils";
 import { useRouter } from "next/navigation";
 import Container from "@/components/Container";
 import { auth } from "@/lib/firebase";
@@ -333,7 +334,7 @@ export default function MyListingsClient() {
                   </svg>
                   {t("market.add")}
                 </Link>
-                <Link href="/market" className="vn-btn vn-btn-ghost text-sm">
+                <Link href="/" className="vn-btn vn-btn-ghost text-sm">
                   ← {t("nav.market")}
                 </Link>
               </div>
@@ -380,20 +381,21 @@ export default function MyListingsClient() {
                       <div
                         role="button"
                         tabIndex={0}
-                        onClick={() => router.push(`/market?id=${item.id}`)}
+                        onClick={() => router.push(`/?id=${item.id}`)}
                         onKeyDown={(e) =>
-                          e.key === "Enter" && router.push(`/market?id=${item.id}`)
+                          e.key === "Enter" && router.push(`/?id=${item.id}`)
                         }
                         className="flex items-center gap-4 p-4 cursor-pointer"
                       >
-                        <div className="w-[68px] h-[68px] rounded-xl overflow-hidden bg-slate-200 flex-shrink-0 flex items-center justify-center">
+                        <div className="relative w-[68px] h-[68px] rounded-xl overflow-hidden bg-slate-200 flex-shrink-0 flex items-center justify-center">
                           {photoUrl ? (
-                            <img
-                              src={photoUrl}
+                            <Image
+                              src={getThumbUrl(photoUrl, 200) ?? photoUrl}
                               alt=""
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                              decoding="async"
+                              fill
+                              sizes="68px"
+                              className="object-cover"
+                              unoptimized
                             />
                           ) : (
                             <span className="text-slate-400 text-2xl">

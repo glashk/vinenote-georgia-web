@@ -114,6 +114,29 @@
     display: none;
   }
 
+  /* Hide native search clear button (keep custom one) */
+  .search-no-native-clear::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* Smooth layout transitions when filter changes affect grid items */
+  .market-grid-transition {
+    transition: grid-template-columns 0.3s ease-out, gap 0.3s ease-out;
+  }
+  .market-item-transition {
+    transition: width 0.3s ease-out, min-width 0.3s ease-out, max-width 0.3s ease-out, flex 0.3s ease-out;
+  }
+
+  /* View Transition API: smooth layout when filters change */
+  @supports (view-transition-name: none) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation-duration: 0.3s;
+      animation-timing-function: ease-out;
+    }
+  }
+
   .animate-shimmer {
     animation: shimmer 2s linear infinite;
     background: linear-gradient(
@@ -281,16 +304,17 @@
     color: rgb(51, 65, 85);
   }
 
-  /* Market list view card: ss.ge-style, white, clean */
+  /* Market list view card: refined design */
   .market-list-card {
-    @apply rounded-xl overflow-hidden bg-white;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    transition: box-shadow 220ms ease, border-color 200ms ease;
+    @apply rounded-2xl overflow-hidden bg-white;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 2px 8px rgba(15, 23, 42, 0.04);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    transition: transform 220ms ease, box-shadow 220ms ease, border-color 200ms ease;
   }
   .market-list-card:hover {
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
-    border-color: rgba(15, 23, 42, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1), 0 2px 8px rgba(15, 23, 42, 0.06);
+    border-color: rgba(15, 23, 42, 0.12);
   }
 
   .vn-link {

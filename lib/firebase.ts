@@ -32,8 +32,10 @@ let _db: Firestore | null = null;
 export async function getDb(): Promise<Firestore | null> {
   if (typeof window === "undefined") return null;
   if (_db) return _db;
+  // Ensure app is initialized (can be null if module was first evaluated on server)
+  const firebaseApp = app ?? (getApps().length > 0 ? getApp() : initializeApp(firebaseConfig));
   const { getFirestore } = await import("firebase/firestore");
-  _db = getFirestore(app);
+  _db = getFirestore(firebaseApp);
   return _db;
 }
 

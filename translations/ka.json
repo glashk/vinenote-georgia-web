@@ -99,7 +99,7 @@
       "submit": "გაგზავნა",
       "loading": "იგზავნება...",
       "success": "შეამოწმეთ ელფოსტა აღდგენის ბმულისთვის.",
-      "backToSignIn": "უკან შესვლაზე"
+      "backToSignIn": "ავტორიზაციაზე დაბრუნება"
     },
     "signUp": {
       "title": "ანგარიშის შექმნა",
@@ -152,7 +152,7 @@
     "description": "აღწერა",
     "item": "ნივთი",
     "priceByAgreement": "შეთანხმებით",
-    "backToList": "უკან სიაში",
+    "backToList": "მარკეტში დაბრუნება",
     "errorLoad": "ჩატვირთვა ვერ მოხერხდა",
     "validation": {
       "typeRequired": "გთხოვთ აირჩიოთ კატეგორია",
@@ -203,6 +203,10 @@
     "minPrice": "მინ. ფასი",
     "maxPrice": "მაქს. ფასი",
     "maxPricePlaceholder": "₾",
+    "minBrix": "მინ. შაქრიანობა",
+    "maxBrix": "მაქს. შაქრიანობა",
+    "brixPlaceholder": "°Brix",
+    "favorites": "ფავორიტები",
     "sortByLabel": "სორტირება",
     "sortBy": {
       "newest": "ახალი",
