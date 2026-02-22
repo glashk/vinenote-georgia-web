@@ -70,7 +70,6 @@ export default function Header() {
   }, [userMenuOpen]);
 
   const navLinks = [
-    { href: "/", label: t("nav.home") },
     { href: "/market", label: t("nav.market") },
   ];
 

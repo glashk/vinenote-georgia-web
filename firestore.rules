@@ -77,7 +77,7 @@ service cloud.firestore {
 
     // Market listings: marketplace feed (read by any signed-in user; write by owner)
     match /marketListings/{id} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isOwnerByRequest();
       allow update, delete: if isOwnerByResource();
     }
