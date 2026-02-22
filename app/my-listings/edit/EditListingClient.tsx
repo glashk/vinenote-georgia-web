@@ -9,7 +9,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { getDb } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, deleteField } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { Wine, Grape, Apple, Package, Sprout, Camera, Pencil, X } from "lucide-react";
+import { Wine, Grape, Apple, Package, Sprout, Camera, Pencil, X, GripVertical } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type Category = "wine" | "grapes" | "nobati" | "inventory" | "seedlings";
@@ -70,6 +70,7 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
   const [notes, setNotes] = useState("");
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [uploadingCount, setUploadingCount] = useState(0);
+  const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoUploading = uploadingCount > 0;
 
@@ -239,6 +240,16 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
     setPhotoUrls((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  const movePhoto = useCallback((fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    setPhotoUrls((prev) => {
+      const next = [...prev];
+      const [removed] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, removed);
+      return next;
+    });
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -374,14 +385,38 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
               />
               <div className="flex flex-wrap gap-3 mt-2">
                 {photoUrls.map((url, idx) => (
-                  <div key={url} className="relative group">
+                  <div
+                    key={url}
+                    draggable
+                    onDragStart={() => setDraggedPhotoIndex(idx)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (draggedPhotoIndex !== null && draggedPhotoIndex !== idx) {
+                        movePhoto(draggedPhotoIndex, idx);
+                      }
+                      setDraggedPhotoIndex(null);
+                    }}
+                    onDragEnd={() => setDraggedPhotoIndex(null)}
+                    className={`relative group cursor-grab active:cursor-grabbing ${
+                      draggedPhotoIndex === idx ? "opacity-60" : ""
+                    }`}
+                  >
                     <img
                       src={url}
                       alt=""
-                      className="w-20 h-20 rounded-[14px] object-cover bg-[#ebe9e4]"
+                      className="w-20 h-20 rounded-[14px] object-cover bg-[#ebe9e4] pointer-events-none"
                       loading="eager"
                       decoding="async"
                     />
+                    {idx === 0 && (
+                      <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#04AA6D] text-white">
+                        {t("market.mainImage")}
+                      </span>
+                    )}
+                    <div className="absolute bottom-1 left-1 p-1 rounded bg-white/90 text-slate-500">
+                      <GripVertical size={12} strokeWidth={2} />
+                    </div>
                     <button
                       type="button"
                       onClick={() => removePhoto(idx)}
@@ -447,24 +482,29 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
                 required
               />
 
-              <label className={labelBase}>{t("market.region")} *</label>
-              <input
-                type="text"
-                value={region}
-                onChange={(e) => setRegion(e.target.value)}
-                placeholder={t("market.regionPlaceholder")}
-                className={`${inputBase} placeholder-[#8a9a85]`}
-                required
-              />
-
-              <label className={labelBase}>{t("market.village")}</label>
-              <input
-                type="text"
-                value={village}
-                onChange={(e) => setVillage(e.target.value)}
-                placeholder={t("market.villagePlaceholder")}
-                className={`${inputBase} placeholder-[#8a9a85]`}
-              />
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-3 mt-4">
+                <div className="flex-1">
+                  <label className={labelBase}>{t("market.region")} *</label>
+                  <input
+                    type="text"
+                    value={region}
+                    onChange={(e) => setRegion(e.target.value)}
+                    placeholder={t("market.regionPlaceholder")}
+                    className={`${inputBase} placeholder-[#8a9a85]`}
+                    required
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className={labelBase}>{t("market.village")}</label>
+                  <input
+                    type="text"
+                    value={village}
+                    onChange={(e) => setVillage(e.target.value)}
+                    placeholder={t("market.villagePlaceholder")}
+                    className={`${inputBase} placeholder-[#8a9a85]`}
+                  />
+                </div>
+              </div>
 
               <div className="flex gap-3 mt-4">
                 <div className="flex-1">
@@ -546,24 +586,29 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
                 </>
               )}
 
-              <label className={labelBase}>{t("market.contactName")}</label>
-              <input
-                type="text"
-                value={contactName}
-                onChange={(e) => setContactName(e.target.value)}
-                placeholder={t("market.contactNamePlaceholder")}
-                className={`${inputBase} placeholder-[#8a9a85]`}
-              />
-
-              <label className={labelBase}>{t("market.phone")} *</label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder={t("market.phonePlaceholder")}
-                className={`${inputBase} placeholder-[#8a9a85]`}
-                required
-              />
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-3 mt-4">
+                <div className="flex-1">
+                  <label className={labelBase}>{t("market.contactName")}</label>
+                  <input
+                    type="text"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    placeholder={t("market.contactNamePlaceholder")}
+                    className={`${inputBase} placeholder-[#8a9a85]`}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className={labelBase}>{t("market.phone")} *</label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder={t("market.phonePlaceholder")}
+                    className={`${inputBase} placeholder-[#8a9a85]`}
+                    required
+                  />
+                </div>
+              </div>
 
               <label className={labelBase}>{t("market.price")}</label>
               <input

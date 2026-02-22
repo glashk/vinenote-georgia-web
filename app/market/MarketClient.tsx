@@ -85,6 +85,7 @@ interface Listing {
   harvestDate?: string;
   sugarBrix?: number;
   vintageYear?: number;
+  wineType?: string;
   phone?: string;
   contactName?: string;
   photoUrls?: string[];
@@ -250,17 +251,24 @@ function ListingDetailView({
               </div>
               {photoUrls.length > 1 && (
                 <>
-                  <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-                    {photoUrls.map((_, i) => (
+                  <div className="flex gap-2 p-3 bg-slate-50 border-t border-slate-100 overflow-x-auto">
+                    {photoUrls.map((url, i) => (
                       <button
                         key={i}
+                        type="button"
                         onClick={() => setCarouselIndex(i)}
-                        className={`w-2 h-2 rounded-full transition-all ${
+                        className={`w-16 h-16 rounded-lg overflow-hidden bg-slate-200 flex-shrink-0 transition-all ${
                           i === carouselIndex
-                            ? "bg-white scale-125"
-                            : "bg-white/50"
+                            ? "ring-2 ring-[#04AA6D] ring-offset-1"
+                            : "opacity-80 hover:opacity-100"
                         }`}
-                      />
+                      >
+                        <img
+                          src={url}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
                     ))}
                   </div>
                   <div className="absolute top-1/2 -translate-y-1/2 left-2 right-2 flex justify-between">
@@ -318,9 +326,10 @@ function ListingDetailView({
 
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-white"
+              className="inline-flex w-fit items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-white"
               style={{ backgroundColor: getCategoryColor(category) }}
             >
+              {CATEGORY_ICONS[category] ?? "📦"}{" "}
               {t(getCategoryLabelKey(category))}
             </span>
             <span className="text-lg font-bold text-[#04AA6D]">
@@ -347,7 +356,7 @@ function ListingDetailView({
                   {t("market.sugarBrix")}
                 </p>
                 <p className="font-bold text-slate-900">
-                  {listing.sugarBrix} °Brix
+                  {listing.sugarBrix} {t("market.brixUnit")}
                 </p>
               </div>
             )}
@@ -447,6 +456,13 @@ export default function MarketClient() {
   const [minPrice, setMinPrice] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("newest");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [selectedImageByListing, setSelectedImageByListing] = useState<
+    Record<string, number>
+  >({});
+
+  const setListingImage = (listingId: string, index: number) => {
+    setSelectedImageByListing((prev) => ({ ...prev, [listingId]: index }));
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -485,6 +501,7 @@ export default function MarketClient() {
                 harvestDate: data.harvestDate,
                 sugarBrix: data.sugarBrix,
                 vintageYear: data.vintageYear,
+                wineType: data.wineType,
                 phone: data.phone,
                 contactName: data.contactName,
                 photoUrls: data.photoUrls,
@@ -602,6 +619,7 @@ export default function MarketClient() {
           harvestDate: data.harvestDate,
           sugarBrix: data.sugarBrix,
           vintageYear: data.vintageYear,
+          wineType: data.wineType,
           phone: data.phone,
           contactName: data.contactName,
           photoUrls: data.photoUrls,
@@ -823,25 +841,8 @@ export default function MarketClient() {
       <div className="max-w-7xl mx-auto">
         {/* Header: compact, scannable */}
         <header className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-6">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-                {t("market.title")}
-              </h1>
-              <p className="text-slate-500 mt-0.5 text-sm sm:text-base">
-                {t("market.subtitle")}
-              </p>
-            </div>
-            <Link
-              href="/"
-              className="vn-btn vn-btn-ghost text-sm shrink-0 self-start sm:self-center focus-visible:ring-2 focus-visible:ring-[#04AA6D]/50"
-            >
-              ← {t("nav.home")}
-            </Link>
-          </div>
-
           {/* Search: primary action */}
-          <div className="relative max-w-xl">
+          <div className="relative l">
             <Search
               size={20}
               className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
@@ -867,8 +868,8 @@ export default function MarketClient() {
           </div>
         </header>
 
-        {/* Toolbar: unified controls */}
-        <div className="vn-glass vn-card vn-card-pad mb-5">
+        {/* Toolbar: unified controls (overflow-visible so select dropdown isn't clipped) */}
+        <div className="vn-glass vn-card vn-card-pad mb-5 overflow-visible">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex bg-slate-100/80 rounded-xl p-1 gap-0.5">
@@ -1137,8 +1138,12 @@ export default function MarketClient() {
           /* Grid view: 4-column compact cards */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {filteredListings.map((listing, index) => {
-              const imgUrl = getListingImageUrl(listing);
               const photoUrls = getPhotoUrls(listing);
+              const selectedIdx = selectedImageByListing[listing.id] ?? 0;
+              const imgUrl =
+                photoUrls[selectedIdx] ??
+                photoUrls[0] ??
+                getListingImageUrl(listing);
               const displayTitle =
                 listing.variety ?? listing.title ?? t("market.unknownListing");
               const category = listing.category ?? "grapes";
@@ -1178,12 +1183,27 @@ export default function MarketClient() {
                       </span>
                     )}
                     {photoUrls.length > 1 && (
-                      <div className="absolute bottom-2.5 left-0 right-0 flex justify-center gap-1.5">
-                        {photoUrls.slice(0, 3).map((_, i) => (
-                          <span
+                      <div
+                        className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 px-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {photoUrls.slice(0, 5).map((url, i) => (
+                          <button
                             key={i}
-                            className="w-2 h-2 rounded-full bg-white/90 shadow-sm"
-                          />
+                            type="button"
+                            onClick={() => setListingImage(listing.id, i)}
+                            className={`w-8 h-8 rounded overflow-hidden bg-white/95 shadow-sm flex-shrink-0 transition-all ${
+                              selectedIdx === i
+                                ? "ring-2 ring-[#04AA6D] ring-offset-1"
+                                : "opacity-80 hover:opacity-100"
+                            }`}
+                          >
+                            <img
+                              src={url}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
                         ))}
                       </div>
                     )}
@@ -1231,7 +1251,7 @@ export default function MarketClient() {
                       )}
                       {listing.sugarBrix != null && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-emerald-50 text-emerald-800">
-                          {listing.sugarBrix} °Brix
+                          {listing.sugarBrix} {t("market.brixUnit")}
                         </span>
                       )}
                       {listing.vintageYear != null && (
@@ -1239,12 +1259,18 @@ export default function MarketClient() {
                           {listing.vintageYear}
                         </span>
                       )}
+                      {category === "wine" && listing.wineType && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-amber-50 text-amber-800">
+                          {listing.wineType}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100/80">
                       <span
-                        className="text-xs font-semibold"
-                        style={{ color: getCategoryColor(category) }}
+                        className="inline-flex w-fit items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-white"
+                        style={{ backgroundColor: getCategoryColor(category) }}
                       >
+                        {CATEGORY_ICONS[category] ?? "📦"}{" "}
                         {t(getCategoryLabelKey(category))}
                       </span>
                       <span className="flex items-center gap-1 text-slate-400 text-xs">
@@ -1263,8 +1289,12 @@ export default function MarketClient() {
             className="grid grid-cols-1 lg:grid-cols-2 gap-5 animate-fade-in"
           >
             {filteredListings.map((listing) => {
-              const imgUrl = getListingImageUrl(listing);
               const photoUrls = getPhotoUrls(listing);
+              const selectedIdx = selectedImageByListing[listing.id] ?? 0;
+              const imgUrl =
+                photoUrls[selectedIdx] ??
+                photoUrls[0] ??
+                getListingImageUrl(listing);
               const displayTitle =
                 listing.variety ?? listing.title ?? t("market.unknownListing");
               const category = listing.category ?? "grapes";
@@ -1303,12 +1333,27 @@ export default function MarketClient() {
                       </span>
                     )}
                     {photoUrls.length > 1 && (
-                      <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
-                        {photoUrls.slice(0, 3).map((_, i) => (
-                          <span
+                      <div
+                        className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 px-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {photoUrls.slice(0, 5).map((url, i) => (
+                          <button
                             key={i}
-                            className="w-1.5 h-1.5 rounded-full bg-white/80"
-                          />
+                            type="button"
+                            onClick={() => setListingImage(listing.id, i)}
+                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded overflow-hidden bg-white/95 shadow-sm flex-shrink-0 transition-all ${
+                              selectedIdx === i
+                                ? "ring-2 ring-[#04AA6D] ring-offset-1"
+                                : "opacity-80 hover:opacity-100"
+                            }`}
+                          >
+                            <img
+                              src={url}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
                         ))}
                       </div>
                     )}
@@ -1347,7 +1392,7 @@ export default function MarketClient() {
                       </span>
                       {listing.quantity != null && unitLabel && (
                         <span className="text-slate-500 text-sm font-medium">
-                          {listing.quantity} / {unitLabel}
+                          / {unitLabel}
                         </span>
                       )}
                     </div>
@@ -1365,21 +1410,29 @@ export default function MarketClient() {
                         </span>
                       )}
                       {listing.sugarBrix != null && (
-                        <span>{listing.sugarBrix} °Brix</span>
+                        <span>
+                          {listing.sugarBrix} {t("market.brixUnit")}
+                        </span>
                       )}
                       {listing.vintageYear != null && (
                         <span>{listing.vintageYear}</span>
                       )}
-                      <span className="flex items-center gap-1 ml-auto">
+                      {category === "wine" && listing.wineType && (
+                        <span>{listing.wineType}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100/80">
+                      <span
+                        className="inline-flex w-fit items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-white"
+                        style={{ backgroundColor: getCategoryColor(category) }}
+                      >
+                        {CATEGORY_ICONS[category] ?? "📦"}{" "}
+                        {t(getCategoryLabelKey(category))}
+                      </span>
+                      <span className="text-slate-400 text-xs">
                         {formatTimeAgo(listing.createdAt)}
                       </span>
                     </div>
-                    <span
-                      className="mt-2 text-xs font-medium"
-                      style={{ color: getCategoryColor(category) }}
-                    >
-                      {t(getCategoryLabelKey(category))}
-                    </span>
                   </div>
                 </div>
               );
@@ -1390,7 +1443,8 @@ export default function MarketClient() {
           <div key="detailed" className="space-y-4 animate-fade-in">
             {filteredListings.map((listing, index) => {
               const photoUrls = getPhotoUrls(listing);
-              const imgUrl = photoUrls[0] ?? null;
+              const selectedIdx = selectedImageByListing[listing.id] ?? 0;
+              const imgUrl = photoUrls[selectedIdx] ?? photoUrls[0] ?? null;
               const displayTitle =
                 listing.variety ?? listing.title ?? t("market.unknownListing");
               const category = listing.category ?? "grapes";
@@ -1437,7 +1491,7 @@ export default function MarketClient() {
                         {/* Badge overlay top-left */}
                         <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
                           <span
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-white"
+                            className="inline-flex w-fit items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-white"
                             style={{
                               backgroundColor: getCategoryColor(category),
                             }}
@@ -1458,27 +1512,28 @@ export default function MarketClient() {
                         </div>
                       </div>
                       {photoUrls.length > 1 && (
-                        <div className="flex gap-1.5 p-2 bg-slate-50 border-t border-slate-100">
-                          {photoUrls.slice(0, 2).map((url, i) => (
-                            <div
+                        <div className="flex gap-1.5 p-2 bg-slate-50 border-t border-slate-100 overflow-x-auto">
+                          {photoUrls.map((url, i) => (
+                            <button
                               key={i}
-                              className="w-16 h-16 rounded overflow-hidden bg-slate-200 flex-shrink-0"
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setListingImage(listing.id, i);
+                              }}
+                              className={`w-14 h-14 sm:w-16 sm:h-16 rounded overflow-hidden bg-slate-200 flex-shrink-0 transition-all ${
+                                selectedIdx === i
+                                  ? "ring-2 ring-[#04AA6D] ring-offset-1"
+                                  : "opacity-80 hover:opacity-100"
+                              }`}
                             >
                               <img
                                 src={url}
                                 alt=""
                                 className="w-full h-full object-cover"
                               />
-                            </div>
+                            </button>
                           ))}
-                          {photoUrls.length > 2 && (
-                            <div className="w-16 h-16 rounded bg-slate-200 flex items-center justify-center text-slate-500 text-[10px] font-semibold flex-shrink-0 px-1 text-center">
-                              {t("market.moreImages").replace(
-                                "{{count}}",
-                                String(photoUrls.length - 2),
-                              )}
-                            </div>
-                          )}
                         </div>
                       )}
                     </div>
@@ -1486,7 +1541,7 @@ export default function MarketClient() {
                     {/* Main content: title, price, location, description, features row */}
                     <div className="flex-1 flex flex-col min-w-0 p-4 sm:p-5">
                       <div className="flex items-start justify-between gap-3 mb-2">
-                        <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-snug line-clamp-2 flex-1">
+                        <h2 className="text-base sm:text-[24px] font-bold text-slate-900 leading-snug line-clamp-2 flex-1">
                           {displayTitle}
                         </h2>
                         <button
@@ -1522,8 +1577,8 @@ export default function MarketClient() {
                             : t("market.priceByAgreement")}
                         </span>
                         {listing.quantity != null && unitLabel && (
-                          <span className="text-slate-500 text-sm">
-                            {listing.quantity} / {unitLabel}
+                          <span className="text-slate-500 text-sm font-medium">
+                            / {unitLabel}
                           </span>
                         )}
                       </div>
@@ -1539,7 +1594,7 @@ export default function MarketClient() {
                       )}
 
                       {(listing.description || listing.notes) && (
-                        <p className="text-slate-600 text-sm leading-relaxed line-clamp-3 mb-3">
+                        <p className="text-slate-600 text-base leading-relaxed line-clamp-3 mb-3 font-medium">
                           {listing.notes || listing.description}
                         </p>
                       )}
@@ -1554,13 +1609,18 @@ export default function MarketClient() {
                         )}
                         {listing.sugarBrix != null && (
                           <span className="inline-flex items-center gap-1.5">
-                            °B {listing.sugarBrix}
+                            {listing.sugarBrix} {t("market.brixUnit")}
                           </span>
                         )}
                         {listing.vintageYear != null && (
                           <span className="inline-flex items-center gap-1.5">
                             <Calendar size={14} className="text-slate-400" />
                             {listing.vintageYear}
+                          </span>
+                        )}
+                        {category === "wine" && listing.wineType && (
+                          <span className="inline-flex items-center gap-1.5">
+                            {listing.wineType}
                           </span>
                         )}
                         {listing.harvestDate && (
@@ -1570,41 +1630,10 @@ export default function MarketClient() {
                           </span>
                         )}
                       </div>
-
-                      {/* Favorite + publish time at bottom */}
-                      <div className="flex flex-col items-end gap-1 mt-4 pt-4 border-t border-slate-100">
-                        <button
-                          onClick={(e) => toggleFavorite(listing.id, e)}
-                          disabled={favoriteToggling === listing.id}
-                          className={`p-2 rounded-lg transition-colors ${
-                            favoriteIds.has(listing.id)
-                              ? "text-rose-500"
-                              : "text-slate-400 hover:text-rose-500 hover:bg-rose-50/50"
-                          } ${favoriteToggling === listing.id ? "opacity-60" : ""}`}
-                          aria-label={
-                            favoriteIds.has(listing.id)
-                              ? "Remove from favorites"
-                              : "Add to favorites"
-                          }
-                        >
-                          <Heart
-                            size={20}
-                            strokeWidth={2}
-                            fill={
-                              favoriteIds.has(listing.id)
-                                ? "currentColor"
-                                : "none"
-                            }
-                          />
-                        </button>
-                        <span className="text-slate-400 text-xs">
-                          {formatTimeAgo(listing.createdAt)}
-                        </span>
-                      </div>
                     </div>
 
                     {/* Right sidebar: avatar, contact, location, time (compact) */}
-                    <div className="sm:w-[140px] lg:w-[160px] flex-shrink-0 flex flex-col items-center sm:items-center p-4 sm:py-5 sm:px-4 border-t sm:border-t-0 sm:border-l border-slate-100">
+                    <div className="sm:w-[140px] lg:w-[160px] flex-shrink-0 flex flex-col items-center  justify-between sm:items-center p-4 sm:py-5 sm:px-4 border-t sm:border-t-0 sm:border-l border-slate-100">
                       <div className="flex flex-col items-center lg:items-center gap-2 text-center">
                         <div
                           className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-base shrink-0"
@@ -1638,6 +1667,12 @@ export default function MarketClient() {
                             {listing.phone}
                           </a>
                         )}
+                      </div>
+                      {/* Favorite + publish time at bottom */}
+                      <div className="flex flex-col items-end gap-1 mt-4 pt-4">
+                        <span className="text-slate-400 text-xs">
+                          {formatTimeAgo(listing.createdAt)}
+                        </span>
                       </div>
                     </div>
                   </div>

@@ -53,6 +53,32 @@ const STATUS_COLORS: Record<ListingStatus, string> = {
   removed: "#c44d2e",
 };
 
+const CATEGORY_COLORS: Record<string, string> = {
+  grapes: "#2d5a27",
+  wine: "#872817",
+  nobati: "#C7772C",
+  inventory: "#5a6b7d",
+  seedlings: "#4a7c59",
+};
+
+const CATEGORY_ICONS: Record<string, string> = {
+  grapes: "🍇",
+  wine: "🍷",
+  nobati: "🥜",
+  inventory: "📦",
+  seedlings: "🌱",
+};
+
+function getCategoryColor(cat: string): string {
+  return CATEGORY_COLORS[cat] ?? CATEGORY_COLORS.grapes;
+}
+
+function getCategoryLabelKey(cat: string): string {
+  const c = cat?.toLowerCase() ?? "grapes";
+  const cap = c.charAt(0).toUpperCase() + c.slice(1);
+  return `market.category${cap}`;
+}
+
 function getListingImageUrl(listing: Listing | null): string | null {
   if (!listing) return null;
   return (
@@ -340,8 +366,17 @@ export default function MyListingsClient() {
                   return (
                     <div
                       key={item.id}
-                      className="vn-glass-hero vn-card overflow-hidden bg-white/90 shadow-md hover:shadow-lg transition-shadow"
+                      className="vn-glass-hero vn-card overflow-hidden bg-white/90 shadow-md hover:shadow-lg transition-shadow relative"
                     >
+                      <span
+                        className="absolute top-2.5 right-2.5 inline-flex w-fit items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-white z-10"
+                        style={{
+                          backgroundColor: getCategoryColor(item.category ?? "grapes"),
+                        }}
+                      >
+                        {CATEGORY_ICONS[item.category ?? "grapes"] ?? "📦"}{" "}
+                        {t(getCategoryLabelKey(item.category ?? "grapes"))}
+                      </span>
                       <div
                         role="button"
                         tabIndex={0}
@@ -375,7 +410,7 @@ export default function MyListingsClient() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="font-bold text-slate-900 truncate">
                               {variety}
                             </span>
@@ -425,7 +460,7 @@ export default function MyListingsClient() {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              router.push(`/my-listings/edit/${item.id}`);
+                              router.push(`/my-listings/edit?id=${item.id}`);
                             }}
                             className="p-2.5 text-vineyard-800 hover:bg-white/50 rounded-lg transition-colors"
                             aria-label={t("common.edit")}
