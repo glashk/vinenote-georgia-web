@@ -324,7 +324,7 @@ export default function PrivacyClient() {
                         href={`#privacy-section-${idx}`}
                         className="block text-sm text-slate-700 hover:text-slate-950 transition-colors"
                       >
-                        <span className="inline-flex items-center gap-2">
+                        <span className="inline-flex items-center gap-3">
                           <span className="w-1.5 h-1.5 rounded-full bg-vineyard-700/70" />
                           <span className="line-clamp-2">{s.title}</span>
                         </span>

@@ -10,7 +10,17 @@ import { onAuthStateChanged } from "firebase/auth";
 import { getDb } from "@/lib/firebase";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { Wine, Grape, Apple, Package, Sprout, Camera, Plus, X, GripVertical } from "lucide-react";
+import {
+  Wine,
+  Grape,
+  Apple,
+  Package,
+  Sprout,
+  Camera,
+  Plus,
+  X,
+  GripVertical,
+} from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type Category = "wine" | "grapes" | "nobati" | "inventory" | "seedlings";
@@ -21,7 +31,14 @@ const NOBATI_UNITS = ["pcs", "kg"];
 const INVENTORY_UNITS = ["pcs", "kg", "l"];
 const SEEDLINGS_UNITS = ["pcs"];
 
-const CATEGORY_ICONS: Record<Category, React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>> = {
+const CATEGORY_ICONS: Record<
+  Category,
+  React.ComponentType<{
+    size?: number;
+    strokeWidth?: number;
+    className?: string;
+  }>
+> = {
   wine: Wine,
   grapes: Grape,
   nobati: Apple,
@@ -29,7 +46,13 @@ const CATEGORY_ICONS: Record<Category, React.ComponentType<{ size?: number; stro
   seedlings: Sprout,
 };
 
-function CategoryIcon({ category, active }: { category: Category; active: boolean }) {
+function CategoryIcon({
+  category,
+  active,
+}: {
+  category: Category;
+  active: boolean;
+}) {
   const Icon = CATEGORY_ICONS[category];
   return (
     <Icon
@@ -56,16 +79,22 @@ export default function AddListingClient() {
   const [price, setPrice] = useState("");
   const [region, setRegion] = useState("");
   const [village, setVillage] = useState("");
-  const [harvestDate, setHarvestDate] = useState(new Date().toISOString().split("T")[0]);
+  const [harvestDate, setHarvestDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
   const [sugarBrix, setSugarBrix] = useState("");
-  const [vintageYear, setVintageYear] = useState(new Date().getFullYear().toString());
+  const [vintageYear, setVintageYear] = useState(
+    new Date().getFullYear().toString(),
+  );
   const [wineType, setWineType] = useState("");
   const [phone, setPhone] = useState("");
   const [contactName, setContactName] = useState("");
   const [notes, setNotes] = useState("");
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [uploadingCount, setUploadingCount] = useState(0);
-  const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
+  const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoUploading = uploadingCount > 0;
 
@@ -82,7 +111,7 @@ export default function AddListingClient() {
               : category === "seedlings"
                 ? SEEDLINGS_UNITS
                 : GRAPE_UNITS,
-    [category]
+    [category],
   );
 
   useEffect(() => {
@@ -95,7 +124,9 @@ export default function AddListingClient() {
     const defaultUnit =
       category === "wine"
         ? "l"
-        : category === "nobati" || category === "inventory" || category === "seedlings"
+        : category === "nobati" ||
+            category === "inventory" ||
+            category === "seedlings"
           ? "pcs"
           : "kg";
     setUnit(units.includes(defaultUnit) ? defaultUnit : units[0]);
@@ -113,11 +144,13 @@ export default function AddListingClient() {
               ? t("market.validation.itemRequired")
               : t("market.validation.varietyRequired"),
       };
-    if (!region.trim()) return { ok: false, message: t("market.validation.regionRequired") };
+    if (!region.trim())
+      return { ok: false, message: t("market.validation.regionRequired") };
     const qty = Number(quantity);
     if (Number.isNaN(qty) || qty <= 0)
       return { ok: false, message: t("market.validation.quantityRequired") };
-    if (!phone.trim()) return { ok: false, message: t("market.validation.phoneRequired") };
+    if (!phone.trim())
+      return { ok: false, message: t("market.validation.phoneRequired") };
     const phoneDigits = phone.replace(/\D/g, "");
     if (phoneDigits.length < 9)
       return { ok: false, message: t("market.validation.phoneInvalid") };
@@ -162,7 +195,9 @@ export default function AddListingClient() {
         const fbErr = err as { code?: string; message?: string };
         let msg = t("market.photoUploadError");
         if (fbErr?.code === "storage/unauthorized") {
-          msg = t("market.photoUploadError") + " — Run: firebase deploy --only storage";
+          msg =
+            t("market.photoUploadError") +
+            " — Run: firebase deploy --only storage";
         } else if (fbErr?.code === "storage/unauthenticated") {
           msg = t("market.photoUploadError") + " — Please sign in again";
         } else if (fbErr?.message) {
@@ -174,7 +209,7 @@ export default function AddListingClient() {
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
     },
-    [user, t]
+    [user, t],
   );
 
   const handlePhotoInputChange = useCallback(
@@ -186,7 +221,7 @@ export default function AddListingClient() {
         uploadPhoto(files[i]);
       }
     },
-    [photoUrls.length, uploadPhoto]
+    [photoUrls.length, uploadPhoto],
   );
 
   const removePhoto = useCallback((index: number) => {
@@ -229,10 +264,14 @@ export default function AddListingClient() {
       };
       if (price.trim()) payload.price = Number(price.replace(",", "."));
       if (village.trim()) payload.village = village.trim();
-      if (category === "grapes" && harvestDate) payload.harvestDate = harvestDate;
-      if (category === "grapes" && sugarBrix.trim()) payload.sugarBrix = Number(sugarBrix);
-      if (category === "wine" && vintageYear.trim()) payload.vintageYear = Number(vintageYear);
-      if (category === "wine" && wineType.trim()) payload.wineType = wineType.trim();
+      if (category === "grapes" && harvestDate)
+        payload.harvestDate = harvestDate;
+      if (category === "grapes" && sugarBrix.trim())
+        payload.sugarBrix = Number(sugarBrix);
+      if (category === "wine" && vintageYear.trim())
+        payload.vintageYear = Number(vintageYear);
+      if (category === "wine" && wineType.trim())
+        payload.wineType = wineType.trim();
       if (contactName.trim()) payload.contactName = contactName.trim();
       if (notes.trim()) payload.notes = notes.trim();
       if (photoUrls.length > 0) payload.photoUrls = photoUrls;
@@ -243,7 +282,8 @@ export default function AddListingClient() {
       const fbErr = err as { code?: string; message?: string };
       let msg = t("market.errorLoad");
       if (fbErr?.code === "permission-denied") {
-        msg = t("market.errorLoad") + " — Permission denied. Please sign in again.";
+        msg =
+          t("market.errorLoad") + " — Permission denied. Please sign in again.";
       } else if (fbErr?.message) {
         msg = fbErr.message;
       }
@@ -272,12 +312,43 @@ export default function AddListingClient() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5f4f0]">
-        <div className="text-center px-6">
-          <p className="text-slate-600 mb-4">{t("auth.signIn.noAccount")}</p>
-          <Link href="/login" className="vn-btn vn-btn-primary">
-            {t("nav.signIn")}
-          </Link>
+      <div className="min-h-screen flex items-center justify-center bg-[#f5f4f0] px-4 py-14 sm:py-20">
+        <div className="w-full max-w-md">
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-8 shadow-sm sm:p-10">
+            <div className="flex flex-col items-center text-center">
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100">
+                <Plus
+                  size={32}
+                  strokeWidth={2.5}
+                  className="text-emerald-600"
+                />
+              </div>
+              <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">
+                {t("market.addListing")}
+              </h1>
+              {/* <p className="mt-3 text-slate-600">
+                {t("auth.signIn.noAccount")}
+              </p> */}
+              <p className="mt-1 text-sm text-slate-500">
+                {t("auth.signIn.addListingHint")}
+              </p>
+              <Link
+                href="/login?redirect=/my-listings/add"
+                className="mt-8 w-full min-h-[52px] rounded-xl bg-emerald-600 px-6 py-3.5 text-base font-semibold text-white shadow-md shadow-emerald-500/25 transition-all hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-500/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+              >
+                {t("nav.signIn")}
+              </Link>
+              <div className="mt-6 pt-6 w-full border-t border-slate-200">
+                <Link
+                  href="/"
+                  className="flex items-center justify-center gap-3 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
+                >
+                  <span aria-hidden>←</span>
+                  {t("common.backToHome")}
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -288,7 +359,7 @@ export default function AddListingClient() {
       <Container>
         <div className="max-w-xl mx-auto px-4">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-2">
+            <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-3">
               <Plus size={24} strokeWidth={2.5} />
               {t("market.addListing")}
             </h1>
@@ -327,7 +398,10 @@ export default function AddListingClient() {
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
                       e.preventDefault();
-                      if (draggedPhotoIndex !== null && draggedPhotoIndex !== idx) {
+                      if (
+                        draggedPhotoIndex !== null &&
+                        draggedPhotoIndex !== idx
+                      ) {
                         movePhoto(draggedPhotoIndex, idx);
                       }
                       setDraggedPhotoIndex(null);
@@ -377,7 +451,11 @@ export default function AddListingClient() {
                       <span className="w-5 h-5 border-2 border-[#2d5a27] border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <>
-                        <Camera size={28} strokeWidth={2} className="text-[#2d5a27]" />
+                        <Camera
+                          size={28}
+                          strokeWidth={2}
+                          className="text-[#2d5a27]"
+                        />
                         <span className="text-xs text-[#2d5a27] font-medium">
                           {t("market.addPhoto")}
                         </span>
@@ -390,7 +468,15 @@ export default function AddListingClient() {
               {/* Category chips */}
               <label className={labelBase}>{t("market.category")}</label>
               <div className="flex flex-wrap gap-2.5 mt-2">
-                {(["wine", "grapes", "nobati", "inventory", "seedlings"] as const).map((c) => {
+                {(
+                  [
+                    "wine",
+                    "grapes",
+                    "nobati",
+                    "inventory",
+                    "seedlings",
+                  ] as const
+                ).map((c) => {
                   const active = category === c;
                   return (
                     <button
@@ -405,7 +491,9 @@ export default function AddListingClient() {
                       }`}
                     >
                       <CategoryIcon category={c} active={active} />
-                      {t(`market.category${c.charAt(0).toUpperCase() + c.slice(1)}`)}
+                      {t(
+                        `market.category${c.charAt(0).toUpperCase() + c.slice(1)}`,
+                      )}
                     </button>
                   );
                 })}
@@ -477,7 +565,9 @@ export default function AddListingClient() {
                               : "bg-[#f5f4f0] border-[#e8e6e1] text-[#2c2c2c]"
                           }`}
                         >
-                          {t(`market.units.${u}`) !== `market.units.${u}` ? t(`market.units.${u}`) : u}
+                          {t(`market.units.${u}`) !== `market.units.${u}`
+                            ? t(`market.units.${u}`)
+                            : u}
                         </button>
                       );
                     })}
@@ -576,15 +666,13 @@ export default function AddListingClient() {
                 className={`${inputBase} placeholder-[#8a9a85] min-h-[90px] resize-none`}
               />
 
-              {error && (
-                <p className="mt-4 text-sm text-red-600">{error}</p>
-              )}
+              {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
               {/* Save button */}
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-7 w-full min-h-[54px] rounded-full bg-[#04AA6D] text-white text-base font-bold flex items-center justify-center gap-2 disabled:opacity-70 hover:bg-[#039a5e] transition-colors shadow-sm"
+                className="mt-7 w-full min-h-[54px] rounded-full bg-[#04AA6D] text-white text-base font-bold flex items-center justify-center gap-3 disabled:opacity-70 hover:bg-[#039a5e] transition-colors shadow-sm"
                 style={{
                   boxShadow: "0 4px 8px rgba(4, 170, 109, 0.2)",
                 }}

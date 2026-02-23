@@ -355,7 +355,7 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
       <Container>
         <div className="max-w-xl mx-auto px-4">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-2">
+            <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-3">
               <Pencil size={24} strokeWidth={2.5} />
               {t("market.editListing")}
             </h1>
@@ -640,7 +640,7 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-7 w-full min-h-[54px] rounded-full bg-[#04AA6D] text-white text-base font-bold flex items-center justify-center gap-2 disabled:opacity-70 hover:bg-[#039a5e] transition-colors shadow-sm"
+                className="mt-7 w-full min-h-[54px] rounded-full bg-[#04AA6D] text-white text-base font-bold flex items-center justify-center gap-3 disabled:opacity-70 hover:bg-[#039a5e] transition-colors shadow-sm"
                 style={{
                   boxShadow: "0 4px 8px rgba(4, 170, 109, 0.2)",
                 }}

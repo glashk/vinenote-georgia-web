@@ -250,7 +250,7 @@ function ListingDetailView({
       <div className="max-w-2xl mx-auto">
         <button
           onClick={onBack}
-          className="mb-6 inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 text-sm font-medium transition-colors"
+          className="mb-6 inline-flex items-center gap-3 text-slate-600 hover:text-slate-900 text-sm font-medium transition-colors"
         >
           ← {t("market.backToList")}
         </button>
@@ -489,7 +489,7 @@ function ListingDetailView({
               </div>
               <a
                 href={`tel:${listing.phone}`}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white bg-[#04AA6D] hover:bg-[#039a5e] transition-colors"
+                className="inline-flex items-center justify-center gap-3 px-6 py-3 rounded-xl font-semibold text-white bg-[#04AA6D] hover:bg-[#039a5e] transition-colors"
               >
                 <span>📞</span>
                 {listing.phone}
@@ -1144,7 +1144,7 @@ export default function MarketClient() {
                       aria-expanded={sortDropdownOpen}
                       aria-haspopup="listbox"
                       aria-label={t("market.sortByLabel")}
-                      className="flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 w-full sm:w-auto px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border-2 border-slate-200/80 bg-white text-slate-700 text-sm font-semibold shadow-[0_2px_6px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:shadow-[0_4px_12px_rgba(15,23,42,0.1),0_2px_4px_rgba(15,23,42,0.06)] focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all cursor-pointer h-11 sm:h-[52px]"
+                      className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border-2 border-slate-200/80 bg-white text-slate-700 text-sm font-semibold shadow-[0_2px_6px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:shadow-[0_4px_12px_rgba(15,23,42,0.1),0_2px_4px_rgba(15,23,42,0.06)] focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all cursor-pointer h-11 sm:h-[52px]"
                     >
                       <ArrowUpDown
                         size={18}
@@ -1203,7 +1203,7 @@ export default function MarketClient() {
                     onClick={() => setFiltersOpen((v) => !v)}
                     aria-expanded={filtersOpen}
                     aria-controls="market-filters"
-                    className={`relative flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 flex-1 sm:flex-initial min-w-0 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl text-sm font-semibold border-2 transition-all h-11 sm:h-[52px] ${
+                    className={`relative flex items-center justify-center sm:justify-start gap-2 sm:gap-3 flex-1 sm:flex-initial min-w-0 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl text-sm font-semibold border-2 transition-all h-11 sm:h-[52px] ${
                       filtersOpen
                         ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-[0_2px_8px_rgba(4,170,109,0.3),0_4px_12px_rgba(0,0,0,0.08)]"
                         : "bg-white border-slate-200/80 text-slate-600 shadow-[0_2px_6px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_4px_12px_rgba(15,23,42,0.1),0_2px_4px_rgba(15,23,42,0.06)]"
@@ -1237,7 +1237,7 @@ export default function MarketClient() {
                       }
                       aria-pressed={favoritesOnly}
                       aria-label={t("market.favorites")}
-                      className={`flex items-center justify-center gap-1.5 sm:gap-2 shrink-0 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl text-sm font-semibold border-2 transition-all h-11 sm:h-[52px] ${
+                      className={`flex items-center justify-center gap-2 sm:gap-3 shrink-0 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl text-sm font-semibold border-2 transition-all h-11 sm:h-[52px] ${
                         favoritesOnly
                           ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]"
                           : "bg-white border-slate-200/80 text-slate-600 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
@@ -1382,7 +1382,7 @@ export default function MarketClient() {
                     onClick={() => setFiltersOpen((v) => !v)}
                     aria-expanded={filtersOpen}
                     aria-controls="market-filters"
-                    className={`relative flex items-center gap-2 px-4 py-3.5 rounded-2xl text-sm font-semibold border-2 transition-all h-[52px] ${
+                    className={`relative flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-semibold border-2 transition-all h-[52px] ${
                       filtersOpen
                         ? "bg-[#04AA6D] border-[#04AA6D] text-white"
                         : "bg-white border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
@@ -1416,7 +1416,7 @@ export default function MarketClient() {
                       }
                       aria-pressed={favoritesOnly}
                       aria-label={t("market.favorites")}
-                      className={`flex items-center gap-2 px-4 py-3.5 rounded-2xl text-sm font-semibold border-2 transition-all h-[52px] ${
+                      className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-semibold border-2 transition-all h-[52px] ${
                         favoritesOnly
                           ? "bg-[#04AA6D] border-[#04AA6D] text-white"
                           : "bg-white border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
@@ -1453,7 +1453,7 @@ export default function MarketClient() {
                       onClick={() =>
                         withViewTransition(() => setCategoryFilter(c))
                       }
-                      className={`inline-flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold border-2 shrink-0 transition-all duration-200 ${
+                      className={`inline-flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold border-2 shrink-0 transition-all duration-200 ${
                         categoryFilter === c
                           ? "bg-[#04AA6D] border-[#04AA6D] text-white"
                           : "bg-white border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
@@ -1636,7 +1636,7 @@ export default function MarketClient() {
                 </div>
                 <button
                   onClick={() => withViewTransition(resetFilters)}
-                  className="inline-flex items-center gap-2 mt-2 sm:mt-4 text-sm bg-red-100/90 rounded-xl px-4 py-2.5 sm:py-2 font-semibold text-slate-600 hover:bg-red-200/80 active:scale-[0.98] transition-colors min-h-[44px] sm:min-h-0"
+                  className="inline-flex items-center gap-3 mt-2 sm:mt-4 text-sm bg-red-100/90 rounded-xl px-4 py-2.5 sm:py-2 font-semibold text-slate-600 hover:bg-red-200/80 active:scale-[0.98] transition-colors min-h-[44px] sm:min-h-0"
                 >
                   <X size={16} />
                   {t("common.reset")}
@@ -1681,9 +1681,10 @@ export default function MarketClient() {
               </button>
               <Link
                 href="/"
-                className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#04AA6D] text-white hover:bg-[#039a5e] transition-colors"
+                className="flex items-center justify-center gap-3 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#04AA6D] text-white hover:bg-[#039a5e] transition-colors"
               >
-                {t("nav.home")}
+                <span aria-hidden>←</span>
+                {t("common.backToHome")}
               </Link>
             </div>
           </div>

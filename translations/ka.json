@@ -85,7 +85,11 @@
     "datePlaceholder": "აირჩიეთ თარიღი",
     "all": "ყველა",
     "reset": "გასუფთავება",
-    "clear": "გასუფთავება"
+    "clear": "გასუფთავება",
+    "processing": "მიმდინარეობს…",
+    "confirm": "დადასტურება",
+    "deletePermanently": "სამუდამოდ წაშლა",
+    "backToHome": "მთავარ გვერდზე"
   },
   "auth": {
     "signIn": {
@@ -98,7 +102,8 @@
       "submit": "შესვლა",
       "loading": "შედიხართ...",
       "noAccount": "არ გაქვთ ანგარიში?",
-      "signUp": "რეგისტრაცია"
+      "signUp": "რეგისტრაცია",
+      "addListingHint": "გაიარეთ ავტორიზაცია, რათა განათავსოთ ყურძენი, ღვინო ან სხვა პროდუქტები მარკეტზე."
     },
     "forgotPassword": {
       "title": "პაროლის აღდგენა",
@@ -111,10 +116,12 @@
     },
     "signUp": {
       "title": "ანგარიშის შექმნა",
+      "subtitle": "შემოუერთდით VineNote-ს ყურძნის, ღვინის და სხვა პროდუქტების გასაყიდად და საყიდად.",
       "name": "სახელი",
       "namePlaceholder": "თქვენი სახელი",
       "email": "ელფოსტა",
       "password": "პაროლი",
+      "passwordHint": "მინიმუმ 6 სიმბოლო",
       "confirmPassword": "გაიმეორეთ პაროლი",
       "showPassword": "პაროლის ჩვენება",
       "hidePassword": "პაროლის დამალვა",
@@ -163,6 +170,9 @@
     "priceByAgreement": "შეთანხმებით",
     "backToList": "მარკეტში დაბრუნება",
     "errorLoad": "ჩატვირთვა ვერ მოხერხდა",
+    "errorUpdateStatus": "სტატუსის განახლება ვერ მოხერხდა",
+    "errorRemoveListing": "ჩანაწერის მოხსნა ვერ მოხერხდა",
+    "errorDeleteListing": "ჩანაწერის წაშლა ვერ მოხერხდა",
     "validation": {
       "typeRequired": "გთხოვთ აირჩიოთ კატეგორია",
       "varietyRequired": "ჯიში აუცილებელია",
@@ -243,6 +253,9 @@
     "editListing": "განცხადების რედაქტირება",
     "createFirst": "ჩამოტვირთეთ აპლიკაცია",
     "createFirstHint": "ჩანაწერების შექმნა VineNote აპლიკაციიდან.",
+    "markAsSold": "მონიშნე როგორც გაყიდული",
+    "markAsReserved": "მონიშნე როგორც დაჯავშნილი",
+    "deleteTypeConfirm": "დასადასტურებლად ჩაწერეთ DELETE",
     "removeListing": "ჩანაწერის მოხსნა",
     "removeConfirm": "მოვხსნათ ეს განცხადება მარკეტიდან?",
     "removeConfirmMessage": "განცხადება დამალული იქნება მარკეტში. შეგიძლიათ მოგვიანებით შეცვალოთ ან წაშალოთ.",

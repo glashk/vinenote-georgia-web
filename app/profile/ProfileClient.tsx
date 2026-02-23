@@ -105,9 +105,13 @@ export default function ProfileClient() {
                   {saving ? t("profile.saving") : t("profile.save")}
                 </button>
               </form>
-              <div className="mt-6">
-                <Link href="/" className="vn-link">
-                  ← {t("nav.home")}
+              <div className="mt-6 pt-6 border-t border-slate-200">
+                <Link
+                  href="/"
+                  className="flex items-center justify-center gap-3 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
+                >
+                  <span aria-hidden>←</span>
+                  {t("common.backToHome")}
                 </Link>
               </div>
             </div>

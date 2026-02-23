@@ -282,7 +282,7 @@ export default function HomeClient() {
                       {feature.title}
                     </h3>
                     <p className="text-slate-700">{feature.description}</p>
-                    <div className="mt-5 flex items-center gap-2 text-sm font-medium text-vineyard-900">
+                    <div className="mt-5 flex items-center gap-3 text-sm font-medium text-vineyard-900">
                       <span>Learn more</span>
                       <svg
                         width="16"

@@ -274,8 +274,12 @@ export default function MarketClient() {
             <Link href="/admin/reports" className="vn-btn vn-btn-ghost text-sm">
               მოხსენებები
             </Link>
-            <Link href="/" className="vn-btn vn-btn-ghost text-sm">
-              ← მთავარი
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              <span aria-hidden>←</span>
+              მთავარი
             </Link>
           </div>
         </div>

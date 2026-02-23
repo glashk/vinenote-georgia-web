@@ -24,7 +24,7 @@ export default function Footer() {
             <div className="lg:col-span-2">
               <Link
                 href="/"
-                className="inline-flex items-center gap-2.5 group transition-opacity hover:opacity-90"
+                className="inline-flex items-center gap-3 group transition-opacity hover:opacity-90"
               >
                 <Logo size={40} className="shrink-0" animated={false} />
                 <span className="text-base font-semibold text-slate-900">

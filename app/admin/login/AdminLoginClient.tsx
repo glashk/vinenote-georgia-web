@@ -100,7 +100,7 @@ export default function AdminLoginClient() {
             {loading ? "შესვლა..." : "შესვლა"}
           </button>
         </form>
-        <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3 text-sm">
+        <div className="mt-6 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-center gap-3 text-sm">
           {user && (
             <button
               type="button"
@@ -110,7 +110,11 @@ export default function AdminLoginClient() {
               გასვლა
             </button>
           )}
-          <Link href="/" className="vn-link text-slate-500">
+          <Link
+            href="/"
+            className="flex items-center justify-center gap-3 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
+          >
+            <span aria-hidden>←</span>
             მთავარი გვერდი
           </Link>
         </div>

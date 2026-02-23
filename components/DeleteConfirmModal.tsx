@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
-export interface ConfirmModalProps {
+const CONFIRM_TEXT = "DELETE";
+
+export interface DeleteConfirmModalProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void | Promise<void>;
@@ -10,23 +12,25 @@ export interface ConfirmModalProps {
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  typeConfirmLabel?: string;
   loadingLabel?: string;
-  variant?: "danger" | "warning" | "neutral";
   loading?: boolean;
 }
 
-export function ConfirmModal({
+export function DeleteConfirmModal({
   open,
   onClose,
   onConfirm,
   title,
   message,
-  confirmLabel = "Confirm",
+  confirmLabel = "Delete permanently",
   cancelLabel = "Cancel",
-  loadingLabel = "Processing…",
-  variant = "neutral",
+  typeConfirmLabel = "Type DELETE to confirm",
   loading = false,
-}: ConfirmModalProps) {
+}: DeleteConfirmModalProps) {
+  const [typed, setTyped] = useState("");
+  const canConfirm = typed === CONFIRM_TEXT && !loading;
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !loading) onClose();
@@ -34,6 +38,7 @@ export function ConfirmModal({
     if (open) {
       document.addEventListener("keydown", handleEscape);
       document.body.style.overflow = "hidden";
+      setTyped("");
     }
     return () => {
       document.removeEventListener("keydown", handleEscape);
@@ -43,27 +48,8 @@ export function ConfirmModal({
 
   if (!open) return null;
 
-  const variantStyles = {
-    danger: {
-      icon: "🗑️",
-      confirmClass:
-        "bg-red-600 hover:bg-red-700 text-white focus-visible:ring-red-500",
-    },
-    warning: {
-      icon: "⚠️",
-      confirmClass:
-        "bg-amber-600 hover:bg-amber-700 text-white focus-visible:ring-amber-500",
-    },
-    neutral: {
-      icon: "ℹ️",
-      confirmClass:
-        "bg-emerald-600 hover:bg-emerald-700 text-white focus-visible:ring-emerald-500",
-    },
-  };
-
-  const styles = variantStyles[variant];
-
   const handleConfirm = async () => {
+    if (!canConfirm) return;
     await onConfirm();
   };
 
@@ -72,44 +58,59 @@ export function ConfirmModal({
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="confirm-modal-title"
+      aria-labelledby="delete-modal-title"
     >
       <div
         className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
         onClick={loading ? undefined : onClose}
       />
       <div
-        className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-2xl animate-scale-in border border-slate-200/50 dark:border-slate-600/50"
+        className="relative w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl animate-scale-in border border-slate-200/50"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex gap-4">
-          <span className="text-3xl flex-shrink-0">{styles.icon}</span>
+          <span className="text-3xl flex-shrink-0">🗑️</span>
           <div className="flex-1 min-w-0">
             <h2
-              id="confirm-modal-title"
-              className="text-lg font-semibold text-slate-900 dark:text-slate-100"
+              id="delete-modal-title"
+              className="text-lg font-semibold text-slate-900"
             >
               {title}
             </h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              {message}
-            </p>
+            <p className="mt-2 text-sm text-slate-600">{message}</p>
           </div>
         </div>
+
+        <div className="mt-6 space-y-2">
+          <label htmlFor="delete-type-confirm" className="block text-sm font-medium text-slate-700">
+            {typeConfirmLabel}
+          </label>
+          <input
+            id="delete-type-confirm"
+            type="text"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value.toUpperCase())}
+            placeholder={CONFIRM_TEXT}
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-mono uppercase placeholder:text-slate-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+            disabled={loading}
+            autoComplete="off"
+          />
+        </div>
+
         <div className="flex gap-3 mt-6 justify-end">
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2.5 rounded-xl text-sm font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
+            className="px-4 py-2.5 rounded-xl text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50"
           >
             {cancelLabel}
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={loading}
-            className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors focus-visible:outline focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 ${styles.confirmClass}`}
+            disabled={!canConfirm}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? (
               <span className="inline-flex items-center gap-3">

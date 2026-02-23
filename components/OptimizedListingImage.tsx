@@ -18,6 +18,7 @@ interface OptimizedListingImageProps {
   width?: number;
   height?: number;
   objectFit?: "cover" | "contain";
+  onError?: () => void;
 }
 
 /**
@@ -37,6 +38,7 @@ export default function OptimizedListingImage({
   width,
   height,
   objectFit = "cover",
+  onError: onErrorProp,
 }: OptimizedListingImageProps) {
   const primaryUrl = getImageForContext(src, image200, image400, context);
   const fallbackUrl = src ?? null;
@@ -54,6 +56,8 @@ export default function OptimizedListingImage({
     if (!failed && fallbackUrl && currentUrl !== fallbackUrl) {
       setCurrentUrl(fallbackUrl);
       setFailed(true);
+    } else {
+      onErrorProp?.();
     }
   };
 
