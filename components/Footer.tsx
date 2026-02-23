@@ -22,8 +22,8 @@ export default function Footer() {
     <footer className="mt-auto">
       {/* Main footer */}
       <div className="relative overflow-hidden bg-gradient-to-b from-emerald-700 via-emerald-600 to-emerald-700">
-        {/* Subtle pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.03]" />
+        {/* Subtle pattern overlay - pointer-events-none so it doesn't block clicks */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.03]" />
         <Container>
           <div className="relative pt-8 md:pt-12">
             <div className="flex flex-col items-center text-center lg:flex-row lg:items-start lg:justify-between lg:text-left">
@@ -110,18 +110,17 @@ export default function Footer() {
           </div>
         </Container>
         {/* Bottom bar */}
-
-        <Container className="py-2">
-          <p className="text-sm text-emerald-200/70 text-center">
+        <Container className="relative z-10 gap-4 py-5 sm:flex-row">
+          <p className="text-sm text-center text-emerald-200/70">
             {t("footer.copyright")} - {new Date().getFullYear()}
           </p>
+          <Link
+            href="/admin/login"
+            className="text-xs text-emerald-200/60 transition-colors hover:text-emerald-100"
+          >
+            {t("footer.admin")}
+          </Link>
         </Container>
-        <Link
-          href="/admin/login"
-          className="text-xs text-emerald-200/60 transition-colors hover:text-emerald-100"
-        >
-          {t("footer.admin")}
-        </Link>
       </div>
     </footer>
   );
