@@ -198,7 +198,7 @@ export default function Header() {
           <div className="flex items-center gap-2 shrink-0">
             <Link
               href="/my-listings/add"
-              className="flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-vineyard-500 text-white font-semibold text-sm hover:bg-vineyard-600 active:scale-[0.98] transition-all shadow-sm"
+              className="flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-emerald-600 text-white font-semibold text-sm shadow-md shadow-emerald-500/25 hover:bg-emerald-700 active:scale-[0.98] transition-all"
             >
               <svg
                 className="w-4 h-4"
@@ -284,7 +284,7 @@ export default function Header() {
               </Link>
               <Link
                 href="/my-listings/add"
-                className="flex items-center gap-3 h-10 px-4 rounded-full bg-vineyard-500 text-white font-semibold text-sm hover:bg-vineyard-600 transition-all duration-200"
+                className="flex items-center gap-3 h-10 px-4 rounded-full bg-emerald-600 text-white font-semibold text-sm shadow-md shadow-emerald-500/25 hover:bg-emerald-700 transition-all duration-200"
               >
                 <svg
                   className="w-4 h-4"
@@ -425,7 +425,7 @@ export default function Header() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex items-center gap-3 h-10 px-4 rounded-full bg-vineyard-500 text-white font-semibold text-sm hover:bg-vineyard-600 transition-all duration-200"
+                  className="flex items-center gap-3 h-10 px-4 rounded-full bg-emerald-600 text-white font-semibold text-sm shadow-md shadow-emerald-500/25 hover:bg-emerald-700 transition-all duration-200"
                 >
                   <svg
                     className="w-4 h-4"
@@ -459,7 +459,7 @@ export default function Header() {
             aria-hidden
           />
           <div
-            className="absolute right-0 top-0 bottom-0 w-[min(320px,85vw)] bg-gradient-to-b from-white via-vineyard-50 to-vineyard-100 shadow-2xl overflow-y-auto ring-1 ring-vineyard-100"
+            className="absolute right-0 top-0 bottom-0 w-[min(320px,85vw)] bg-gradient-to-b from-white via-emerald-50 to-emerald-100 shadow-2xl overflow-y-auto ring-1 ring-emerald-100"
             data-closing={isClosing ? "true" : undefined}
             style={{
               animation: isClosing
@@ -476,7 +476,7 @@ export default function Header() {
                   <LanguageSwitcher variant="light" />
                   <button
                     onClick={closeMobileMenu}
-                    className="p-2 rounded-lg text-slate-700 hover:bg-vineyard-50 transition-colors"
+                    className="p-2 rounded-lg text-slate-700 hover:bg-emerald-50 transition-colors"
                     aria-label={t("nav.closeMenu")}
                   >
                     <svg
@@ -514,13 +514,13 @@ export default function Header() {
                       className={[
                         "flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-colors",
                         isActive
-                          ? "bg-vineyard-100 text-vineyard-800"
-                          : "text-slate-800 hover:bg-vineyard-50 hover:text-vineyard-600",
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "text-slate-800 hover:bg-emerald-50 hover:text-emerald-600",
                       ].join(" ")}
                     >
                       <NavIcon
                         icon={link.icon}
-                        className="w-5 h-5 shrink-0 text-vineyard-500"
+                        className="w-5 h-5 shrink-0 text-emerald-600"
                       />
                       {link.label}
                     </Link>
@@ -529,7 +529,7 @@ export default function Header() {
                 <Link
                   href="/my-listings/add"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-vineyard-500 text-white font-semibold mt-4 hover:bg-vineyard-600 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-emerald-600 text-white font-semibold mt-4 shadow-md shadow-emerald-500/25 hover:bg-emerald-700 transition-colors"
                 >
                   <svg
                     className="w-5 h-5"
@@ -547,7 +547,7 @@ export default function Header() {
                   {t("market.add")}
                 </Link>
               </nav>
-              <div className="pt-4 mt-4 border-t border-vineyard-100 space-y-1">
+              <div className="pt-4 mt-4 border-t border-emerald-100 space-y-1">
                 {user ? (
                   <>
                     <div className="px-4 py-2 text-sm text-slate-600 truncate">
@@ -558,10 +558,10 @@ export default function Header() {
                     <Link
                       href="/my-listings"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-800 hover:bg-vineyard-50 hover:text-vineyard-600"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-800 hover:bg-emerald-50 hover:text-emerald-600"
                     >
                       <svg
-                        className="w-5 h-5 text-vineyard-500"
+                        className="w-5 h-5 text-emerald-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -578,10 +578,10 @@ export default function Header() {
                     <Link
                       href="/profile"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-800 hover:bg-vineyard-50 hover:text-vineyard-600"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-800 hover:bg-emerald-50 hover:text-emerald-600"
                     >
                       <svg
-                        className="w-5 h-5 text-vineyard-500"
+                        className="w-5 h-5 text-emerald-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -622,7 +622,7 @@ export default function Header() {
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-vineyard-500 text-white font-semibold hover:bg-vineyard-600 transition-colors"
+                    className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-emerald-600 text-white font-semibold shadow-md shadow-emerald-500/25 hover:bg-emerald-700 transition-colors"
                   >
                     <svg
                       className="w-5 h-5"
