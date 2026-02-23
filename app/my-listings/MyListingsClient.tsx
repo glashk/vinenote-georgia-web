@@ -36,6 +36,7 @@ export default function MyListingsClient() {
     updateStatus,
     removeListing,
     deleteListing,
+    renewListing,
     activeCount,
     statusCounts,
   } = useMyListings(t);
@@ -46,6 +47,10 @@ export default function MyListingsClient() {
 
   const handleRequestDelete = useCallback((item: Listing) => {
     setModal({ type: "delete", item });
+  }, []);
+
+  const handleRequestRenew = useCallback((item: Listing) => {
+    setModal({ type: "renew", item });
   }, []);
 
   const handleConfirmRemove = useCallback(async () => {
@@ -100,6 +105,14 @@ export default function MyListingsClient() {
       if (item) handleRequestDelete(item);
     },
     [filteredListings, handleRequestDelete]
+  );
+
+  const handleRenew = useCallback(
+    (id: string) => {
+      const item = filteredListings.find((l) => l.id === id);
+      if (item) handleRequestRenew(item);
+    },
+    [filteredListings, handleRequestRenew]
   );
 
   if (!user) {
@@ -162,6 +175,7 @@ export default function MyListingsClient() {
                       onUpdateStatus={updateStatus}
                       onRemove={handleRemove}
                       onDelete={handleDelete}
+                      onRenew={renewListing}
                     />
                   ))}
                 </div>
@@ -197,6 +211,21 @@ export default function MyListingsClient() {
           cancelLabel={t("common.cancel")}
           typeConfirmLabel={t("market.deleteTypeConfirm")}
           loadingLabel={t("common.processing")}
+          loading={modalLoading}
+        />
+      )}
+
+      {modal?.type === "renew" && (
+        <ConfirmModal
+          open={true}
+          onClose={() => setModal(null)}
+          onConfirm={handleConfirmRenew}
+          title={t("market.renewConfirm")}
+          message={t("market.renewConfirmMessage")}
+          confirmLabel={t("market.renewListing")}
+          cancelLabel={t("common.cancel")}
+          loadingLabel={t("common.processing")}
+          variant="neutral"
           loading={modalLoading}
         />
       )}

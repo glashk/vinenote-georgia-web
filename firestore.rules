@@ -8,6 +8,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
     function isOwnerByResource() {
       return isSignedIn() && resource.data.userId == request.auth.uid;
     }
@@ -16,83 +20,54 @@ service cloud.firestore {
       return isSignedIn() && request.resource.data.userId == request.auth.uid;
     }
 
-    // Users: allow a user to read/write their own user document.
+    // Users: user can read/write self; admin can read any
     match /users/{userId} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      allow read: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
+      allow write: if isSignedIn() && request.auth.uid == userId;
 
-      // Favorites subcollection: users/{userId}/favorites/{listingId}
       match /favorites/{listingId} {
         allow read, create, delete: if isSignedIn() && request.auth.uid == userId;
       }
 
-      // Push tokens subcollection: users/{userId}/pushTokens/{tokenId}
-      // Tokens remain after logout; we clean inactive tokens later
       match /pushTokens/{tokenId} {
         allow read, create, update: if isSignedIn() && request.auth.uid == userId;
       }
     }
 
-    // Finance (required): finance/{financeId}
+    // Finance
     match /finance/{financeId} {
       allow create: if isOwnerByRequest();
       allow read: if isOwnerByResource();
-      // Prevent changing userId on update (and keep writes user-scoped).
       allow update: if isOwnerByResource() && request.resource.data.userId == request.auth.uid;
       allow delete: if isOwnerByResource();
     }
 
-    // Existing app collections (all store userId on docs).
-    match /vineyards/{id} {
-      allow create: if isOwnerByRequest();
-      allow read, update, delete: if isOwnerByResource();
-    }
-    match /vineyardBlocks/{id} {
-      allow create: if isOwnerByRequest();
-      allow read, update, delete: if isOwnerByResource();
-    }
-    match /tasks/{id} {
-      allow create: if isOwnerByRequest();
-      allow read, update, delete: if isOwnerByResource();
-    }
-    match /harvests/{id} {
-      allow create: if isOwnerByRequest();
-      allow read, update, delete: if isOwnerByResource();
-    }
-    match /containers/{id} {
-      allow create: if isOwnerByRequest();
-      allow read, update, delete: if isOwnerByResource();
-    }
-    match /wineBatches/{id} {
-      allow create: if isOwnerByRequest();
-      allow read, update, delete: if isOwnerByResource();
-    }
-    match /inventory/{id} {
-      allow create: if isOwnerByRequest();
-      allow read, update, delete: if isOwnerByResource();
-    }
-    match /entries/{id} {
-      allow create: if isOwnerByRequest();
-      allow read, update, delete: if isOwnerByResource();
-    }
+    // App collections (vineyards, tasks, harvests, etc.)
+    match /vineyards/{id}      { allow create: if isOwnerByRequest(); allow read, update, delete: if isOwnerByResource(); }
+    match /vineyardBlocks/{id} { allow create: if isOwnerByRequest(); allow read, update, delete: if isOwnerByResource(); }
+    match /tasks/{id}          { allow create: if isOwnerByRequest(); allow read, update, delete: if isOwnerByResource(); }
+    match /harvests/{id}       { allow create: if isOwnerByRequest(); allow read, update, delete: if isOwnerByResource(); }
+    match /containers/{id}     { allow create: if isOwnerByRequest(); allow read, update, delete: if isOwnerByResource(); }
+    match /wineBatches/{id}    { allow create: if isOwnerByRequest(); allow read, update, delete: if isOwnerByResource(); }
+    match /inventory/{id}      { allow create: if isOwnerByRequest(); allow read, update, delete: if isOwnerByResource(); }
+    match /entries/{id}        { allow create: if isOwnerByRequest(); allow read, update, delete: if isOwnerByResource(); }
 
-    // Market listings: marketplace feed (read by any signed-in user; write by owner)
+    // Market listings: public read; owner create/update/delete; admin can moderate
     match /marketListings/{id} {
       allow read: if true;
       allow create: if isOwnerByRequest();
-      allow update, delete: if isOwnerByResource();
+      allow update, delete: if isOwnerByResource() || isAdmin();
     }
 
-    // Reports: user-generated content moderation (App Store 1.2 safety).
-    // Authenticated users can create reports; reporterId must match auth.
-    // Users can read only their own reports (for rate-limit check).
+    // Reports: moderation (App Store 1.2 safety)
     match /reports/{reportId} {
       allow create: if isSignedIn()
         && request.resource.data.reporterId == request.auth.uid;
-      allow read: if isSignedIn() && resource.data.reporterId == request.auth.uid;
-      allow update, delete: if false;
+      allow read: if (isSignedIn() && resource.data.reporterId == request.auth.uid) || isAdmin();
+      allow update, delete: if isAdmin();
     }
 
-    // Default: deny everything else.
+    // Default: deny everything else
     match /{document=**} {
       allow read, write: if false;
     }

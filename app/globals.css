@@ -302,28 +302,32 @@
   }
 
   .vn-btn-primary {
-    background-color: rgba(var(--vn-brand), 0.76);
-    border: 1px solid rgba(255, 255, 255, 0.41);
+    background: linear-gradient(180deg, #2d7a2a 0%, #1e5c1c 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
   }
   .vn-btn-primary:hover {
-    background-color: rgba(var(--vn-brand), 0.86);
+    background: linear-gradient(180deg, #338830 0%, #256d22 100%);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
     transform: translateY(-1px);
   }
   .vn-btn-primary:active {
     transform: translateY(0px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   }
   .vn-btn-primary:focus-visible {
-    outline-color: rgba(var(--vn-brand), 0.65);
+    outline-color: #2d7a2a;
   }
 
   .vn-btn-ghost {
-    background-color: rgba(255, 255, 255, 0.34);
-    border: 1px solid rgba(255, 255, 255, 0.55);
+    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 1px solid #cbd5e1;
     color: rgb(15, 23, 42);
   }
   .vn-btn-ghost:hover {
-    background-color: rgba(255, 255, 255, 0.46);
+    background: linear-gradient(180deg, #f1f5f9 0%, #cbd5e1 100%);
+    border-color: #94a3b8;
     transform: translateY(-1px);
   }
   .vn-btn-ghost:active {

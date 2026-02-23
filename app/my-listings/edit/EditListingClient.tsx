@@ -10,8 +10,20 @@ import { onAuthStateChanged } from "firebase/auth";
 import { getDb } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, deleteField } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { Wine, Grape, Apple, Package, Sprout, Camera, Pencil, X, GripVertical } from "lucide-react";
+import {
+  Wine,
+  Grape,
+  Apple,
+  Package,
+  Sprout,
+  Camera,
+  Pencil,
+  X,
+  GripVertical,
+  ArrowLeft,
+} from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import RegionSearchInput from "@/components/RegionSearchInput";
 
 type Category = "wine" | "grapes" | "nobati" | "inventory" | "seedlings";
 
@@ -21,7 +33,14 @@ const NOBATI_UNITS = ["pcs", "kg"];
 const INVENTORY_UNITS = ["pcs", "kg", "l"];
 const SEEDLINGS_UNITS = ["pcs"];
 
-const CATEGORY_ICONS: Record<Category, React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>> = {
+const CATEGORY_ICONS: Record<
+  Category,
+  React.ComponentType<{
+    size?: number;
+    strokeWidth?: number;
+    className?: string;
+  }>
+> = {
   wine: Wine,
   grapes: Grape,
   nobati: Apple,
@@ -29,7 +48,13 @@ const CATEGORY_ICONS: Record<Category, React.ComponentType<{ size?: number; stro
   seedlings: Sprout,
 };
 
-function CategoryIcon({ category, active }: { category: Category; active: boolean }) {
+function CategoryIcon({
+  category,
+  active,
+}: {
+  category: Category;
+  active: boolean;
+}) {
   const Icon = CATEGORY_ICONS[category];
   return (
     <Icon
@@ -46,7 +71,9 @@ interface EditListingClientProps {
   listingId: string;
 }
 
-export default function EditListingClient({ listingId }: EditListingClientProps) {
+export default function EditListingClient({
+  listingId,
+}: EditListingClientProps) {
   const { t } = useLanguage();
   const router = useRouter();
   const [user, setUser] = useState(auth?.currentUser ?? null);
@@ -62,16 +89,22 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
   const [price, setPrice] = useState("");
   const [region, setRegion] = useState("");
   const [village, setVillage] = useState("");
-  const [harvestDate, setHarvestDate] = useState(new Date().toISOString().split("T")[0]);
+  const [harvestDate, setHarvestDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
   const [sugarBrix, setSugarBrix] = useState("");
-  const [vintageYear, setVintageYear] = useState(new Date().getFullYear().toString());
+  const [vintageYear, setVintageYear] = useState(
+    new Date().getFullYear().toString(),
+  );
   const [wineType, setWineType] = useState("");
   const [phone, setPhone] = useState("");
   const [contactName, setContactName] = useState("");
   const [notes, setNotes] = useState("");
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [uploadingCount, setUploadingCount] = useState(0);
-  const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
+  const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoUploading = uploadingCount > 0;
 
@@ -88,7 +121,7 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
               : category === "seedlings"
                 ? SEEDLINGS_UNITS
                 : GRAPE_UNITS,
-    [category]
+    [category],
   );
 
   useEffect(() => {
@@ -126,12 +159,20 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
         setVariety(data.variety ?? data.title ?? "");
         setQuantity(String(data.quantity ?? ""));
         setUnit(data.unit ?? "kg");
-        setPrice(data.price != null && data.price > 0 ? String(data.price) : "");
+        setPrice(
+          data.price != null && data.price > 0 ? String(data.price) : "",
+        );
         setRegion(data.region ?? "");
         setVillage(data.village ?? "");
-        setHarvestDate(data.harvestDate ?? new Date().toISOString().split("T")[0]);
+        setHarvestDate(
+          data.harvestDate ?? new Date().toISOString().split("T")[0],
+        );
         setSugarBrix(data.sugarBrix != null ? String(data.sugarBrix) : "");
-        setVintageYear(data.vintageYear != null ? String(data.vintageYear) : new Date().getFullYear().toString());
+        setVintageYear(
+          data.vintageYear != null
+            ? String(data.vintageYear)
+            : new Date().getFullYear().toString(),
+        );
         setWineType(data.wineType ?? "");
         setPhone(data.phone ?? "");
         setContactName(data.contactName ?? "");
@@ -146,7 +187,9 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
       }
     };
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user, listingId, t]);
 
   const validate = (): { ok: boolean; message?: string } => {
@@ -161,11 +204,13 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
               ? t("market.validation.itemRequired")
               : t("market.validation.varietyRequired"),
       };
-    if (!region.trim()) return { ok: false, message: t("market.validation.regionRequired") };
+    if (!region.trim())
+      return { ok: false, message: t("market.validation.regionRequired") };
     const qty = Number(quantity);
     if (Number.isNaN(qty) || qty <= 0)
       return { ok: false, message: t("market.validation.quantityRequired") };
-    if (!phone.trim()) return { ok: false, message: t("market.validation.phoneRequired") };
+    if (!phone.trim())
+      return { ok: false, message: t("market.validation.phoneRequired") };
     const phoneDigits = phone.replace(/\D/g, "");
     if (phoneDigits.length < 9)
       return { ok: false, message: t("market.validation.phoneInvalid") };
@@ -210,7 +255,9 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
         const fbErr = err as { code?: string; message?: string };
         let msg = t("market.photoUploadError");
         if (fbErr?.code === "storage/unauthorized") {
-          msg = t("market.photoUploadError") + " — Run: firebase deploy --only storage";
+          msg =
+            t("market.photoUploadError") +
+            " — Run: firebase deploy --only storage";
         } else if (fbErr?.code === "storage/unauthenticated") {
           msg = t("market.photoUploadError") + " — Please sign in again";
         } else if (fbErr?.message) {
@@ -222,7 +269,7 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
     },
-    [user, t]
+    [user, t],
   );
 
   const handlePhotoInputChange = useCallback(
@@ -234,7 +281,7 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
         uploadPhoto(files[i]);
       }
     },
-    [photoUrls.length, uploadPhoto]
+    [photoUrls.length, uploadPhoto],
   );
 
   const removePhoto = useCallback((index: number) => {
@@ -275,10 +322,14 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
       if (price.trim()) payload.price = Number(price.replace(",", "."));
       else payload.price = deleteField();
       if (village.trim()) payload.village = village.trim();
-      if (category === "grapes" && harvestDate) payload.harvestDate = harvestDate;
-      if (category === "grapes" && sugarBrix.trim()) payload.sugarBrix = Number(sugarBrix);
-      if (category === "wine" && vintageYear.trim()) payload.vintageYear = Number(vintageYear);
-      if (category === "wine" && wineType.trim()) payload.wineType = wineType.trim();
+      if (category === "grapes" && harvestDate)
+        payload.harvestDate = harvestDate;
+      if (category === "grapes" && sugarBrix.trim())
+        payload.sugarBrix = Number(sugarBrix);
+      if (category === "wine" && vintageYear.trim())
+        payload.vintageYear = Number(vintageYear);
+      if (category === "wine" && wineType.trim())
+        payload.wineType = wineType.trim();
       if (contactName.trim()) payload.contactName = contactName.trim();
       if (notes.trim()) payload.notes = notes.trim();
       payload.photoUrls = photoUrls;
@@ -289,7 +340,8 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
       const fbErr = err as { code?: string; message?: string };
       let msg = t("market.errorLoad");
       if (fbErr?.code === "permission-denied") {
-        msg = t("market.errorLoad") + " — Permission denied. Please sign in again.";
+        msg =
+          t("market.errorLoad") + " — Permission denied. Please sign in again.";
       } else if (fbErr?.message) {
         msg = fbErr.message;
       }
@@ -354,17 +406,24 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
     <div className="min-h-screen bg-[#f5f4f0] py-14 sm:py-20">
       <Container>
         <div className="max-w-xl mx-auto px-4">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-3">
-              <Pencil size={24} strokeWidth={2.5} />
-              {t("market.editListing")}
-            </h1>
+          <div className="mb-8">
             <Link
               href="/my-listings"
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+              className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 mb-4 transition-colors group"
             >
-              ← {t("market.backToList")}
+              <ArrowLeft
+                size={18}
+                strokeWidth={2}
+                className="transition-transform group-hover:-translate-x-0.5"
+              />
+              {t("market.backToList")}
             </Link>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              {t("market.editListing")}
+            </h1>
+            <p className="mt-1.5 text-slate-600 text-base">
+              {t("market.editListingSubtitle")}
+            </p>
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -393,7 +452,10 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
                       e.preventDefault();
-                      if (draggedPhotoIndex !== null && draggedPhotoIndex !== idx) {
+                      if (
+                        draggedPhotoIndex !== null &&
+                        draggedPhotoIndex !== idx
+                      ) {
                         movePhoto(draggedPhotoIndex, idx);
                       }
                       setDraggedPhotoIndex(null);
@@ -443,7 +505,11 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
                       <span className="w-5 h-5 border-2 border-[#2d5a27] border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <>
-                        <Camera size={28} strokeWidth={2} className="text-[#2d5a27]" />
+                        <Camera
+                          size={28}
+                          strokeWidth={2}
+                          className="text-[#2d5a27]"
+                        />
                         <span className="text-xs text-[#2d5a27] font-medium">
                           {t("market.addPhoto")}
                         </span>
@@ -455,7 +521,15 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
 
               <label className={labelBase}>{t("market.category")}</label>
               <div className="flex flex-wrap gap-2.5 mt-2">
-                {(["wine", "grapes", "nobati", "inventory", "seedlings"] as const).map((c) => {
+                {(
+                  [
+                    "wine",
+                    "grapes",
+                    "nobati",
+                    "inventory",
+                    "seedlings",
+                  ] as const
+                ).map((c) => {
                   const active = category === c;
                   return (
                     <button
@@ -470,7 +544,9 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
                       }`}
                     >
                       <CategoryIcon category={c} active={active} />
-                      {t(`market.category${c.charAt(0).toUpperCase() + c.slice(1)}`)}
+                      {t(
+                        `market.category${c.charAt(0).toUpperCase() + c.slice(1)}`,
+                      )}
                     </button>
                   );
                 })}
@@ -489,12 +565,13 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-3 mt-4">
                 <div className="flex-1">
                   <label className={labelBase}>{t("market.region")} *</label>
-                  <input
-                    type="text"
+                  <RegionSearchInput
+                    className="mt-2"
                     value={region}
-                    onChange={(e) => setRegion(e.target.value)}
-                    placeholder={t("market.regionPlaceholder")}
-                    className={`${inputBase} placeholder-[#8a9a85]`}
+                    onChange={setRegion}
+                    t={t}
+                    placeholder={t("market.selectRegion")}
+                    disabled={loading}
                     required
                   />
                 </div>
@@ -539,7 +616,9 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
                               : "bg-[#f5f4f0] border-[#e8e6e1] text-[#2c2c2c]"
                           }`}
                         >
-                          {t(`market.units.${u}`) !== `market.units.${u}` ? t(`market.units.${u}`) : u}
+                          {t(`market.units.${u}`) !== `market.units.${u}`
+                            ? t(`market.units.${u}`)
+                            : u}
                         </button>
                       );
                     })}
@@ -633,9 +712,7 @@ export default function EditListingClient({ listingId }: EditListingClientProps)
                 className={`${inputBase} placeholder-[#8a9a85] min-h-[90px] resize-none`}
               />
 
-              {error && (
-                <p className="mt-4 text-sm text-red-600">{error}</p>
-              )}
+              {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
               <button
                 type="submit"

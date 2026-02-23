@@ -15,6 +15,7 @@ interface ListingCardProps {
   onUpdateStatus: (id: string, status: ListingStatus) => void;
   onRemove: (id: string) => void;
   onDelete: (id: string) => void;
+  onRenew?: (id: string) => void;
 }
 
 function getUnitLabel(t: (k: string) => string, unit: string): string {
@@ -28,6 +29,7 @@ export const ListingCard = memo(function ListingCard({
   onUpdateStatus,
   onRemove,
   onDelete,
+  onRenew,
 }: ListingCardProps) {
   const { t } = useLanguage();
   const router = useRouter();
@@ -64,6 +66,10 @@ export const ListingCard = memo(function ListingCard({
   const handleDelete = useCallback(() => {
     onDelete(listing.id);
   }, [listing.id, onDelete]);
+
+  const handleRenew = useCallback(() => {
+    onRenew?.(listing.id);
+  }, [listing.id, onRenew]);
 
   const category = listing.category ?? "grapes";
   const categoryColor = CATEGORY_COLORS[category] ?? CATEGORY_COLORS.grapes;
@@ -161,6 +167,7 @@ export const ListingCard = memo(function ListingCard({
               onMarkReserved={handleMarkReserved}
               onRemove={handleRemove}
               onDelete={handleDelete}
+              onRenew={status === "expired" || status === "removed" ? handleRenew : undefined}
             />
           </div>
         </div>

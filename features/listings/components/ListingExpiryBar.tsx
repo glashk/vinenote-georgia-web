@@ -8,28 +8,29 @@ interface ListingExpiryBarProps {
   listing: Listing;
 }
 
-function getBarColor(progress: number): string {
-  if (progress < 0.5) return "bg-emerald-500";
-  if (progress < 0.8) return "bg-amber-500";
-  return "bg-red-500";
-}
-
 export function ListingExpiryBar({ listing }: ListingExpiryBarProps) {
   const { t } = useLanguage();
-  const daysLeft = getDaysLeft(listing.createdAt);
-  const progress = getExpiryProgress(listing.createdAt);
   const status = listing.status ?? "active";
 
   if (status !== "active") return null;
+  if (!listing.createdAt) return null;
 
-  const barColor = getBarColor(progress);
+  const daysLeft = getDaysLeft(listing.createdAt);
+  const elapsedProgress = getExpiryProgress(listing.createdAt);
+
+  // Bar shows time REMAINING (drains as days pass) to match "days left"
+  const remainingRatio = Math.max(0, 1 - elapsedProgress);
+  const barWidth = daysLeft > 0 ? Math.max(5, remainingRatio * 100) : 0;
 
   return (
     <div className="mt-3">
       <div className="h-2 overflow-hidden rounded-full bg-slate-200">
         <div
-          className={`h-full rounded-full transition-all ${barColor}`}
-          style={{ width: `${Math.max(0, Math.min(100, progress * 100))}%` }}
+          className="h-full rounded-full  transition-all duration-300"
+          style={{
+            width: `${barWidth}%`,
+            backgroundColor: daysLeft > 3 ? "#4a7c59" : "#c7772c",
+          }}
         />
       </div>
       <p className="mt-1.5 text-xs font-medium text-slate-600">

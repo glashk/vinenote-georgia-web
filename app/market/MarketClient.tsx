@@ -9,10 +9,12 @@ import { onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   doc,
+  addDoc,
   onSnapshot,
   getDoc,
   setDoc,
   deleteDoc,
+  updateDoc,
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
@@ -31,7 +33,7 @@ import {
   Calendar,
   Heart,
   Share2,
-  Square,
+  CircleAlert,
   Phone,
   Package,
 } from "lucide-react";
@@ -39,6 +41,8 @@ import OptimizedListingImage, {
   ThumbnailImage,
 } from "@/components/OptimizedListingImage";
 import ListingCardSkeleton from "@/components/ListingCardSkeleton";
+import { ConfirmModal } from "@/components/ConfirmModal";
+import { GEORGIA_REGIONS } from "@/lib/georgiaRegions";
 
 type MarketCategory = "grapes" | "wine" | "nobati" | "inventory" | "seedlings";
 type CategoryFilter = "all" | MarketCategory;
@@ -75,6 +79,18 @@ function getCategoryLabelKey(cat: string): string {
   const c = cat?.toLowerCase() ?? "grapes";
   const cap = c.charAt(0).toUpperCase() + c.slice(1);
   return `market.category${cap}`;
+}
+
+function getRegionLabel(
+  region: string | undefined,
+  t: (key: string) => string,
+): string {
+  if (!region) return "";
+  if (GEORGIA_REGIONS.includes(region as (typeof GEORGIA_REGIONS)[number])) {
+    const label = t(`market.regions.${region}`);
+    return label.startsWith("market.") ? region : label;
+  }
+  return region;
 }
 
 interface Listing {
@@ -199,8 +215,13 @@ function ListingDetailView({
   getUnitLabel,
   onShare,
   onToggleFavorite,
+  onReport,
   favoriteIds,
   favoriteToggling,
+  currentUserId,
+  onRenew,
+  onRenewClick,
+  renewLoading,
 }: {
   listing: Listing | null;
   loading: boolean;
@@ -209,8 +230,13 @@ function ListingDetailView({
   getUnitLabel: (unit: string) => string;
   onShare?: (listingId: string, listingTitle?: string) => void;
   onToggleFavorite?: (listingId: string, e: React.MouseEvent) => void;
+  onReport?: (listing: Listing, e: React.MouseEvent) => void;
   favoriteIds?: Set<string>;
   favoriteToggling?: string | null;
+  currentUserId?: string | null;
+  onRenew?: (listingId: string) => Promise<void>;
+  onRenewClick?: (listingId: string) => void;
+  renewLoading?: boolean;
 }) {
   const [carouselIndex, setCarouselIndex] = useState(0);
 
@@ -222,14 +248,72 @@ function ListingDetailView({
     );
   }
 
-  if (!listing || listing.hidden) {
+  if (!listing || listing.hidden || listing.status === "expired") {
+    const isExpired = listing?.status === "expired";
+    const isOwner = listing && currentUserId && listing.userId === currentUserId;
+    const canRenew = isExpired && isOwner && (onRenew || onRenewClick);
+
     return (
-      <div className="min-h-screen bg-slate-50 py-12 px-4">
-        <div className="max-w-2xl mx-auto text-center py-16">
-          <p className="text-slate-600 mb-4">{t("market.errorLoad")}</p>
-          <button onClick={onBack} className="vn-btn vn-btn-primary">
-            ← {t("market.backToList")}
-          </button>
+      <div className="min-h-screen bg-[#f5f4f0] py-12 px-4 sm:px-6">
+        <div className="max-w-md mx-auto">
+          <div className="vn-glass vn-card overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm p-8 sm:p-10 text-center">
+            <div className="mb-6 flex justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-200/80 text-3xl">
+                {isExpired ? "⏱" : "⚠"}
+              </div>
+            </div>
+            <h2 className="text-xl font-bold text-slate-900 mb-2">
+              {isExpired ? t("market.statusExpired") : t("market.errorLoad")}
+            </h2>
+            <p className="text-slate-600 text-sm mb-8">
+              {isExpired
+                ? t("market.expiredDescription")
+                : t("market.errorLoadDescription")}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              {canRenew && (
+                <button
+                  onClick={() =>
+                    onRenewClick
+                      ? onRenewClick(listing.id)
+                      : onRenew?.(listing.id)
+                  }
+                  disabled={renewLoading}
+                  className="vn-btn vn-btn-primary order-first sm:order-none disabled:opacity-60"
+                >
+                  {renewLoading ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      {t("common.processing")}
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                      </svg>
+                      {t("market.renewListing")}
+                    </>
+                  )}
+                </button>
+              )}
+              <button
+                onClick={onBack}
+                className={`vn-btn ${canRenew ? "vn-btn-ghost" : "vn-btn-primary"}`}
+              >
+                ← {t("market.backToList")}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -239,14 +323,17 @@ function ListingDetailView({
   const displayTitle =
     listing.variety ?? listing.title ?? t("market.unknownListing");
   const category = listing.category ?? "grapes";
-  const locationText = [listing.region, listing.village]
+  const locationText = [
+    getRegionLabel(listing.region, t),
+    listing.village,
+  ]
     .filter(Boolean)
     .join(", ");
   const status = listing.status ?? "active";
   const statusColor = STATUS_COLORS[status] ?? "#8a8a8a";
 
   return (
-    <div className="min-h-screen py-10 px-4 sm:px-6">
+    <div className="min-h-screen py-4 sm:py-8 px-4 sm:px-6 bg-white">
       <div className="max-w-2xl mx-auto">
         <button
           onClick={onBack}
@@ -342,7 +429,7 @@ function ListingDetailView({
               {displayTitle}
             </h1>
             <div className="flex items-center gap-2">
-              <div className="flex flex-col gap-1">
+              <div className="flex gap-1">
                 {onToggleFavorite && favoriteIds && listing && (
                   <button
                     onClick={(e) => onToggleFavorite(listing.id, e)}
@@ -374,6 +461,15 @@ function ListingDetailView({
                     aria-label={t("market.share")}
                   >
                     <Share2 size={20} strokeWidth={2} />
+                  </button>
+                )}
+                {onReport && listing && (
+                  <button
+                    onClick={(e) => onReport(listing, e)}
+                    className="p-2 rounded-lg transition-colors text-slate-400 hover:text-amber-600 hover:bg-amber-50/50"
+                    aria-label={t("market.report")}
+                  >
+                    <CircleAlert size={20} strokeWidth={2} />
                   </button>
                 )}
               </div>
@@ -502,6 +598,136 @@ function ListingDetailView({
   );
 }
 
+const REPORT_REASONS = [
+  "spam",
+  "inappropriate",
+  "misleading",
+  "scam",
+  "other",
+] as const;
+
+function ReportModal({
+  listing,
+  onClose,
+  onSubmit,
+  t,
+  submitting,
+  success,
+  error,
+}: {
+  listing: Listing | null;
+  onClose: () => void;
+  onSubmit: (reason: string) => Promise<void>;
+  t: (key: string) => string;
+  submitting: boolean;
+  success: boolean;
+  error: string | null;
+}) {
+  const [selectedReason, setSelectedReason] = useState<string>("");
+
+  if (!listing) return null;
+
+  const displayTitle =
+    listing.variety ?? listing.title ?? t("market.unknownListing");
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05)",
+        }}
+      >
+        <div className="bg-gradient-to-b from-amber-50 to-white px-6 pt-6 pb-4 border-b border-amber-100/80">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold text-slate-900">
+                {t("market.reportTitle")}
+              </h2>
+              <p className="text-slate-600 text-sm mt-1 truncate">{displayTitle}</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 -m-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"
+              aria-label="Close"
+            >
+              <X size={20} strokeWidth={2} />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {success ? (
+            <div className="flex flex-col items-center py-8 text-center">
+              <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
+                <span className="text-2xl">✓</span>
+              </div>
+              <p className="text-emerald-700 font-semibold">
+                {t("market.reportSuccess")}
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="text-slate-600 text-sm mb-4">
+                {t("market.reportDescription")}
+              </p>
+              <div className="space-y-2 mb-6">
+                {REPORT_REASONS.map((reason) => (
+                  <label
+                    key={reason}
+                    className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
+                      selectedReason === reason
+                        ? "border-[#04AA6D] bg-emerald-50/50"
+                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="reason"
+                      value={reason}
+                      checked={selectedReason === reason}
+                      onChange={() => setSelectedReason(reason)}
+                      className="w-4 h-4 text-[#04AA6D] accent-[#04AA6D]"
+                    />
+                    <span className="text-sm font-medium text-slate-700">
+                      {t(`market.reportReasons.${reason}`)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {error && (
+                <p className="text-red-600 text-sm mb-4 px-1">{error}</p>
+              )}
+              <div className="flex gap-3">
+                <button
+                  onClick={onClose}
+                  className="flex-1 px-4 py-3 rounded-xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors disabled:opacity-50"
+                  disabled={submitting}
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  onClick={() => selectedReason && onSubmit(selectedReason)}
+                  disabled={!selectedReason || submitting}
+                  className="flex-1 px-4 py-3 rounded-xl font-semibold text-white bg-[#04AA6D] hover:bg-[#039a5e] transition-colors disabled:opacity-50 disabled:hover:bg-[#04AA6D]"
+                >
+                  {submitting
+                    ? t("market.reportSubmitting")
+                    : t("market.reportSubmit")}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function withViewTransition(cb: () => void) {
   if (typeof document !== "undefined" && "startViewTransition" in document) {
     (
@@ -538,6 +764,16 @@ export default function MarketClient() {
   const [user, setUser] = useState(auth?.currentUser ?? null);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [favoriteToggling, setFavoriteToggling] = useState<string | null>(null);
+  const [reportModalListing, setReportModalListing] = useState<Listing | null>(
+    null,
+  );
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [renewLoading, setRenewLoading] = useState(false);
+  const [renewConfirmListingId, setRenewConfirmListingId] = useState<
+    string | null
+  >(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
   const [regionFilter, setRegionFilter] = useState("");
@@ -630,11 +866,12 @@ export default function MarketClient() {
                   photos: data.photos,
                   thumbnail: data.thumbnail,
                   hidden: data.hidden,
+                  status: data.status ?? "active",
                   userId: data.userId,
                   createdAt: data.createdAt,
                 };
               })
-              .filter((l) => !l.hidden);
+              .filter((l) => !l.hidden && (l.status ?? "active") !== "expired");
             list.sort((a, b) => {
               const aTime =
                 a.createdAt &&
@@ -728,8 +965,7 @@ export default function MarketClient() {
   const handleShare = useCallback(
     (listingId: string, e: React.MouseEvent, listingTitle?: string) => {
       e.stopPropagation();
-      const base =
-        typeof window !== "undefined" ? window.location.origin : "";
+      const base = typeof window !== "undefined" ? window.location.origin : "";
       const shareUrl = `${base}/share/${listingId}`;
       const title = listingTitle ?? "VineNote Georgia - Market";
       if (navigator.share) {
@@ -747,6 +983,53 @@ export default function MarketClient() {
       }
     },
     [],
+  );
+
+  const handleReportClick = useCallback(
+    (listing: Listing, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!user) {
+        router.push("/login?redirect=/");
+        return;
+      }
+      if (listing.userId === user.uid) return; // Don't allow reporting own listing
+      setReportError(null);
+      setReportSuccess(false);
+      setReportModalListing(listing);
+    },
+    [user, router],
+  );
+
+  const handleReportSubmit = useCallback(
+    async (reason: string) => {
+      if (!reportModalListing || !user) return;
+      const db = await getDb();
+      if (!db) return;
+      setReportSubmitting(true);
+      setReportError(null);
+      try {
+        await addDoc(collection(db, "reports"), {
+          listingId: reportModalListing.id,
+          reportedUserId: reportModalListing.userId ?? "",
+          reporterId: user.uid,
+          reason,
+          status: "pending",
+          createdAt: serverTimestamp(),
+        });
+        setReportSuccess(true);
+        setTimeout(() => {
+          setReportModalListing(null);
+          setReportSuccess(false);
+        }, 1500);
+      } catch (err) {
+        setReportError(
+          err instanceof Error ? err.message : t("market.reportError"),
+        );
+      } finally {
+        setReportSubmitting(false);
+      }
+    },
+    [reportModalListing, user, t],
   );
 
   const loadDetail = useCallback(async () => {
@@ -811,6 +1094,31 @@ export default function MarketClient() {
   const closeDetail = useCallback(() => {
     router.push("/");
   }, [router]);
+
+  const handleRenew = useCallback(
+    async (listingId: string) => {
+      if (!user) return;
+      const db = await getDb();
+      if (!db) return;
+      setRenewLoading(true);
+      try {
+        await updateDoc(doc(db, "marketListings", listingId), {
+          status: "active",
+          createdAt: Timestamp.now(),
+        });
+        setListingDetail((prev) =>
+          prev && prev.id === listingId
+            ? { ...prev, status: "active", createdAt: Timestamp.now() }
+            : prev
+        );
+      } catch (e) {
+        console.error("Renew listing error:", e);
+      } finally {
+        setRenewLoading(false);
+      }
+    },
+    [user]
+  );
 
   const uniqueRegions = useMemo(() => {
     const set = new Set<string>();
@@ -1015,30 +1323,132 @@ export default function MarketClient() {
 
   if (detailId) {
     return (
-      <ListingDetailView
-        listing={listingDetail}
-        loading={detailLoading}
-        onBack={closeDetail}
-        t={t}
-        getUnitLabel={(unit) => {
-          const key = `market.units.${unit}`;
-          const label = t(key);
-          return label === key ? unit : label;
-        }}
-        onShare={(id: string, title?: string) =>
-          handleShare(id, { stopPropagation: () => {} } as React.MouseEvent, title)
-        }
-        onToggleFavorite={toggleFavorite}
-        favoriteIds={favoriteIds}
-        favoriteToggling={favoriteToggling}
-      />
+      <>
+        <ListingDetailView
+          listing={listingDetail}
+          loading={detailLoading}
+          onBack={closeDetail}
+          t={t}
+          getUnitLabel={(unit) => {
+            const key = `market.units.${unit}`;
+            const label = t(key);
+            return label === key ? unit : label;
+          }}
+          onShare={(id: string, title?: string) =>
+            handleShare(
+              id,
+              { stopPropagation: () => {} } as React.MouseEvent,
+              title,
+            )
+          }
+          onToggleFavorite={toggleFavorite}
+          onReport={
+            listingDetail && listingDetail.userId !== user?.uid
+              ? (listing, e) => handleReportClick(listing, e)
+              : undefined
+          }
+          favoriteIds={favoriteIds}
+          favoriteToggling={favoriteToggling}
+          currentUserId={user?.uid}
+          onRenew={
+            listingDetail?.userId === user?.uid ? handleRenew : undefined
+          }
+          onRenewClick={
+            listingDetail?.userId === user?.uid
+              ? (id) => setRenewConfirmListingId(id)
+              : undefined
+          }
+          renewLoading={renewLoading}
+        />
+        {reportModalListing && (
+          <ReportModal
+            listing={reportModalListing}
+            onClose={() => setReportModalListing(null)}
+            onSubmit={handleReportSubmit}
+            t={t}
+            submitting={reportSubmitting}
+            success={reportSuccess}
+            error={reportError}
+          />
+        )}
+        {renewConfirmListingId && (
+          <ConfirmModal
+            open={true}
+            onClose={() => setRenewConfirmListingId(null)}
+            onConfirm={async () => {
+              await handleRenew(renewConfirmListingId);
+              setRenewConfirmListingId(null);
+            }}
+            title={t("market.renewConfirm")}
+            message={t("market.renewConfirmMessage")}
+            confirmLabel={t("market.renewListing")}
+            cancelLabel={t("common.cancel")}
+            loadingLabel={t("common.processing")}
+            variant="neutral"
+            loading={renewLoading}
+          />
+        )}
+      </>
     );
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen py-8 sm:py-12 px-4 sm:px-6">
+      <div className="min-h-screen py-4 sm:py-8 px-4 sm:px-6 bg-white">
         <div className="max-w-7xl mx-auto">
+          {/* Filters section skeleton */}
+          <header className="relative z-20 mb-6 sm:mb-8 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.06)] overflow-visible animate-pulse">
+            <div className="p-3 sm:p-4 space-y-4 sm:space-y-5">
+              {/* Mobile: Search, then Controls */}
+              <div className="flex flex-col gap-3 md:hidden">
+                <div className="h-11 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-200 w-full" />
+                <div className="flex gap-2 overflow-x-hidden">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div
+                      key={i}
+                      className="h-10 rounded-xl bg-slate-200 shrink-0"
+                      style={{ width: i === 1 ? 56 : i === 2 ? 72 : 64 }}
+                    />
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex gap-2">
+                    <div className="h-11 rounded-xl bg-slate-200 w-20" />
+                    <div className="h-11 rounded-xl bg-slate-200 w-24" />
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="h-11 rounded-xl bg-slate-200 w-12" />
+                    <div className="h-11 rounded-xl bg-slate-200 w-20" />
+                  </div>
+                </div>
+              </div>
+              {/* Desktop: Row 1 Search + Controls, Row 2 Tabs */}
+              <div className="hidden md:block space-y-4">
+                <div className="flex flex-row gap-3">
+                  <div className="h-[52px] flex-1 rounded-2xl bg-slate-200 min-w-0" />
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="h-[52px] w-32 rounded-2xl bg-slate-200" />
+                    <div className="h-[52px] w-28 rounded-2xl bg-slate-200" />
+                    <div className="h-[52px] w-24 rounded-2xl bg-slate-200" />
+                  </div>
+                </div>
+                <div className="flex flex-row flex-wrap items-center gap-2 pt-1">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div
+                      key={i}
+                      className="h-12 rounded-2xl bg-slate-200 shrink-0"
+                      style={{
+                        width: i === 1 ? 64 : i === 2 ? 88 : i === 3 ? 72 : 80,
+                      }}
+                    />
+                  ))}
+                  <div className="ml-auto h-9 w-16 rounded-xl bg-slate-200 shrink-0" />
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Listing cards skeleton */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 market-grid-transition">
             {Array.from({ length: 12 }).map((_, i) => (
               <ListingCardSkeleton key={i} />
@@ -1050,7 +1460,7 @@ export default function MarketClient() {
   }
 
   return (
-    <div className="min-h-screen py-4 sm:py-8 px-4 sm:px-6">
+    <div className="min-h-screen py-4 sm:py-8 px-4 sm:px-6 bg-white">
       <div data-market-main className="max-w-7xl mx-auto">
         {/* Header: unified modern UX - solid bg to avoid backdrop-filter changing when grid/list below changes */}
         <header
@@ -1541,7 +1951,7 @@ export default function MarketClient() {
                             }
                             className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-[0.98] whitespace-nowrap ${regionFilter === r ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
                           >
-                            {r}
+                            {getRegionLabel(r, t)}
                           </button>
                         ))}
                       </div>
@@ -1703,7 +2113,10 @@ export default function MarketClient() {
               const displayTitle =
                 listing.variety ?? listing.title ?? t("market.unknownListing");
               const category = listing.category ?? "grapes";
-              const locationText = [listing.region, listing.village]
+              const locationText = [
+                getRegionLabel(listing.region, t),
+                listing.village,
+              ]
                 .filter(Boolean)
                 .join(", ");
               const unitLabel = listing.unit
@@ -1811,11 +2224,14 @@ export default function MarketClient() {
                       </button>
                       <button
                         onClick={(e) =>
-                        handleShare(
-                          listing.id,
-                          e,
-                          listing.variety ?? listing.title ?? t("market.unknownListing"),
-                        )}
+                          handleShare(
+                            listing.id,
+                            e,
+                            listing.variety ??
+                              listing.title ??
+                              t("market.unknownListing"),
+                          )
+                        }
                         className="w-9 h-9 rounded-full bg-white/95 backdrop-blur flex items-center justify-center shadow-sm transition-colors text-slate-600 hover:text-[#04AA6D]"
                         aria-label={t("market.share")}
                       >
@@ -1896,7 +2312,10 @@ export default function MarketClient() {
               const displayTitle =
                 listing.variety ?? listing.title ?? t("market.unknownListing");
               const category = listing.category ?? "grapes";
-              const locationText = [listing.region, listing.village]
+              const locationText = [
+                getRegionLabel(listing.region, t),
+                listing.village,
+              ]
                 .filter(Boolean)
                 .join(", ");
               const unitLabel = listing.unit
@@ -1986,7 +2405,7 @@ export default function MarketClient() {
                       <h3 className="font-semibold text-slate-900 line-clamp-2">
                         {displayTitle}
                       </h3>
-                      <div className="flex flex-col gap-1 shrink-0">
+                      <div className="flex gap-1">
                         <button
                           onClick={(e) => toggleFavorite(listing.id, e)}
                           disabled={favoriteToggling === listing.id}
@@ -2009,11 +2428,14 @@ export default function MarketClient() {
                         </button>
                         <button
                           onClick={(e) =>
-                        handleShare(
-                          listing.id,
-                          e,
-                          listing.variety ?? listing.title ?? t("market.unknownListing"),
-                        )}
+                            handleShare(
+                              listing.id,
+                              e,
+                              listing.variety ??
+                                listing.title ??
+                                t("market.unknownListing"),
+                            )
+                          }
                           className="p-1.5 rounded-lg transition-colors text-slate-400 hover:text-[#04AA6D]"
                           aria-label={t("market.share")}
                         >
@@ -2029,8 +2451,8 @@ export default function MarketClient() {
                       </span>
                       {listing.quantity != null && unitLabel && (
                         <span className="inline-flex items-center gap-1 text-slate-500 text-sm font-medium">
-                          <Package size={14} className="shrink-0" />
-                          / {unitLabel}
+                          <Package size={14} className="shrink-0" />/{" "}
+                          {unitLabel}
                         </span>
                       )}
                     </div>
@@ -2096,7 +2518,10 @@ export default function MarketClient() {
                   listing.title ??
                   t("market.unknownListing");
                 const category = listing.category ?? "grapes";
-                const locationText = [listing.region, listing.village]
+                const locationText = [
+                  getRegionLabel(listing.region, t),
+                  listing.village,
+                ]
                   .filter(Boolean)
                   .join(", ");
                 const unitLabel = listing.unit
@@ -2209,11 +2634,14 @@ export default function MarketClient() {
                           </button>
                           <button
                             onClick={(e) =>
-                        handleShare(
-                          listing.id,
-                          e,
-                          listing.variety ?? listing.title ?? t("market.unknownListing"),
-                        )}
+                              handleShare(
+                                listing.id,
+                                e,
+                                listing.variety ??
+                                  listing.title ??
+                                  t("market.unknownListing"),
+                              )
+                            }
                             className="p-2 rounded-lg transition-colors text-slate-400 hover:text-[#04AA6D]"
                             aria-label={t("market.share")}
                           >
@@ -2229,8 +2657,8 @@ export default function MarketClient() {
                         </span>
                         {listing.quantity != null && unitLabel && (
                           <span className="inline-flex items-center gap-1 text-slate-500 text-sm font-medium">
-                            <Package size={14} className="shrink-0" />
-                            / {unitLabel}
+                            <Package size={14} className="shrink-0" />/{" "}
+                            {unitLabel}
                           </span>
                         )}
                       </div>
@@ -2241,9 +2669,11 @@ export default function MarketClient() {
                         </p>
                       )}
                       {(listing.description || listing.notes) && (
-                        <p className="text-slate-500 text-sm leading-relaxed line-clamp-3 mb-3">
-                          {listing.notes || listing.description}
-                        </p>
+                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/30 p-3 mb-3">
+                          <p className="text-slate-600 text-sm leading-relaxed line-clamp-3">
+                            {listing.notes || listing.description}
+                          </p>
+                        </div>
                       )}
                       <div className="flex flex-wrap items-center gap-3 text-slate-500 text-sm mt-auto">
                         {listing.quantity != null && unitLabel && (
@@ -2298,7 +2728,10 @@ export default function MarketClient() {
                   listing.title ??
                   t("market.unknownListing");
                 const category = listing.category ?? "grapes";
-                const locationText = [listing.region, listing.village]
+                const locationText = [
+                  getRegionLabel(listing.region, t),
+                  listing.village,
+                ]
                   .filter(Boolean)
                   .join(", ");
                 const unitLabel = listing.unit
@@ -2395,7 +2828,8 @@ export default function MarketClient() {
                                 <ThumbnailImage
                                   src={url}
                                   image200={
-                                    listing.photoUrls200?.[i] ?? listing.image200
+                                    listing.photoUrls200?.[i] ??
+                                    listing.image200
                                   }
                                   fill
                                   className="object-cover"
@@ -2412,7 +2846,7 @@ export default function MarketClient() {
                             <h2 className="text-[24px] font-bold text-slate-900 leading-snug line-clamp-2 flex-1">
                               {displayTitle}
                             </h2>
-                            <div className="flex flex-col gap-1 shrink-0">
+                            <div className="flex gap-1">
                               <button
                                 onClick={(e) => toggleFavorite(listing.id, e)}
                                 disabled={favoriteToggling === listing.id}
@@ -2439,16 +2873,28 @@ export default function MarketClient() {
                               </button>
                               <button
                                 onClick={(e) =>
-                        handleShare(
-                          listing.id,
-                          e,
-                          listing.variety ?? listing.title ?? t("market.unknownListing"),
-                        )}
+                                  handleShare(
+                                    listing.id,
+                                    e,
+                                    listing.variety ??
+                                      listing.title ??
+                                      t("market.unknownListing"),
+                                  )
+                                }
                                 className="p-2 rounded-lg transition-colors text-slate-400 hover:text-[#04AA6D] hover:bg-slate-50/50"
                                 aria-label={t("market.share")}
                               >
                                 <Share2 size={18} strokeWidth={2} />
                               </button>
+                              {listing.userId !== user?.uid && (
+                                <button
+                                  onClick={(e) => handleReportClick(listing, e)}
+                                  className="p-2 rounded-lg transition-colors text-slate-400 hover:text-amber-600 hover:bg-slate-50/50"
+                                  aria-label={t("market.report")}
+                                >
+                                  <CircleAlert size={18} strokeWidth={2} />
+                                </button>
+                              )}
                             </div>
                           </div>
 
@@ -2460,8 +2906,8 @@ export default function MarketClient() {
                             </span>
                             {listing.quantity != null && unitLabel && (
                               <span className="inline-flex items-center gap-1 text-slate-500 text-sm font-medium">
-                                <Package size={14} className="shrink-0" />
-                                / {unitLabel}
+                                <Package size={14} className="shrink-0" />/{" "}
+                                {unitLabel}
                               </span>
                             )}
                           </div>
@@ -2477,9 +2923,11 @@ export default function MarketClient() {
                           )}
 
                           {(listing.description || listing.notes) && (
-                            <p className="text-slate-600 text-base leading-relaxed line-clamp-3 mb-3 font-medium">
-                              {listing.notes || listing.description}
-                            </p>
+                            <div className="rounded-xl border border-slate-200/80 bg-slate-50/30 p-3 mb-3">
+                              <p className="text-slate-600 text-base leading-relaxed line-clamp-3">
+                                {listing.notes || listing.description}
+                              </p>
+                            </div>
                           )}
 
                           <div className="flex flex-wrap items-center gap-6 text-slate-600 text-sm mt-auto">
@@ -2499,7 +2947,10 @@ export default function MarketClient() {
                             )}
                             {listing.vintageYear != null && (
                               <span className="inline-flex items-center gap-1.5">
-                                <Calendar size={14} className="text-slate-400" />
+                                <Calendar
+                                  size={14}
+                                  className="text-slate-400"
+                                />
                                 {listing.vintageYear}
                               </span>
                             )}
@@ -2510,7 +2961,10 @@ export default function MarketClient() {
                             )}
                             {listing.harvestDate && (
                               <span className="inline-flex items-center gap-1.5">
-                                <Calendar size={14} className="text-slate-400" />
+                                <Calendar
+                                  size={14}
+                                  className="text-slate-400"
+                                />
                                 {formatHarvestDate(listing.harvestDate)}
                               </span>
                             )}
@@ -2567,6 +3021,17 @@ export default function MarketClient() {
           </>
         )}
       </div>
+      {reportModalListing && (
+        <ReportModal
+          listing={reportModalListing}
+          onClose={() => setReportModalListing(null)}
+          onSubmit={handleReportSubmit}
+          t={t}
+          submitting={reportSubmitting}
+          success={reportSuccess}
+          error={reportError}
+        />
+      )}
     </div>
   );
 }

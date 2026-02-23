@@ -20,8 +20,10 @@ import {
   Plus,
   X,
   GripVertical,
+  ArrowLeft,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import RegionSearchInput from "@/components/RegionSearchInput";
 
 type Category = "wine" | "grapes" | "nobati" | "inventory" | "seedlings";
 
@@ -358,17 +360,24 @@ export default function AddListingClient() {
     <div className="min-h-screen bg-[#f5f4f0] py-14 sm:py-20">
       <Container>
         <div className="max-w-xl mx-auto px-4">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-3">
-              <Plus size={24} strokeWidth={2.5} />
-              {t("market.addListing")}
-            </h1>
+          <div className="mb-8">
             <Link
               href="/my-listings"
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+              className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 mb-4 transition-colors group"
             >
-              ← {t("market.backToList")}
+              <ArrowLeft
+                size={18}
+                strokeWidth={2}
+                className="transition-transform group-hover:-translate-x-0.5"
+              />
+              {t("market.backToList")}
             </Link>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              {t("market.addListing")}
+            </h1>
+            <p className="mt-1.5 text-slate-600 text-base">
+              {t("market.addListingSubtitle")}
+            </p>
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -467,7 +476,7 @@ export default function AddListingClient() {
 
               {/* Category chips */}
               <label className={labelBase}>{t("market.category")}</label>
-              <div className="flex flex-wrap gap-2.5 mt-2">
+              <div className="flex flex-wrap gap-2.5 mt-2 mb-4">
                 {(
                   [
                     "wine",
@@ -499,27 +508,75 @@ export default function AddListingClient() {
                 })}
               </div>
 
-              {/* Variety / Product / Item */}
-              <label className={labelBase}>{varietyLabel} *</label>
-              <input
-                type="text"
-                value={variety}
-                onChange={(e) => setVariety(e.target.value)}
-                placeholder={varietyPlaceholder}
-                className={`${inputBase} placeholder-[#8a9a85]`}
-                required
-              />
+              {/* Variety / Product / Item — for wine/grapes: variety + wineType/sugarBrix side by side */}
+              {category === "wine" || category === "grapes" ? (
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-3">
+                  <div className="flex-1">
+                    <label className={labelBase}>{varietyLabel} *</label>
+                    <input
+                      type="text"
+                      value={variety}
+                      onChange={(e) => setVariety(e.target.value)}
+                      placeholder={varietyPlaceholder}
+                      className={`${inputBase} placeholder-[#8a9a85]`}
+                      required
+                    />
+                  </div>
+                  {category === "wine" && (
+                    <div className="flex-1">
+                      <label className={labelBase}>
+                        {t("market.wineType")}
+                      </label>
+                      <input
+                        type="text"
+                        value={wineType}
+                        onChange={(e) => setWineType(e.target.value)}
+                        placeholder={t("market.wineTypePlaceholder")}
+                        className={`${inputBase} placeholder-[#8a9a85]`}
+                      />
+                    </div>
+                  )}
+                  {category === "grapes" && (
+                    <div className="flex-1">
+                      <label className={labelBase}>
+                        {t("market.sugarBrix")}
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={sugarBrix}
+                        onChange={(e) => setSugarBrix(e.target.value)}
+                        placeholder={t("market.sugarBrixPlaceholder")}
+                        className={`${inputBase} placeholder-[#8a9a85]`}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <label className={labelBase}>{varietyLabel} *</label>
+                  <input
+                    type="text"
+                    value={variety}
+                    onChange={(e) => setVariety(e.target.value)}
+                    placeholder={varietyPlaceholder}
+                    className={`${inputBase} placeholder-[#8a9a85]`}
+                    required
+                  />
+                </>
+              )}
 
               {/* Region + Village side by side on web */}
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-3 mt-4">
                 <div className="flex-1">
                   <label className={labelBase}>{t("market.region")} *</label>
-                  <input
-                    type="text"
+                  <RegionSearchInput
+                    className="mt-2"
                     value={region}
-                    onChange={(e) => setRegion(e.target.value)}
-                    placeholder={t("market.regionPlaceholder")}
-                    className={`${inputBase} placeholder-[#8a9a85]`}
+                    onChange={setRegion}
+                    t={t}
+                    placeholder={t("market.selectRegion")}
+                    disabled={loading}
                     required
                   />
                 </div>
@@ -575,18 +632,9 @@ export default function AddListingClient() {
                 </div>
               </div>
 
-              {/* Grapes: sugar Brix + harvest date */}
+              {/* Grapes: harvest date (sugar Brix is beside variety above) */}
               {category === "grapes" && (
                 <>
-                  <label className={labelBase}>{t("market.sugarBrix")}</label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={sugarBrix}
-                    onChange={(e) => setSugarBrix(e.target.value)}
-                    placeholder={t("market.sugarBrixPlaceholder")}
-                    className={`${inputBase} placeholder-[#8a9a85]`}
-                  />
                   <label className={labelBase}>{t("market.harvestDate")}</label>
                   <input
                     type="date"
@@ -597,17 +645,9 @@ export default function AddListingClient() {
                 </>
               )}
 
-              {/* Wine: wine type + vintage year */}
+              {/* Wine: vintage year (wine type is beside variety above) */}
               {category === "wine" && (
                 <>
-                  <label className={labelBase}>{t("market.wineType")}</label>
-                  <input
-                    type="text"
-                    value={wineType}
-                    onChange={(e) => setWineType(e.target.value)}
-                    placeholder={t("market.wineTypePlaceholder")}
-                    className={`${inputBase} placeholder-[#8a9a85]`}
-                  />
                   <label className={labelBase}>{t("market.vintageYear")}</label>
                   <input
                     type="text"

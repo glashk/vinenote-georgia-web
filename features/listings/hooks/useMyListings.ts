@@ -13,7 +13,9 @@ import {
   onSnapshot,
   updateDoc,
   deleteDoc,
+  Timestamp,
 } from "firebase/firestore";
+import { getDaysLeft } from "../utils";
 import type { Listing, ListingStatus, ListingsFilters } from "../types";
 
 function mapDocToListing(docSnap: { id: string; data: () => Record<string, unknown> }): Listing {
@@ -104,10 +106,27 @@ export function useMyListings(t?: (key: string) => string) {
       );
       unsub = onSnapshot(
         q,
-        (snapshot) => {
+        async (snapshot) => {
           const list = snapshot.docs.map((d) => mapDocToListing(d));
           setListings(list);
           setLoading(false);
+
+          // Auto-expire listings that are past their expiry date
+          const expiredActive = list.filter(
+            (l) =>
+              (l.status ?? "active") === "active" &&
+              l.createdAt &&
+              getDaysLeft(l.createdAt) <= 0
+          );
+          for (const l of expiredActive) {
+            try {
+              await updateDoc(doc(db, "marketListings", l.id), {
+                status: "expired",
+              });
+            } catch (e) {
+              console.error("Auto-expire error:", e);
+            }
+          }
         },
         (err) => {
           console.error("My listings load error:", err);
@@ -178,6 +197,32 @@ export function useMyListings(t?: (key: string) => string) {
     [user]
   );
 
+  const renewListing = useCallback(
+    async (listingId: string) => {
+      if (!user) return;
+      const db = await getDb();
+      if (!db) return;
+      setError(null);
+      try {
+        await updateDoc(doc(db, "marketListings", listingId), {
+          status: "active",
+          createdAt: Timestamp.now(),
+        });
+        setListings((prev) =>
+          prev.map((l) =>
+            l.id === listingId
+              ? { ...l, status: "active" as const, createdAt: Timestamp.now() }
+              : l
+          )
+        );
+      } catch (e) {
+        console.error("Renew listing error:", e);
+        setError(t?.("market.errorLoad") ?? "Failed to renew listing");
+      }
+    },
+    [user]
+  );
+
   const activeCount = listings.filter((l) => (l.status ?? "active") === "active").length;
 
   const statusCounts = useMemo(() => {
@@ -208,6 +253,7 @@ export function useMyListings(t?: (key: string) => string) {
     updateStatus,
     removeListing,
     deleteListing,
+    renewListing,
     activeCount,
     statusCounts,
   };

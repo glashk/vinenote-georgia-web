@@ -50,6 +50,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const translations = TRANSLATIONS[language];
 
   const t = (key: string): any => {
+    if (key == null || typeof key !== "string") return String(key ?? "");
     const keys = key.split(".");
     let value: any = translations;
 
