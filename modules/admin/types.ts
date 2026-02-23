@@ -22,8 +22,12 @@ export interface Listing {
   phone?: string;
   contactName?: string;
   photoUrls?: string[];
+  photoUrls200?: string[];
+  photoUrls400?: string[];
   imageUrl?: string;
   image?: string;
+  image200?: string;
+  image400?: string;
   photos?: string[];
   thumbnail?: string;
   hidden?: boolean;

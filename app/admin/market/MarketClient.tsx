@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { getThumbUrl } from "@/lib/imageUtils";
+import OptimizedListingImage from "@/components/OptimizedListingImage";
 import { getDb } from "@/lib/firebase";
 import {
   collection,
@@ -38,10 +37,14 @@ interface Listing {
   phone?: string;
   contactName?: string;
   photoUrls?: string[];
+  photoUrls200?: string[];
   imageUrl?: string;
   image?: string;
+  image200?: string;
   photos?: string[];
   thumbnail?: string;
+  mainImage?: string;
+  photo?: string;
   hidden?: boolean;
   userId?: string;
   createdAt?: Timestamp | { seconds: number; nanoseconds?: number } | Date;
@@ -53,10 +56,14 @@ function getListingImageUrl(
   if (!listing) return null;
   return (
     listing.photoUrls?.[0] ??
+    listing.photoUrls200?.[0] ??
     listing.imageUrl ??
     listing.image ??
+    listing.image200 ??
     listing.thumbnail ??
     listing.photos?.[0] ??
+    listing.mainImage ??
+    listing.photo ??
     null
   );
 }
@@ -332,13 +339,13 @@ export default function MarketClient() {
                     <div className="flex-shrink-0">
                       <div className="relative w-24 h-24 rounded-xl bg-slate-200 overflow-hidden flex items-center justify-center">
                         {imgUrl ? (
-                          <Image
-                            src={getThumbUrl(imgUrl, 200) ?? imgUrl}
+                          <OptimizedListingImage
+                            src={imgUrl}
+                            context="card"
                             alt=""
                             fill
                             sizes="96px"
                             className="object-cover"
-                            unoptimized
                           />
                         ) : (
                           <span className="text-slate-400 text-xs">

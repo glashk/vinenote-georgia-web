@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { getThumbUrl } from "@/lib/imageUtils";
+import OptimizedListingImage from "@/components/OptimizedListingImage";
 import { getDb } from "@/lib/firebase";
 import {
   collection,
@@ -184,13 +183,13 @@ export default function SafetyClient() {
                 >
                   <div className="relative w-20 h-20 rounded-lg bg-slate-200 dark:bg-slate-600 overflow-hidden flex-shrink-0">
                     {imgUrl ? (
-                      <Image
-                        src={getThumbUrl(imgUrl, 200) ?? imgUrl}
+                      <OptimizedListingImage
+                        src={imgUrl}
+                        context="card"
                         alt=""
                         fill
                         sizes="80px"
                         className="object-cover"
-                        unoptimized
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">

@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { getThumbUrl } from "@/lib/imageUtils";
+import OptimizedListingImage from "@/components/OptimizedListingImage";
 import {
   useListings,
   type ListingFilter,
@@ -500,13 +499,13 @@ function ListingTableRow({
         <div className="flex items-center gap-3">
           {imgUrl && (
             <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 dark:bg-slate-700">
-              <Image
-                src={getThumbUrl(imgUrl, 200) ?? imgUrl}
+              <OptimizedListingImage
+                src={imgUrl}
+                context="card"
                 alt=""
                 fill
                 sizes="48px"
                 className="object-cover"
-                unoptimized
               />
             </div>
           )}
@@ -622,13 +621,13 @@ function ListingCard({
     >
       <div className="aspect-[4/3] bg-slate-200 dark:bg-slate-600 relative overflow-hidden">
         {imgUrl ? (
-          <Image
-            src={getThumbUrl(imgUrl, 400) ?? imgUrl}
+          <OptimizedListingImage
+            src={imgUrl}
+            context="detail"
             alt=""
             fill
             sizes="(max-width: 640px) 100vw, 400px"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            unoptimized
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-slate-400">

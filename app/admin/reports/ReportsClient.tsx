@@ -3,8 +3,7 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
-import Image from "next/image";
-import { getThumbUrl } from "@/lib/imageUtils";
+import OptimizedListingImage from "@/components/OptimizedListingImage";
 import { useReports } from "@/modules/admin/hooks/useReports";
 import { useAdminActions } from "@/modules/admin/hooks/useAdminActions";
 import { formatTimeAgo, getListingImageUrl } from "@/modules/admin/utils";
@@ -155,13 +154,13 @@ export default function ReportsClient() {
                   <div className="p-4 flex gap-4">
                     <div className="relative w-20 h-20 rounded-lg bg-slate-200 dark:bg-slate-600 overflow-hidden flex-shrink-0">
                       {imgUrl ? (
-                        <Image
-                          src={getThumbUrl(imgUrl, 200) ?? imgUrl}
+                        <OptimizedListingImage
+                          src={imgUrl}
+                          context="card"
                           alt=""
                           fill
                           sizes="80px"
                           className="object-cover"
-                          unoptimized
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
@@ -341,13 +340,13 @@ function ReportDetailPanel({
           <div className="space-y-3">
             {imgUrl && (
               <div className="relative w-full h-48 rounded-lg overflow-hidden">
-                <Image
-                  src={getThumbUrl(imgUrl, 400) ?? imgUrl}
+                <OptimizedListingImage
+                  src={imgUrl}
+                  context="detail"
                   alt=""
                   fill
                   sizes="(max-width: 640px) 100vw, 400px"
                   className="object-cover"
-                  unoptimized
                 />
               </div>
             )}

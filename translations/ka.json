@@ -275,6 +275,19 @@
       "qvevri": "ქვევრი"
     }
   },
+  "adminLogin": {
+    "title": "ადმინისტრატორის შესვლა",
+    "subtitle": "მხოლოდ ადმინისტრატორებისთვის",
+    "email": "ელფოსტა",
+    "password": "პაროლი",
+    "submit": "შესვლა",
+    "loading": "შედიხართ...",
+    "logout": "გასვლა",
+    "backToHome": "მთავარ გვერდზე",
+    "firebaseError": "Firebase ხელმისაწვდომი არ არის",
+    "loginError": "შესვლა ვერ მოხერხდა",
+    "accessDenied": "თქვენ არ გაქვთ ადმინისტრატორის უფლება."
+  },
   "footer": {
     "copyright": "© VineNote Georgia",
     "email": "support@vinenote.app",
