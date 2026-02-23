@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Sign In - VineNote Georgia",
     description: "Sign in to your VineNote Georgia account.",
-    url: "https://vinenote.ge/login",
+    url: "https://vinenote.app/login",
   },
 };
 

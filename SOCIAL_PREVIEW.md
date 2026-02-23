@@ -22,7 +22,7 @@ Before deploying, update the `metadataBase` URL in `app/layout.tsx`:
 metadataBase: new URL("https://your-actual-domain.com"),
 ```
 
-Replace `https://vinenote.ge` with your actual domain URL.
+Replace `https://vinenote.app` with your actual domain URL.
 
 ## Testing Link Previews
 
@@ -43,6 +43,7 @@ After deployment, test your link previews using:
 ## How It Works
 
 When someone shares your website link:
+
 1. Social media platforms fetch the page
 2. They read the Open Graph meta tags
 3. They display a preview card with:

@@ -13,6 +13,7 @@
     "cleanUrls": true,
     "trailingSlash": false,
     "rewrites": [
+      {"source": "/share/**", "function": "sharePreview"},
       {"source": "/support", "destination": "/support.html"},
       {"source": "/privacy", "destination": "/privacy.html"},
       {"source": "**", "destination": "/index.html"}

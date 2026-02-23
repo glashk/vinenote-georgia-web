@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     title: "VineNote Georgia - Market",
     description:
       "Browse and buy grapes, wine, and vineyard products from Georgian winemakers.",
-    url: "https://vinenote.ge",
+    url: "https://vinenote.app",
     images: [
       {
         url: "/Grapevines-scaled-e5b6bd5d-a447-4b5f-9da8-6c8c55461efd.png",

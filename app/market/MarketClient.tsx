@@ -207,7 +207,7 @@ function ListingDetailView({
   onBack: () => void;
   t: (key: string) => string;
   getUnitLabel: (unit: string) => string;
-  onShare?: (listingId: string) => void;
+  onShare?: (listingId: string, listingTitle?: string) => void;
   onToggleFavorite?: (listingId: string, e: React.MouseEvent) => void;
   favoriteIds?: Set<string>;
   favoriteToggling?: string | null;
@@ -369,7 +369,7 @@ function ListingDetailView({
                 )}
                 {onShare && listing && (
                   <button
-                    onClick={() => onShare(listing.id)}
+                    onClick={() => onShare(listing.id, displayTitle)}
                     className="p-2 rounded-lg transition-colors text-slate-400 hover:text-[#04AA6D] hover:bg-slate-50/50"
                     aria-label={t("market.share")}
                   >
@@ -725,27 +725,29 @@ export default function MarketClient() {
     [user, favoriteIds, router],
   );
 
-  const handleShare = useCallback((listingId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const url =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/?id=${listingId}`
-        : `/?id=${listingId}`;
-    const title = "VineNote Georgia - Market";
-    if (navigator.share) {
-      navigator
-        .share({
-          title,
-          url,
-          text: title,
-        })
-        .catch(() => {
-          navigator.clipboard?.writeText(url);
-        });
-    } else {
-      navigator.clipboard?.writeText(url);
-    }
-  }, []);
+  const handleShare = useCallback(
+    (listingId: string, e: React.MouseEvent, listingTitle?: string) => {
+      e.stopPropagation();
+      const base =
+        typeof window !== "undefined" ? window.location.origin : "";
+      const shareUrl = `${base}/share/${listingId}`;
+      const title = listingTitle ?? "VineNote Georgia - Market";
+      if (navigator.share) {
+        navigator
+          .share({
+            title,
+            url: shareUrl,
+            text: title,
+          })
+          .catch(() => {
+            navigator.clipboard?.writeText(shareUrl);
+          });
+      } else {
+        navigator.clipboard?.writeText(shareUrl);
+      }
+    },
+    [],
+  );
 
   const loadDetail = useCallback(async () => {
     if (!detailId) return;
@@ -1023,8 +1025,8 @@ export default function MarketClient() {
           const label = t(key);
           return label === key ? unit : label;
         }}
-        onShare={(id: string) =>
-          handleShare(id, { stopPropagation: () => {} } as React.MouseEvent)
+        onShare={(id: string, title?: string) =>
+          handleShare(id, { stopPropagation: () => {} } as React.MouseEvent, title)
         }
         onToggleFavorite={toggleFavorite}
         favoriteIds={favoriteIds}
@@ -1808,7 +1810,12 @@ export default function MarketClient() {
                         />
                       </button>
                       <button
-                        onClick={(e) => handleShare(listing.id, e)}
+                        onClick={(e) =>
+                        handleShare(
+                          listing.id,
+                          e,
+                          listing.variety ?? listing.title ?? t("market.unknownListing"),
+                        )}
                         className="w-9 h-9 rounded-full bg-white/95 backdrop-blur flex items-center justify-center shadow-sm transition-colors text-slate-600 hover:text-[#04AA6D]"
                         aria-label={t("market.share")}
                       >
@@ -2001,7 +2008,12 @@ export default function MarketClient() {
                           />
                         </button>
                         <button
-                          onClick={(e) => handleShare(listing.id, e)}
+                          onClick={(e) =>
+                        handleShare(
+                          listing.id,
+                          e,
+                          listing.variety ?? listing.title ?? t("market.unknownListing"),
+                        )}
                           className="p-1.5 rounded-lg transition-colors text-slate-400 hover:text-[#04AA6D]"
                           aria-label={t("market.share")}
                         >
@@ -2196,7 +2208,12 @@ export default function MarketClient() {
                             />
                           </button>
                           <button
-                            onClick={(e) => handleShare(listing.id, e)}
+                            onClick={(e) =>
+                        handleShare(
+                          listing.id,
+                          e,
+                          listing.variety ?? listing.title ?? t("market.unknownListing"),
+                        )}
                             className="p-2 rounded-lg transition-colors text-slate-400 hover:text-[#04AA6D]"
                             aria-label={t("market.share")}
                           >
@@ -2421,7 +2438,12 @@ export default function MarketClient() {
                                 />
                               </button>
                               <button
-                                onClick={(e) => handleShare(listing.id, e)}
+                                onClick={(e) =>
+                        handleShare(
+                          listing.id,
+                          e,
+                          listing.variety ?? listing.title ?? t("market.unknownListing"),
+                        )}
                                 className="p-2 rounded-lg transition-colors text-slate-400 hover:text-[#04AA6D] hover:bg-slate-50/50"
                                 aria-label={t("market.share")}
                               >

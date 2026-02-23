@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "About Us - VineNote Georgia",
     description:
       "Simple vineyard & qvevri management for Georgian winemakers. Track vineyards, harvest records, qvevri & tank management, and wine batch history.",
-    url: "https://vinenote.ge/about",
+    url: "https://vinenote.app/about",
     images: [
       {
         url: "/Grapevines-scaled-e5b6bd5d-a447-4b5f-9da8-6c8c55461efd.png",

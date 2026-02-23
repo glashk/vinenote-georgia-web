@@ -9,7 +9,7 @@ import FirebaseAnalytics from "@/components/FirebaseAnalytics";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://vinenote.ge"),
+  metadataBase: new URL("https://vinenote.app"),
   title: "VineNote Georgia - Vineyard & Qvevri Management",
   description: "Simple vineyard & qvevri management for Georgian winemakers",
   icons: {
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "VineNote Georgia - Vineyard & Qvevri Management",
     description: "Simple vineyard & qvevri management for Georgian winemakers",
-    url: "https://vinenote.ge",
+    url: "https://vinenote.app",
     siteName: "VineNote Georgia",
     images: [
       {

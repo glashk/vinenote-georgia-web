@@ -3,11 +3,13 @@ import PrivacyClient from "./PrivacyClient";
 
 export const metadata: Metadata = {
   title: "Privacy Policy - VineNote Georgia",
-  description: "Privacy Policy for VineNote Georgia app. Learn how we collect, use, and protect your data.",
+  description:
+    "Privacy Policy for VineNote Georgia app. Learn how we collect, use, and protect your data.",
   openGraph: {
     title: "Privacy Policy - VineNote Georgia",
-    description: "Privacy Policy for VineNote Georgia app. Learn how we collect, use, and protect your data.",
-    url: "https://vinenote.ge/privacy",
+    description:
+      "Privacy Policy for VineNote Georgia app. Learn how we collect, use, and protect your data.",
+    url: "https://vinenote.app/privacy",
     images: [
       {
         url: "/Glass-over-Qvevri-1-1024x850-7233ca7d-92db-4916-bb63-677ca05a2ccc.png",
@@ -20,8 +22,11 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Privacy Policy - VineNote Georgia",
-    description: "Privacy Policy for VineNote Georgia app. Learn how we collect, use, and protect your data.",
-    images: ["/Glass-over-Qvevri-1-1024x850-7233ca7d-92db-4916-bb63-677ca05a2ccc.png"],
+    description:
+      "Privacy Policy for VineNote Georgia app. Learn how we collect, use, and protect your data.",
+    images: [
+      "/Glass-over-Qvevri-1-1024x850-7233ca7d-92db-4916-bb63-677ca05a2ccc.png",
+    ],
   },
 };
 
