@@ -106,6 +106,36 @@
     animation: scaleIn 0.5s ease-out forwards;
   }
 
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideOutRight {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  }
+
+  .animate-slide-out-right {
+    animation: slideOutRight 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -134,6 +164,11 @@
     ::view-transition-new(root) {
       animation-duration: 0.3s;
       animation-timing-function: ease-out;
+    }
+    /* Keep filter header and main container stable during view transitions (no morph/flash) */
+    [data-market-header],
+    [data-market-main] {
+      view-transition-name: none;
     }
   }
 
@@ -227,11 +262,9 @@
   }
 
   .vn-card-hover {
-    transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
-    will-change: transform;
+    transition: box-shadow 220ms ease, border-color 220ms ease;
   }
   .vn-card-hover:hover {
-    transform: translateY(-4px);
     box-shadow:
       0 24px 48px rgba(15, 23, 42, 0.12),
       inset 0 1px 0 rgba(255, 255, 255, 0.65);
@@ -314,6 +347,17 @@
   .market-list-card:hover {
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
     border-color: rgba(15, 23, 42, 0.1);
+  }
+  /* Mobile-only: improved list card design */
+  @media (max-width: 639px) {
+    .market-list-card {
+      @apply rounded-2xl;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+    }
+    .market-list-card:active {
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1);
+    }
   }
 
   .vn-link {

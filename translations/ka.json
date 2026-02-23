@@ -1,6 +1,14 @@
 {
   "nav": {
     "home": "მთავარი",
+    "app": "ჩამოტვირთეთ აპლიკაცია",
+    "menu": "მენიუ",
+    "closeMenu": "მენიუის დახურვა",
+    "toggleMenu": "მენიუის გახსნა",
+    "tagline": "ვენახი და მარკეტი",
+    "homeAria": "VineNote Georgia მთავარი",
+    "browse": "ნავიგაცია",
+    "account": "ანგარიში",
     "aboutUs": "ჩვენს შესახებ",
     "support": "მხარდაჭერა",
     "privacy": "კონფიდენციალურობის პოლიტიკა",
@@ -130,6 +138,7 @@
     }
   },
   "profile": {
+    "title": "პროფილი",
     "name": "სახელი",
     "email": "ელფოსტა",
     "save": "ცვლილებების შენახვა",
@@ -198,6 +207,7 @@
     "notesOptional": "შენიშვნები (არასავალდებულო)",
     "notesPlaceholder": "დამატებითი დეტალები...",
     "searchPlaceholder": "ძებნა ჯიში, რეგიონი...",
+    "clearSearch": "ძებნის გასუფთავება",
     "allRegions": "ყველა რეგიონი",
     "allVillages": "ყველა სოფელი",
     "minPrice": "მინ. ფასი",
@@ -226,6 +236,7 @@
     "wineTypePlaceholder": "მაგ. მშრალი წითელი",
     "emptyFeed": "ჩანაწერები ჯერ არ არის",
     "emptyFeedSubtext": "შექმენით პირველი ჩანაწერი გაყიდვის დასაწყებად.",
+    "noMatchFilter": "ფილტრებს არცერთი ჩანაწერი არ შეესაბამება.",
     "listingsFromSeller": "ამ გამყიდველის ჩანაწერები",
     "add": "დამატება",
     "addListing": "განცხადების დამატება",
@@ -234,8 +245,10 @@
     "createFirstHint": "ჩანაწერების შექმნა VineNote აპლიკაციიდან.",
     "removeListing": "ჩანაწერის მოხსნა",
     "removeConfirm": "მოვხსნათ ეს განცხადება მარკეტიდან?",
+    "removeConfirmMessage": "განცხადება დამალული იქნება მარკეტში. შეგიძლიათ მოგვიანებით შეცვალოთ ან წაშალოთ.",
     "deleteListing": "სრულად წაშლა",
     "deleteConfirm": "ამის გაუქმება შეუძლებელია. წავშალოთ ეს განცხადება?",
+    "deleteConfirmTitle": "წავშალოთ ეს განცხადება სრულად?",
     "daysLeft": "{{count}} დღე დარჩა",
     "moreImages": "+{{count}} სურათი",
     "units": {
@@ -253,6 +266,7 @@
     "copyright": "© VineNote Georgia",
     "email": "support@vinenote.app",
     "links": "ბმულები",
+    "admin": "ადმინი",
     "tagline": "მარტივი ვენახისა და ქვევრის მართვა ქართველი მეღვინეებისთვის."
   },
   "support": {

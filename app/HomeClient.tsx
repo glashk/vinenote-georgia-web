@@ -271,7 +271,7 @@ export default function HomeClient() {
                       src={feature.image}
                       alt={feature.title}
                       fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="object-cover"
                       loading="lazy"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
@@ -340,13 +340,13 @@ export default function HomeClient() {
                       src={item.image}
                       alt={item.title}
                       fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="object-cover"
                       loading="lazy"
                       sizes="(max-width: 768px) 100vw, 33vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-wine-900/40 to-transparent" />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="bg-white/70 backdrop-blur-sm rounded-full w-20 h-20 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 border border-white/40">
+                      <div className="bg-white/70 backdrop-blur-sm rounded-full w-20 h-20 flex items-center justify-center shadow-lg border border-white/40">
                         {item.icon}
                       </div>
                     </div>

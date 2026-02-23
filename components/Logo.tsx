@@ -16,7 +16,7 @@ export default function Logo({ size = 48, className = "", animated = true, style
   return (
     <div
       className={`relative shrink-0 ${className} transition-transform duration-300 ${
-        animated && isHovered ? "scale-110 rotate-3" : ""
+        animated && isHovered ? "rotate-3" : ""
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

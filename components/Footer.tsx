@@ -76,7 +76,7 @@ export default function Footer() {
               href="/admin/login"
               className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
             >
-              Admin
+              {t("footer.admin")}
             </Link>
           </div>
         </div>

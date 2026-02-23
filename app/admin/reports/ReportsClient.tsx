@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import { useLanguage } from "@/contexts/LanguageContext";
 import Image from "next/image";
 import { getThumbUrl } from "@/lib/imageUtils";
 import { useReports } from "@/modules/admin/hooks/useReports";
@@ -12,6 +13,7 @@ import type { Listing } from "@/modules/admin/types";
 import { KeyboardShortcutsHelp } from "@/modules/admin/components/KeyboardShortcuts";
 
 export default function ReportsClient() {
+  const { t } = useLanguage();
   const {
     reports,
     pendingReports,
@@ -171,7 +173,7 @@ export default function ReportsClient() {
                       <div className="font-medium text-slate-900 dark:text-slate-100 truncate">
                         {report.listing?.title ??
                           report.listing?.variety ??
-                          "Unknown listing"}
+                          t("market.unknownListing")}
                       </div>
                       {report.listing?.price != null && report.listing.price > 0 && (
                         <div className="text-emerald-600 dark:text-emerald-400 font-medium text-sm">

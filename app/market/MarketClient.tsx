@@ -25,6 +25,7 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  ArrowUpDown,
   SlidersHorizontal,
   MapPin,
   Calendar,
@@ -724,30 +725,27 @@ export default function MarketClient() {
     [user, favoriteIds, router],
   );
 
-  const handleShare = useCallback(
-    (listingId: string, e: React.MouseEvent) => {
-      e.stopPropagation();
-      const url =
-        typeof window !== "undefined"
-          ? `${window.location.origin}/?id=${listingId}`
-          : `/?id=${listingId}`;
-      const title = "VineNote Georgia - Market";
-      if (navigator.share) {
-        navigator
-          .share({
-            title,
-            url,
-            text: title,
-          })
-          .catch(() => {
-            navigator.clipboard?.writeText(url);
-          });
-      } else {
-        navigator.clipboard?.writeText(url);
-      }
-    },
-    [],
-  );
+  const handleShare = useCallback((listingId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/?id=${listingId}`
+        : `/?id=${listingId}`;
+    const title = "VineNote Georgia - Market";
+    if (navigator.share) {
+      navigator
+        .share({
+          title,
+          url,
+          text: title,
+        })
+        .catch(() => {
+          navigator.clipboard?.writeText(url);
+        });
+    } else {
+      navigator.clipboard?.writeText(url);
+    }
+  }, []);
 
   const loadDetail = useCallback(async () => {
     if (!detailId) return;
@@ -1050,17 +1048,21 @@ export default function MarketClient() {
   }
 
   return (
-    <div className="min-h-screen py-8 sm:py-12 px-4 sm:px-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header: unified modern UX */}
-        <header className="relative z-20 mb-8 vn-glass vn-card overflow-visible">
-          <div className="p-4 sm:p-4 space-y-5">
-            {/* Row 1: Search + Sort + Filter */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative min-w-0 flex-1 group">
+    <div className="min-h-screen py-4 sm:py-8 px-4 sm:px-6">
+      <div data-market-main className="max-w-7xl mx-auto">
+        {/* Header: unified modern UX - solid bg to avoid backdrop-filter changing when grid/list below changes */}
+        <header
+          data-market-header
+          className="relative z-20 mb-6 sm:mb-8 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.06)] overflow-visible"
+        >
+          <div className="p-3 sm:p-4 space-y-4 sm:space-y-5">
+            {/* Mobile: Search, then Categories, then Controls */}
+            <div className="flex flex-col gap-3 md:hidden">
+              {/* Search */}
+              <div className="relative min-w-0 group">
                 <Search
                   size={20}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none transition-colors duration-200 group-focus-within:text-[#04AA6D]"
+                  className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none transition-colors duration-200 group-focus-within:text-[#04AA6D]"
                 />
                 <input
                   type="search"
@@ -1068,138 +1070,22 @@ export default function MarketClient() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t("market.searchPlaceholder")}
                   aria-label={t("market.searchPlaceholder")}
-                  className="search-no-native-clear w-full pl-12 pr-12 py-3.5 rounded-2xl border-2 border-slate-200/80 text-slate-900 placeholder-slate-400 text-base font-normal shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-slate-300 hover:shadow-md focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all duration-200 bg-white"
+                  className="search-no-native-clear w-full pl-11 sm:pl-12 pr-11 sm:pr-12 py-2 sm:py-3.5 rounded-xl sm:rounded-2xl border-2 border-slate-200/80 text-slate-900 placeholder-slate-400 text-base font-normal shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-slate-300 hover:shadow-md focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all duration-200 bg-white"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
-                    aria-label="Clear search"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all focus-visible:ring-2 focus-visible:ring-[#04AA6D]/50"
+                    aria-label={t("market.clearSearch")}
+                    className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all focus-visible:ring-2 focus-visible:ring-[#04AA6D]/50"
                   >
                     <X size={18} strokeWidth={2.5} />
                   </button>
                 )}
               </div>
-              <div className="flex items-center gap-2 shrink-0 flex-2">
-                {/* Sort dropdown */}
-                <div className="relative" ref={sortDropdownRef}>
-                  <button
-                    type="button"
-                    onClick={() => setSortDropdownOpen((v) => !v)}
-                    aria-expanded={sortDropdownOpen}
-                    aria-haspopup="listbox"
-                    aria-label={t("market.sortByLabel")}
-                    className="flex items-center gap-2 px-4 py-3.5 rounded-2xl border-2 border-slate-200/80 bg-white text-slate-700 text-sm font-semibold shadow-[0_2px_6px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:shadow-[0_4px_12px_rgba(15,23,42,0.1),0_2px_4px_rgba(15,23,42,0.06)] focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all cursor-pointer h-[52px]"
-                  >
-                    {t(`market.sortBy.${sortBy}`)}
-                    <ChevronDown
-                      size={16}
-                      className={`transition-transform duration-200 ${sortDropdownOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-                  {sortDropdownOpen && (
-                    <div
-                      role="listbox"
-                      className="absolute right-0 top-full mt-1.5 min-w-[200px] py-1.5 rounded-xl border-2 border-slate-200/80 bg-white shadow-xl shadow-slate-200/40 z-[100] animate-fade-in overflow-hidden"
-                    >
-                      {(
-                        [
-                          "newest",
-                          "price_asc",
-                          "price_desc",
-                          "brix_asc",
-                          "brix_desc",
-                          "vintage_asc",
-                          "vintage_desc",
-                        ] as SortBy[]
-                      ).map((value) => (
-                        <button
-                          key={value}
-                          role="option"
-                          aria-selected={sortBy === value}
-                          onClick={() => {
-                            withViewTransition(() => {
-                              setSortBy(value);
-                              setSortDropdownOpen(false);
-                            });
-                          }}
-                          className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors first:pt-3 last:pb-3 ${
-                            sortBy === value
-                              ? "bg-[#04AA6D]/10 text-[#04AA6D]"
-                              : "text-slate-700 hover:bg-slate-50"
-                          }`}
-                        >
-                          {t(`market.sortBy.${value}`)}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Filters */}
-                <button
-                  onClick={() => setFiltersOpen((v) => !v)}
-                  aria-expanded={filtersOpen}
-                  aria-controls="market-filters"
-                  className={`relative flex items-center gap-2 px-4 py-3.5 rounded-2xl text-sm font-semibold border-2 transition-all h-[52px] ${
-                    filtersOpen
-                      ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-[0_2px_8px_rgba(4,170,109,0.3),0_4px_12px_rgba(0,0,0,0.08)]"
-                      : "bg-white border-slate-200/80 text-slate-600 shadow-[0_2px_6px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_4px_12px_rgba(15,23,42,0.1),0_2px_4px_rgba(15,23,42,0.06)]"
-                  }`}
-                >
-                  <SlidersHorizontal
-                    size={18}
-                    strokeWidth={2}
-                    className="shrink-0"
-                  />
-                  <span className="max-w-[100px] sm:max-w-[140px] truncate hidden sm:inline">
-                    {filterSummary}
-                  </span>
-                  {hasActiveFilters && !filtersOpen && (
-                    <span
-                      className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#04AA6D] ring-2 ring-white"
-                      aria-hidden
-                    />
-                  )}
-                  {filtersOpen ? (
-                    <ChevronUp size={18} className="shrink-0" />
-                  ) : (
-                    <ChevronDown size={18} className="shrink-0" />
-                  )}
-                </button>
-                {user && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      withViewTransition(() => setFavoritesOnly((v) => !v))
-                    }
-                    aria-pressed={favoritesOnly}
-                    aria-label={t("market.favorites")}
-                    className={`flex items-center gap-2 px-4 py-3.5 rounded-2xl text-sm font-semibold border-2 transition-all h-[52px] ${
-                      favoritesOnly
-                        ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]"
-                        : "bg-white border-slate-200/80 text-slate-600 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
-                    }`}
-                  >
-                    <Heart
-                      size={18}
-                      strokeWidth={2}
-                      fill={favoritesOnly ? "currentColor" : "none"}
-                      className="shrink-0"
-                    />
-                    <span className="hidden sm:inline">
-                      {t("market.favorites")}
-                    </span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Row 2: Category chips + Listing counter + Grid switch */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+              {/* Categories - under search on mobile, full-width scroll */}
               <nav
-                className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide min-w-0"
+                className="flex gap-2 overflow-x-auto pb-1 -mx-3 scrollbar-hide touch-pan-x px-3"
                 aria-label="Filter by category"
               >
                 {(
@@ -1217,54 +1103,407 @@ export default function MarketClient() {
                     onClick={() =>
                       withViewTransition(() => setCategoryFilter(c))
                     }
-                    className={`inline-flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold border-2 shrink-0 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border-2 shrink-0 transition-all duration-200 ${
                       categoryFilter === c
-                        ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]"
-                        : "bg-white border-slate-200/80 text-slate-600 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
+                        ? "bg-[#04AA6D] border-[#04AA6D] text-white"
+                        : "bg-white border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                     }`}
                   >
                     {c !== "all" && (
-                      <span className="text-base" aria-hidden>
+                      <span className="text-base shrink-0">
                         {CATEGORY_ICONS[c] ?? "📦"}
                       </span>
                     )}
-                    {c === "all"
-                      ? t("common.all")
-                      : t(
-                          `market.category${c.charAt(0).toUpperCase() + c.slice(1)}`,
-                        )}
+                    <span className="whitespace-nowrap">
+                      {c === "all"
+                        ? t("common.all")
+                        : t(
+                            `market.category${c.charAt(0).toUpperCase() + c.slice(1)}`,
+                          )}
+                    </span>
                   </button>
                 ))}
               </nav>
-              <div className="flex items-center justify-between gap-3 w-full md:w-unset">
-                <span className="px-3 py-2 rounded-xl bg-slate-100/90 text-slate-700 font-bold tabular-nums text-sm shadow-[0_1px_4px_rgba(15,23,42,0.05)]">
-                  {t("market.listingsFound").replace(
-                    "{{count}}",
-                    String(filteredListings.length),
-                  )}
-                </span>
-                {/* View mode */}
-                <div className="flex bg-slate-100/90 rounded-xl p-1 gap-0.5 shadow-inner">
-                  {[
-                    { mode: "grid" as const, icon: LayoutGrid },
-                    { mode: "card" as const, icon: LayoutList },
-                    { mode: "detailed" as const, icon: List },
-                  ].map(({ mode, icon: Icon }) => (
+              {/* Controls - mobile: two containers with justify-between */}
+              <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
+                {/* Container 1: Sort, Filter, Favorites */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* Sort dropdown */}
+                  <div
+                    className="relative flex-1 sm:flex-initial min-w-0"
+                    ref={(el) => {
+                      if (el?.offsetParent)
+                        (
+                          sortDropdownRef as React.MutableRefObject<HTMLDivElement | null>
+                        ).current = el;
+                    }}
+                  >
                     <button
-                      key={mode}
-                      onClick={() =>
-                        withViewTransition(() => setViewMode(mode))
-                      }
-                      className={`p-2.5 rounded-lg transition-all duration-300 ${
-                        viewMode === mode
-                          ? "bg-white text-[#04AA6D] shadow-md"
-                          : "text-slate-500 hover:text-slate-700 hover:bg-white/60"
-                      } ${mode === "card" ? "hidden md:flex" : ""}`}
-                      aria-label={`${mode} view`}
+                      type="button"
+                      onClick={() => setSortDropdownOpen((v) => !v)}
+                      aria-expanded={sortDropdownOpen}
+                      aria-haspopup="listbox"
+                      aria-label={t("market.sortByLabel")}
+                      className="flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 w-full sm:w-auto px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border-2 border-slate-200/80 bg-white text-slate-700 text-sm font-semibold shadow-[0_2px_6px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:shadow-[0_4px_12px_rgba(15,23,42,0.1),0_2px_4px_rgba(15,23,42,0.06)] focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all cursor-pointer h-11 sm:h-[52px]"
                     >
-                      <Icon size={18} strokeWidth={2} />
+                      <ArrowUpDown
+                        size={18}
+                        className="shrink-0 md:hidden"
+                        strokeWidth={2}
+                      />
+                      <span className="truncate hidden md:inline">
+                        {t(`market.sortBy.${sortBy}`)}
+                      </span>
+                      <ChevronDown
+                        size={16}
+                        className={`shrink-0 transition-transform duration-200 ${sortDropdownOpen ? "rotate-180" : ""} hidden md:block`}
+                      />
+                    </button>
+                    {sortDropdownOpen && (
+                      <div
+                        role="listbox"
+                        className="absolute left-0 right-0 sm:right-0 sm:left-auto top-full mt-1.5 min-w-[150px] sm:min-w-[200px] w-full sm:w-auto py-1.5 rounded-xl border-2 border-slate-200/80 bg-white shadow-xl shadow-slate-200/40 z-[100] animate-fade-in overflow-hidden"
+                      >
+                        {(
+                          [
+                            "newest",
+                            "price_asc",
+                            "price_desc",
+                            "brix_asc",
+                            "brix_desc",
+                            "vintage_asc",
+                            "vintage_desc",
+                          ] as SortBy[]
+                        ).map((value) => (
+                          <button
+                            key={value}
+                            role="option"
+                            aria-selected={sortBy === value}
+                            onClick={() => {
+                              withViewTransition(() => {
+                                setSortBy(value);
+                                setSortDropdownOpen(false);
+                              });
+                            }}
+                            className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors first:pt-3 last:pb-3 ${
+                              sortBy === value
+                                ? "bg-[#04AA6D]/10 text-[#04AA6D]"
+                                : "text-slate-700 hover:bg-slate-50"
+                            }`}
+                          >
+                            {t(`market.sortBy.${value}`)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Filters */}
+                  <button
+                    onClick={() => setFiltersOpen((v) => !v)}
+                    aria-expanded={filtersOpen}
+                    aria-controls="market-filters"
+                    className={`relative flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 flex-1 sm:flex-initial min-w-0 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl text-sm font-semibold border-2 transition-all h-11 sm:h-[52px] ${
+                      filtersOpen
+                        ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-[0_2px_8px_rgba(4,170,109,0.3),0_4px_12px_rgba(0,0,0,0.08)]"
+                        : "bg-white border-slate-200/80 text-slate-600 shadow-[0_2px_6px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_4px_12px_rgba(15,23,42,0.1),0_2px_4px_rgba(15,23,42,0.06)]"
+                    }`}
+                  >
+                    <SlidersHorizontal
+                      size={18}
+                      strokeWidth={2}
+                      className="shrink-0"
+                    />
+                    <span className="max-w-[80px] sm:max-w-[140px] truncate hidden sm:inline">
+                      {filterSummary}
+                    </span>
+                    {hasActiveFilters && !filtersOpen && (
+                      <span
+                        className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#04AA6D] ring-2 ring-white"
+                        aria-hidden
+                      />
+                    )}
+                    {filtersOpen ? (
+                      <ChevronUp size={18} className="shrink-0" />
+                    ) : (
+                      <ChevronDown size={18} className="shrink-0" />
+                    )}
+                  </button>
+                  {user && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        withViewTransition(() => setFavoritesOnly((v) => !v))
+                      }
+                      aria-pressed={favoritesOnly}
+                      aria-label={t("market.favorites")}
+                      className={`flex items-center justify-center gap-1.5 sm:gap-2 shrink-0 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl text-sm font-semibold border-2 transition-all h-11 sm:h-[52px] ${
+                        favoritesOnly
+                          ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]"
+                          : "bg-white border-slate-200/80 text-slate-600 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
+                      }`}
+                    >
+                      <Heart
+                        size={18}
+                        strokeWidth={2}
+                        fill={favoritesOnly ? "currentColor" : "none"}
+                        className="shrink-0"
+                      />
+                      <span className="hidden sm:inline">
+                        {t("market.favorites")}
+                      </span>
+                    </button>
+                  )}
+                </div>
+                {/* Container 2: Counter, Grid switcher - mobile only */}
+                <div className="md:hidden flex items-center gap-2 shrink-0">
+                  <div
+                    className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-slate-100/80 border border-slate-200/60 h-11 sm:h-[52px] shrink-0"
+                    aria-label={t("market.listingsFound").replace(
+                      "{{count}}",
+                      String(filteredListings.length),
+                    )}
+                  >
+                    <Package
+                      size={15}
+                      className="text-slate-500 shrink-0"
+                      strokeWidth={2}
+                    />
+                    <span className="text-slate-600 font-semibold tabular-nums text-sm">
+                      {filteredListings.length}
+                    </span>
+                  </div>
+                  <div className="flex bg-slate-100/90 rounded-xl p-1 gap-0.5 shadow-inner shrink-0">
+                    {[
+                      { mode: "grid" as const, icon: LayoutGrid },
+                      { mode: "card" as const, icon: LayoutList },
+                      { mode: "detailed" as const, icon: List },
+                    ].map(({ mode, icon: Icon }) => (
+                      <button
+                        key={mode}
+                        onClick={() =>
+                          withViewTransition(() => setViewMode(mode))
+                        }
+                        className={`p-2 sm:p-2.5 rounded-lg transition-all duration-300 ${
+                          viewMode === mode
+                            ? "bg-white text-[#04AA6D] shadow-md"
+                            : "text-slate-500 hover:text-slate-700 hover:bg-white/60"
+                        } ${mode === "card" ? "hidden" : ""}`}
+                        aria-label={`${mode} view`}
+                      >
+                        <Icon size={18} strokeWidth={2} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop: Row 1 Search + Controls, Row 2 Categories + Counter + Grid */}
+            <div className="hidden md:block space-y-4">
+              <div className="flex flex-row gap-3">
+                <div className="relative min-w-0 flex-1 group">
+                  <Search
+                    size={20}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none transition-colors duration-200 group-focus-within:text-[#04AA6D]"
+                  />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t("market.searchPlaceholder")}
+                    aria-label={t("market.searchPlaceholder")}
+                    className="search-no-native-clear w-full pl-12 pr-12 py-3.5 rounded-2xl border-2 border-slate-200/80 text-slate-900 placeholder-slate-400 text-base font-normal shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-slate-300 hover:shadow-md focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all duration-200 bg-white"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      aria-label={t("market.clearSearch")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all focus-visible:ring-2 focus-visible:ring-[#04AA6D]/50"
+                    >
+                      <X size={18} strokeWidth={2.5} />
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="relative" ref={sortDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => setSortDropdownOpen((v) => !v)}
+                      aria-expanded={sortDropdownOpen}
+                      aria-haspopup="listbox"
+                      aria-label={t("market.sortByLabel")}
+                      className="flex items-center gap-2 px-4 py-3.5 rounded-2xl border-2 border-slate-200/80 bg-white text-slate-700 text-sm font-semibold shadow-[0_2px_6px_rgba(15,23,42,0.06)] hover:border-slate-300 focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all cursor-pointer h-[52px]"
+                    >
+                      <span className="truncate">
+                        {t(`market.sortBy.${sortBy}`)}
+                      </span>
+                      <ChevronDown
+                        size={16}
+                        className={`shrink-0 transition-transform duration-200 ${sortDropdownOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {sortDropdownOpen && (
+                      <div
+                        role="listbox"
+                        className="absolute right-0 top-full mt-1.5 min-w-[200px] py-1.5 rounded-xl border-2 border-slate-200/80 bg-white shadow-xl z-[100] animate-fade-in overflow-hidden"
+                      >
+                        {(
+                          [
+                            "newest",
+                            "price_asc",
+                            "price_desc",
+                            "brix_asc",
+                            "brix_desc",
+                            "vintage_asc",
+                            "vintage_desc",
+                          ] as SortBy[]
+                        ).map((value) => (
+                          <button
+                            key={value}
+                            role="option"
+                            aria-selected={sortBy === value}
+                            onClick={() => {
+                              withViewTransition(() => {
+                                setSortBy(value);
+                                setSortDropdownOpen(false);
+                              });
+                            }}
+                            className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors first:pt-3 last:pb-3 ${sortBy === value ? "bg-[#04AA6D]/10 text-[#04AA6D]" : "text-slate-700 hover:bg-slate-50"}`}
+                          >
+                            {t(`market.sortBy.${value}`)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setFiltersOpen((v) => !v)}
+                    aria-expanded={filtersOpen}
+                    aria-controls="market-filters"
+                    className={`relative flex items-center gap-2 px-4 py-3.5 rounded-2xl text-sm font-semibold border-2 transition-all h-[52px] ${
+                      filtersOpen
+                        ? "bg-[#04AA6D] border-[#04AA6D] text-white"
+                        : "bg-white border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    <SlidersHorizontal
+                      size={18}
+                      strokeWidth={2}
+                      className="shrink-0"
+                    />
+                    <span className="max-w-[140px] truncate">
+                      {filterSummary}
+                    </span>
+                    {hasActiveFilters && !filtersOpen && (
+                      <span
+                        className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#04AA6D] ring-2 ring-white"
+                        aria-hidden
+                      />
+                    )}
+                    {filtersOpen ? (
+                      <ChevronUp size={18} className="shrink-0" />
+                    ) : (
+                      <ChevronDown size={18} className="shrink-0" />
+                    )}
+                  </button>
+                  {user && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        withViewTransition(() => setFavoritesOnly((v) => !v))
+                      }
+                      aria-pressed={favoritesOnly}
+                      aria-label={t("market.favorites")}
+                      className={`flex items-center gap-2 px-4 py-3.5 rounded-2xl text-sm font-semibold border-2 transition-all h-[52px] ${
+                        favoritesOnly
+                          ? "bg-[#04AA6D] border-[#04AA6D] text-white"
+                          : "bg-white border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <Heart
+                        size={18}
+                        strokeWidth={2}
+                        fill={favoritesOnly ? "currentColor" : "none"}
+                        className="shrink-0"
+                      />
+                      {t("market.favorites")}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-row flex-wrap items-center justify-between gap-3 pt-1">
+                <nav
+                  className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide min-w-0"
+                  aria-label="Filter by category"
+                >
+                  {(
+                    [
+                      "all",
+                      "grapes",
+                      "wine",
+                      "nobati",
+                      "inventory",
+                      "seedlings",
+                    ] as const
+                  ).map((c) => (
+                    <button
+                      key={c}
+                      onClick={() =>
+                        withViewTransition(() => setCategoryFilter(c))
+                      }
+                      className={`inline-flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold border-2 shrink-0 transition-all duration-200 ${
+                        categoryFilter === c
+                          ? "bg-[#04AA6D] border-[#04AA6D] text-white"
+                          : "bg-white border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      {c !== "all" && (
+                        <span className="text-base shrink-0">
+                          {CATEGORY_ICONS[c] ?? "📦"}
+                        </span>
+                      )}
+                      <span className="whitespace-nowrap">
+                        {c === "all"
+                          ? t("common.all")
+                          : t(
+                              `market.category${c.charAt(0).toUpperCase() + c.slice(1)}`,
+                            )}
+                      </span>
                     </button>
                   ))}
+                </nav>
+                <div className="hidden md:flex items-center justify-between gap-3 shrink-0">
+                  <span className="px-3 py-2 rounded-xl bg-slate-100/90 text-slate-700 font-bold tabular-nums text-sm shadow-[0_1px_4px_rgba(15,23,42,0.05)]">
+                    {t("market.listingsFound").replace(
+                      "{{count}}",
+                      String(filteredListings.length),
+                    )}
+                  </span>
+                  {/* View mode - desktop only */}
+                  <div className="flex bg-slate-100/90 rounded-xl p-1 gap-0.5 shadow-inner">
+                    {[
+                      { mode: "grid" as const, icon: LayoutGrid },
+                      { mode: "card" as const, icon: LayoutList },
+                      { mode: "detailed" as const, icon: List },
+                    ].map(({ mode, icon: Icon }) => (
+                      <button
+                        key={mode}
+                        onClick={() =>
+                          withViewTransition(() => setViewMode(mode))
+                        }
+                        className={`p-2.5 rounded-lg transition-all duration-300 ${
+                          viewMode === mode
+                            ? "bg-white text-[#04AA6D] shadow-md"
+                            : "text-slate-500 hover:text-slate-700 hover:bg-white/60"
+                        } ${mode === "card" ? "hidden md:flex" : ""}`}
+                        aria-label={`${mode} view`}
+                      >
+                        <Icon size={18} strokeWidth={2} />
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1273,22 +1512,22 @@ export default function MarketClient() {
             {filtersOpen && (
               <div
                 id="market-filters"
-                className="pt-4 border-t border-slate-200/60 space-y-4 animate-fade-in "
+                className="pt-4 mt-1 border-t border-slate-200/60 space-y-4 animate-fade-in"
                 role="region"
                 aria-label="Filters"
               >
                 <div className="flex flex-col lg:flex-row lg:items-start gap-5 justify-between">
-                  <div className="flex-3 min-w-0 space-y-5">
+                  <div className="flex-1 min-w-0 space-y-4 sm:space-y-5">
                     <div>
                       <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
                         {t("market.region")}
                       </label>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide touch-pan-x">
                         <button
                           onClick={() =>
                             withViewTransition(() => setRegionFilter(""))
                           }
-                          className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${!regionFilter ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                          className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-[0.98] ${!regionFilter ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
                         >
                           {t("market.allRegions")}
                         </button>
@@ -1298,7 +1537,7 @@ export default function MarketClient() {
                             onClick={() =>
                               withViewTransition(() => setRegionFilter(r))
                             }
-                            className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${regionFilter === r ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                            className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-[0.98] whitespace-nowrap ${regionFilter === r ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
                           >
                             {r}
                           </button>
@@ -1310,10 +1549,10 @@ export default function MarketClient() {
                         <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
                           {t("market.village")}
                         </label>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide touch-pan-x">
                           <button
                             onClick={() => setVillageFilter("")}
-                            className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${!villageFilter ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                            className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-[0.98] ${!villageFilter ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
                           >
                             {t("market.allVillages")}
                           </button>
@@ -1323,7 +1562,7 @@ export default function MarketClient() {
                               onClick={() =>
                                 withViewTransition(() => setVillageFilter(v))
                               }
-                              className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${villageFilter === v ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                              className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-[0.98] whitespace-nowrap ${villageFilter === v ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
                             >
                               {v}
                             </button>
@@ -1332,7 +1571,7 @@ export default function MarketClient() {
                       </div>
                     )}
                   </div>
-                  <div className="lg:shrink-0 grid grid-cols-2 sm:grid-cols-4 gap-5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
                     <div>
                       <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">
                         {t("market.minPrice")}
@@ -1345,7 +1584,7 @@ export default function MarketClient() {
                           setMinPrice(e.target.value.replace(/[^0-9.,]/g, ""))
                         }
                         placeholder={t("market.maxPricePlaceholder")}
-                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all"
+                        className="w-full px-3 py-3 sm:py-2.5 rounded-xl border-2 border-slate-200 text-base sm:text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all min-h-[44px] sm:min-h-0"
                       />
                     </div>
                     <div>
@@ -1360,7 +1599,7 @@ export default function MarketClient() {
                           setMaxPrice(e.target.value.replace(/[^0-9.,]/g, ""))
                         }
                         placeholder={t("market.maxPricePlaceholder")}
-                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all"
+                        className="w-full px-3 py-3 sm:py-2.5 rounded-xl border-2 border-slate-200 text-base sm:text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all min-h-[44px] sm:min-h-0"
                       />
                     </div>
                     <div>
@@ -1375,7 +1614,7 @@ export default function MarketClient() {
                           setMinBrix(e.target.value.replace(/[^0-9.,]/g, ""))
                         }
                         placeholder={t("market.brixPlaceholder")}
-                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all"
+                        className="w-full px-3 py-3 sm:py-2.5 rounded-xl border-2 border-slate-200 text-base sm:text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all min-h-[44px] sm:min-h-0"
                       />
                     </div>
                     <div>
@@ -1390,14 +1629,14 @@ export default function MarketClient() {
                           setMaxBrix(e.target.value.replace(/[^0-9.,]/g, ""))
                         }
                         placeholder={t("market.brixPlaceholder")}
-                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all"
+                        className="w-full px-3 py-3 sm:py-2.5 rounded-xl border-2 border-slate-200 text-base sm:text-sm font-medium focus:ring-2 focus:ring-[#04AA6D]/40 focus:border-[#04AA6D] outline-none transition-all min-h-[44px] sm:min-h-0"
                       />
                     </div>
                   </div>
                 </div>
                 <button
                   onClick={() => withViewTransition(resetFilters)}
-                  className="inline-flex items-center gap-2 mt-4 text-sm  bg-red-100/90 rounded-xl px-4 py-2 font-semibold text-slate-600 hover:text-[#04AA6D] transition-colors"
+                  className="inline-flex items-center gap-2 mt-2 sm:mt-4 text-sm bg-red-100/90 rounded-xl px-4 py-2.5 sm:py-2 font-semibold text-slate-600 hover:bg-red-200/80 active:scale-[0.98] transition-colors min-h-[44px] sm:min-h-0"
                 >
                   <X size={16} />
                   {t("common.reset")}
@@ -1506,7 +1745,7 @@ export default function MarketClient() {
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                         priority={index === 0}
                         fill
-                        className="transition-transform duration-300 group-hover:scale-105"
+                        className=""
                       />
                     ) : (
                       <span className="absolute inset-0 flex items-center justify-center text-slate-300 text-4xl">
@@ -1561,7 +1800,9 @@ export default function MarketClient() {
                           size={17}
                           strokeWidth={2}
                           fill={
-                            favoriteIds.has(listing.id) ? "currentColor" : "none"
+                            favoriteIds.has(listing.id)
+                              ? "currentColor"
+                              : "none"
                           }
                         />
                       </button>
@@ -1594,6 +1835,7 @@ export default function MarketClient() {
                     <div className="flex flex-wrap gap-1.5 mt-auto">
                       {listing.quantity != null && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-slate-100 text-slate-700">
+                          <Package size={12} className="shrink-0" />
                           {listing.quantity} {unitLabel}
                         </span>
                       )}
@@ -1690,7 +1932,7 @@ export default function MarketClient() {
                         context="card"
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                         fill
-                        className="transition-transform duration-300 group-hover:scale-105"
+                        className=""
                       />
                     ) : (
                       <span className="absolute inset-0 flex items-center justify-center text-slate-300 text-3xl">
@@ -1773,7 +2015,8 @@ export default function MarketClient() {
                           : t("market.priceByAgreement")}
                       </span>
                       {listing.quantity != null && unitLabel && (
-                        <span className="text-slate-500 text-sm font-medium">
+                        <span className="inline-flex items-center gap-1 text-slate-500 text-sm font-medium">
+                          <Package size={14} className="shrink-0" />
                           / {unitLabel}
                         </span>
                       )}
@@ -1787,7 +2030,7 @@ export default function MarketClient() {
                     <div className="flex flex-wrap items-center gap-3 text-slate-500 text-sm mt-auto">
                       {listing.quantity != null && unitLabel && (
                         <span className="inline-flex items-center gap-1">
-                          <Square size={14} />
+                          <Package size={14} />
                           {listing.quantity} {unitLabel}
                         </span>
                       )}
@@ -1821,97 +2064,82 @@ export default function MarketClient() {
             })}
           </div>
         ) : (
-          /* Detailed list view: ss.ge-style layout */
-          <div key="detailed" className="space-y-4 animate-fade-in">
-            {filteredListings.map((listing, index) => {
-              const photoUrls = getPhotoUrls(listing);
-              const selectedIdx = selectedImageByListing[listing.id] ?? 0;
-              const imgUrl = photoUrls[selectedIdx] ?? photoUrls[0] ?? null;
-              const displayTitle =
-                listing.variety ?? listing.title ?? t("market.unknownListing");
-              const category = listing.category ?? "grapes";
-              const locationText = [listing.region, listing.village]
-                .filter(Boolean)
-                .join(", ");
-              const unitLabel = listing.unit
-                ? (() => {
-                    const key = `market.units.${listing.unit}`;
-                    const label = t(key);
-                    return label === key ? listing.unit : label;
-                  })()
-                : null;
-              const status = listing.status ?? "active";
-              const statusColor = STATUS_COLORS[status] ?? "#8a8a8a";
+          /* List view: mobile = card-style 1 per row with description, desktop = detailed ss.ge-style */
+          <>
+            {/* Mobile: grid-style card, 1 per row, with description */}
+            <div
+              key="list-mobile"
+              className="block sm:hidden space-y-4 animate-fade-in"
+            >
+              {filteredListings.map((listing) => {
+                const photoUrls = getPhotoUrls(listing);
+                const selectedIdx = selectedImageByListing[listing.id] ?? 0;
+                const imgUrl =
+                  photoUrls[selectedIdx] ??
+                  photoUrls[0] ??
+                  getListingImageUrl(listing);
+                const displayTitle =
+                  listing.variety ??
+                  listing.title ??
+                  t("market.unknownListing");
+                const category = listing.category ?? "grapes";
+                const locationText = [listing.region, listing.village]
+                  .filter(Boolean)
+                  .join(", ");
+                const unitLabel = listing.unit
+                  ? (() => {
+                      const key = `market.units.${listing.unit}`;
+                      const label = t(key);
+                      return label === key ? listing.unit : label;
+                    })()
+                  : null;
 
-              return (
-                <article
-                  key={listing.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => router.push(`/?id=${listing.id}`)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && router.push(`/?id=${listing.id}`)
-                  }
-                  className="market-list-card group relative cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] market-item-transition rounded-2xl sm:rounded-xl overflow-hidden shadow-md sm:shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
-                  style={
-                    {
-                      viewTransitionName: `listing-${listing.id}`,
-                    } as React.CSSProperties
-                  }
-                >
-                  <div className="flex flex-col sm:flex-row min-h-0">
-                    {/* Image: full width on mobile, ~40% on sm+ */}
-                    <div className="w-full sm:w-[42%] lg:w-[38%] flex-shrink-0 relative">
-                      <div className="relative aspect-[4/3] sm:aspect-[4/3] bg-slate-100 overflow-hidden">
-                        {imgUrl ? (
-                          <OptimizedListingImage
-                            src={imgUrl}
-                            image200={
-                              listing.image200 ??
-                              listing.photoUrls200?.[selectedIdx] ??
-                              listing.photoUrls200?.[0]
-                            }
-                            image400={
-                              listing.image400 ??
-                              listing.photoUrls400?.[selectedIdx] ??
-                              listing.photoUrls400?.[0]
-                            }
-                            context="card"
-                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                            fill
-                            className="transition-transform duration-300 group-hover:scale-[1.02]"
-                          />
-                        ) : (
-                          <span className="absolute inset-0 flex items-center justify-center text-slate-300 text-4xl select-none">
-                            {CATEGORY_ICONS[category] ?? "🍇"}
-                          </span>
-                        )}
-                        {/* Badge overlay top-left */}
-                        <div className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 flex items-center gap-1 sm:gap-1.5">
-                          <span
-                            className="inline-flex w-fit items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold text-white"
-                            style={{
-                              backgroundColor: getCategoryColor(category),
-                            }}
-                          >
-                            {CATEGORY_ICONS[category] ?? "📦"}{" "}
-                            {t(getCategoryLabelKey(category))}
-                          </span>
-                          {status !== "active" && (
-                            <span
-                              className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold text-white"
-                              style={{ backgroundColor: statusColor }}
-                            >
-                              {t(
-                                `market.status${status.charAt(0).toUpperCase() + status.slice(1)}`,
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                return (
+                  <div
+                    key={listing.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => router.push(`/?id=${listing.id}`)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && router.push(`/?id=${listing.id}`)
+                    }
+                    className="vn-glass vn-card overflow-hidden cursor-pointer vn-card-hover flex flex-col group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] rounded-2xl market-item-transition"
+                    style={
+                      {
+                        viewTransitionName: `listing-${listing.id}`,
+                      } as React.CSSProperties
+                    }
+                  >
+                    <div className="relative w-full aspect-[4/3] bg-slate-100 overflow-hidden flex-shrink-0">
+                      {imgUrl ? (
+                        <OptimizedListingImage
+                          src={imgUrl}
+                          image200={
+                            listing.image200 ??
+                            listing.photoUrls200?.[selectedIdx] ??
+                            listing.photoUrls200?.[0]
+                          }
+                          image400={
+                            listing.image400 ??
+                            listing.photoUrls400?.[selectedIdx] ??
+                            listing.photoUrls400?.[0]
+                          }
+                          context="card"
+                          sizes="100vw"
+                          fill
+                          className=""
+                        />
+                      ) : (
+                        <span className="absolute inset-0 flex items-center justify-center text-slate-300 text-4xl">
+                          {CATEGORY_ICONS[category] ?? "🍇"}
+                        </span>
+                      )}
                       {photoUrls.length > 1 && (
-                        <div className="flex gap-1 sm:gap-1.5 p-1.5 sm:p-2 bg-slate-50 border-t border-slate-100 overflow-x-auto">
-                          {photoUrls.map((url, i) => (
+                        <div
+                          className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 px-2 z-10"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {photoUrls.slice(0, 5).map((url, i) => (
                             <button
                               key={i}
                               type="button"
@@ -1920,7 +2148,8 @@ export default function MarketClient() {
                                 e.stopPropagation();
                                 setListingImage(listing.id, i);
                               }}
-                              className={`relative w-11 h-11 sm:w-16 sm:h-16 rounded overflow-hidden bg-slate-200 flex-shrink-0 transition-all ${
+                              onPointerDown={(e) => e.stopPropagation()}
+                              className={`relative w-8 h-8 rounded overflow-hidden bg-white/95 shadow-sm flex-shrink-0 transition-all touch-manipulation ${
                                 selectedIdx === i
                                   ? "ring-2 ring-[#04AA6D] ring-offset-1"
                                   : "opacity-80 hover:opacity-100"
@@ -1939,29 +2168,21 @@ export default function MarketClient() {
                         </div>
                       )}
                     </div>
-
-                    {/* Main content + sidebar: side by side on mobile, row on sm+ */}
-                    <div className="flex flex-row sm:contents min-w-0">
-                    {/* Main content: title, price, location, description, features row */}
-                    <div className="flex-1 flex flex-col min-w-0 p-3 sm:p-5">
-                      <div className="flex items-start justify-between gap-2 sm:gap-3 mb-1.5 sm:mb-2">
-                        <h2 className="text-sm sm:text-[24px] font-bold text-slate-900 leading-snug line-clamp-2 flex-1">
+                    <div className="flex-1 p-4 flex flex-col min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <h3 className="font-semibold text-slate-900 text-base line-clamp-2">
                           {displayTitle}
-                        </h2>
-                        <div className="flex flex-col gap-0.5 sm:gap-1 shrink-0">
+                        </h3>
+                        <div className="flex gap-1 shrink-0">
                           <button
                             onClick={(e) => toggleFavorite(listing.id, e)}
                             disabled={favoriteToggling === listing.id}
-                            className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
+                            className={`p-2 rounded-lg transition-colors ${
                               favoriteIds.has(listing.id)
                                 ? "text-rose-500"
-                                : "text-slate-400 hover:text-rose-500 hover:bg-rose-50/50"
+                                : "text-slate-400 hover:text-rose-500"
                             } ${favoriteToggling === listing.id ? "opacity-60" : ""}`}
-                            aria-label={
-                              favoriteIds.has(listing.id)
-                                ? "Remove from favorites"
-                                : "Add to favorites"
-                            }
+                            aria-label="Favorite"
                           >
                             <Heart
                               size={18}
@@ -1975,122 +2196,352 @@ export default function MarketClient() {
                           </button>
                           <button
                             onClick={(e) => handleShare(listing.id, e)}
-                            className="p-1.5 sm:p-2 rounded-lg transition-colors text-slate-400 hover:text-[#04AA6D] hover:bg-slate-50/50"
+                            className="p-2 rounded-lg transition-colors text-slate-400 hover:text-[#04AA6D]"
                             aria-label={t("market.share")}
                           >
                             <Share2 size={18} strokeWidth={2} />
                           </button>
                         </div>
                       </div>
-
-                      <div className="flex flex-wrap items-baseline gap-2 mb-1.5 sm:mb-2">
-                        <span className="text-lg sm:text-xl font-bold text-[#04AA6D] tabular-nums">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xl font-bold text-[#04AA6D] tracking-tight">
                           {listing.price != null && listing.price > 0
                             ? `${listing.price.toLocaleString()} ₾`
                             : t("market.priceByAgreement")}
                         </span>
                         {listing.quantity != null && unitLabel && (
-                          <span className="text-slate-500 text-sm font-medium">
+                          <span className="inline-flex items-center gap-1 text-slate-500 text-sm font-medium">
+                            <Package size={14} className="shrink-0" />
                             / {unitLabel}
                           </span>
                         )}
                       </div>
-
                       {locationText && (
-                        <p className="flex items-center gap-1.5 text-slate-600 text-xs sm:text-sm mb-2 sm:mb-3">
-                          <MapPin
-                            size={14}
-                            className="shrink-0 text-slate-400"
-                          />
+                        <p className="flex items-center gap-1.5 text-slate-600 text-sm mb-2 font-medium">
+                          <MapPin size={14} />
                           {locationText}
                         </p>
                       )}
-
                       {(listing.description || listing.notes) && (
-                        <p className="text-slate-600 text-sm sm:text-base leading-relaxed line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-3 font-medium">
+                        <p className="text-slate-500 text-sm leading-relaxed line-clamp-3 mb-3">
                           {listing.notes || listing.description}
                         </p>
                       )}
-
-                      {/* Features row: icon + text (like reference) */}
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-6 text-slate-600 text-xs sm:text-sm mt-auto">
+                      <div className="flex flex-wrap items-center gap-3 text-slate-500 text-sm mt-auto">
                         {listing.quantity != null && unitLabel && (
-                          <span className="inline-flex items-center gap-1 sm:gap-1.5">
-                            <Package size={12} className="text-slate-400 shrink-0" />
+                          <span className="inline-flex items-center gap-1">
+                            <Package size={14} />
                             {listing.quantity} {unitLabel}
                           </span>
                         )}
                         {listing.sugarBrix != null && (
-                          <span className="inline-flex items-center gap-1.5">
+                          <span>
                             {listing.sugarBrix} {t("market.brixUnit")}
                           </span>
                         )}
                         {listing.vintageYear != null && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <Calendar size={14} className="text-slate-400" />
-                            {listing.vintageYear}
-                          </span>
+                          <span>{listing.vintageYear}</span>
                         )}
                         {category === "wine" && listing.wineType && (
-                          <span className="inline-flex items-center gap-1.5">
-                            {listing.wineType}
-                          </span>
-                        )}
-                        {listing.harvestDate && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <Calendar size={14} className="text-slate-400" />
-                            {formatHarvestDate(listing.harvestDate)}
-                          </span>
+                          <span>{listing.wineType}</span>
                         )}
                       </div>
-                    </div>
-
-                    {/* Right sidebar: avatar, contact, location, time (compact) - side by side on mobile */}
-                    <div className="w-[72px] sm:w-[140px] lg:w-[160px] flex-shrink-0 flex flex-col items-center justify-center sm:justify-between sm:items-center p-1.5 sm:p-4 sm:py-5 sm:px-4 border-l border-slate-100">
-                      <div className="flex flex-col items-center lg:items-center gap-1 sm:gap-2 text-center">
-                        <div
-                          className="w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base shrink-0"
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100/80">
+                        <span
+                          className="inline-flex w-fit items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-white"
                           style={{
                             backgroundColor: getCategoryColor(category),
                           }}
                         >
-                          {(listing.contactName || "?").charAt(0).toUpperCase()}
-                        </div>
-                        <p className="text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-400 font-semibold hidden sm:block">
-                          {t("market.contact")}
-                        </p>
-                        <p className="font-semibold text-slate-900 text-xs sm:text-sm truncate w-full">
-                          {listing.contactName || "—"}
-                        </p>
-                        {locationText && (
-                          <p className="text-slate-500 text-[10px] sm:text-xs truncate w-full hidden sm:block">
-                            {locationText}
-                          </p>
-                        )}
-
-                        {listing.phone && (
-                          <a
-                            href={`tel:${listing.phone}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center justify-center gap-1 sm:gap-1.5 w-full mt-1 sm:mt-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg font-semibold text-white bg-[#04AA6D] hover:bg-[#039a5e] text-[10px] sm:text-xs transition-colors"
-                          >
-                            <Phone size={12} className="shrink-0" />
-                            {listing.phone}
-                          </a>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end gap-1 mt-2 sm:mt-4 pt-2 sm:pt-4">
-                        <span className="text-slate-400 text-[10px] sm:text-xs">
+                          {CATEGORY_ICONS[category] ?? "📦"}{" "}
+                          {t(getCategoryLabelKey(category))}
+                        </span>
+                        <span className="text-slate-400 text-xs">
                           {formatTimeAgo(listing.createdAt)}
                         </span>
                       </div>
                     </div>
-                    </div>
                   </div>
-                </article>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop: detailed list view (ss.ge-style) */}
+            <div
+              key="list-desktop"
+              className="hidden sm:block space-y-4 animate-fade-in"
+            >
+              {filteredListings.map((listing) => {
+                const photoUrls = getPhotoUrls(listing);
+                const selectedIdx = selectedImageByListing[listing.id] ?? 0;
+                const imgUrl = photoUrls[selectedIdx] ?? photoUrls[0] ?? null;
+                const displayTitle =
+                  listing.variety ??
+                  listing.title ??
+                  t("market.unknownListing");
+                const category = listing.category ?? "grapes";
+                const locationText = [listing.region, listing.village]
+                  .filter(Boolean)
+                  .join(", ");
+                const unitLabel = listing.unit
+                  ? (() => {
+                      const key = `market.units.${listing.unit}`;
+                      const label = t(key);
+                      return label === key ? listing.unit : label;
+                    })()
+                  : null;
+                const status = listing.status ?? "active";
+                const statusColor = STATUS_COLORS[status] ?? "#8a8a8a";
+
+                return (
+                  <article
+                    key={listing.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => router.push(`/?id=${listing.id}`)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && router.push(`/?id=${listing.id}`)
+                    }
+                    className="market-list-card group relative cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#04AA6D] market-item-transition"
+                    style={
+                      {
+                        viewTransitionName: `listing-${listing.id}`,
+                      } as React.CSSProperties
+                    }
+                  >
+                    <div className="flex flex-row min-h-0">
+                      <div className="w-[42%] lg:w-[38%] flex-shrink-0 relative">
+                        <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
+                          {imgUrl ? (
+                            <OptimizedListingImage
+                              src={imgUrl}
+                              image200={
+                                listing.image200 ??
+                                listing.photoUrls200?.[selectedIdx] ??
+                                listing.photoUrls200?.[0]
+                              }
+                              image400={
+                                listing.image400 ??
+                                listing.photoUrls400?.[selectedIdx] ??
+                                listing.photoUrls400?.[0]
+                              }
+                              context="card"
+                              sizes="(max-width: 1024px) 33vw, 20vw"
+                              fill
+                              className=""
+                            />
+                          ) : (
+                            <span className="absolute inset-0 flex items-center justify-center text-slate-300 text-4xl select-none">
+                              {CATEGORY_ICONS[category] ?? "🍇"}
+                            </span>
+                          )}
+                          <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                            <span
+                              className="inline-flex w-fit items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-white"
+                              style={{
+                                backgroundColor: getCategoryColor(category),
+                              }}
+                            >
+                              {CATEGORY_ICONS[category] ?? "📦"}{" "}
+                              {t(getCategoryLabelKey(category))}
+                            </span>
+                            {status !== "active" && (
+                              <span
+                                className="px-2 py-1 rounded text-xs font-semibold text-white"
+                                style={{ backgroundColor: statusColor }}
+                              >
+                                {t(
+                                  `market.status${status.charAt(0).toUpperCase() + status.slice(1)}`,
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {photoUrls.length > 1 && (
+                          <div className="flex gap-1.5 p-2 bg-slate-50 border-t border-slate-100 overflow-x-auto">
+                            {photoUrls.map((url, i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setListingImage(listing.id, i);
+                                }}
+                                className={`relative w-16 h-16 rounded overflow-hidden bg-slate-200 flex-shrink-0 transition-all ${
+                                  selectedIdx === i
+                                    ? "ring-2 ring-[#04AA6D] ring-offset-1"
+                                    : "opacity-80 hover:opacity-100"
+                                }`}
+                              >
+                                <ThumbnailImage
+                                  src={url}
+                                  image200={
+                                    listing.photoUrls200?.[i] ?? listing.image200
+                                  }
+                                  fill
+                                  className="object-cover"
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 flex flex-col sm:contents min-w-0">
+                        <div className="flex-1 flex flex-col min-w-0 p-5">
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <h2 className="text-[24px] font-bold text-slate-900 leading-snug line-clamp-2 flex-1">
+                              {displayTitle}
+                            </h2>
+                            <div className="flex flex-col gap-1 shrink-0">
+                              <button
+                                onClick={(e) => toggleFavorite(listing.id, e)}
+                                disabled={favoriteToggling === listing.id}
+                                className={`p-2 rounded-lg transition-colors ${
+                                  favoriteIds.has(listing.id)
+                                    ? "text-rose-500"
+                                    : "text-slate-400 hover:text-rose-500 hover:bg-rose-50/50"
+                                } ${favoriteToggling === listing.id ? "opacity-60" : ""}`}
+                                aria-label={
+                                  favoriteIds.has(listing.id)
+                                    ? "Remove from favorites"
+                                    : "Add to favorites"
+                                }
+                              >
+                                <Heart
+                                  size={18}
+                                  strokeWidth={2}
+                                  fill={
+                                    favoriteIds.has(listing.id)
+                                      ? "currentColor"
+                                      : "none"
+                                  }
+                                />
+                              </button>
+                              <button
+                                onClick={(e) => handleShare(listing.id, e)}
+                                className="p-2 rounded-lg transition-colors text-slate-400 hover:text-[#04AA6D] hover:bg-slate-50/50"
+                                aria-label={t("market.share")}
+                              >
+                                <Share2 size={18} strokeWidth={2} />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-baseline gap-2 mb-2">
+                            <span className="text-xl font-bold text-[#04AA6D] tabular-nums">
+                              {listing.price != null && listing.price > 0
+                                ? `${listing.price.toLocaleString()} ₾`
+                                : t("market.priceByAgreement")}
+                            </span>
+                            {listing.quantity != null && unitLabel && (
+                              <span className="inline-flex items-center gap-1 text-slate-500 text-sm font-medium">
+                                <Package size={14} className="shrink-0" />
+                                / {unitLabel}
+                              </span>
+                            )}
+                          </div>
+
+                          {locationText && (
+                            <p className="flex items-center gap-1.5 text-slate-600 text-sm mb-3">
+                              <MapPin
+                                size={14}
+                                className="shrink-0 text-slate-400"
+                              />
+                              {locationText}
+                            </p>
+                          )}
+
+                          {(listing.description || listing.notes) && (
+                            <p className="text-slate-600 text-base leading-relaxed line-clamp-3 mb-3 font-medium">
+                              {listing.notes || listing.description}
+                            </p>
+                          )}
+
+                          <div className="flex flex-wrap items-center gap-6 text-slate-600 text-sm mt-auto">
+                            {listing.quantity != null && unitLabel && (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Package
+                                  size={12}
+                                  className="text-slate-400 shrink-0"
+                                />
+                                {listing.quantity} {unitLabel}
+                              </span>
+                            )}
+                            {listing.sugarBrix != null && (
+                              <span className="inline-flex items-center gap-1.5">
+                                {listing.sugarBrix} {t("market.brixUnit")}
+                              </span>
+                            )}
+                            {listing.vintageYear != null && (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Calendar size={14} className="text-slate-400" />
+                                {listing.vintageYear}
+                              </span>
+                            )}
+                            {category === "wine" && listing.wineType && (
+                              <span className="inline-flex items-center gap-1.5">
+                                {listing.wineType}
+                              </span>
+                            )}
+                            {listing.harvestDate && (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Calendar size={14} className="text-slate-400" />
+                                {formatHarvestDate(listing.harvestDate)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="w-[140px] lg:w-[160px] flex-shrink-0 flex flex-col items-center justify-between p-4 py-5 px-4 border-l border-slate-100">
+                          <div className="flex flex-col items-center gap-2 text-center">
+                            <div
+                              className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-base shrink-0"
+                              style={{
+                                backgroundColor: getCategoryColor(category),
+                              }}
+                            >
+                              {(listing.contactName || "?")
+                                .charAt(0)
+                                .toUpperCase()}
+                            </div>
+                            <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+                              {t("market.contact")}
+                            </p>
+                            <p className="font-semibold text-slate-900 text-sm truncate w-full">
+                              {listing.contactName || "—"}
+                            </p>
+                            {locationText && (
+                              <p className="text-slate-500 text-xs truncate w-full">
+                                {locationText}
+                              </p>
+                            )}
+
+                            {listing.phone && (
+                              <a
+                                href={`tel:${listing.phone}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center justify-center gap-1.5 w-full mt-2 px-3 py-2 rounded-lg font-semibold text-white bg-[#04AA6D] hover:bg-[#039a5e] text-xs transition-colors"
+                              >
+                                <Phone size={14} />
+                                {listing.phone}
+                              </a>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end gap-1 mt-4 pt-4">
+                            <span className="text-slate-400 text-xs">
+                              {formatTimeAgo(listing.createdAt)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
     </div>
