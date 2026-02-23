@@ -26,6 +26,7 @@ export function DeleteConfirmModal({
   confirmLabel = "Delete permanently",
   cancelLabel = "Cancel",
   typeConfirmLabel = "Type DELETE to confirm",
+  loadingLabel = "Deleting...",
   loading = false,
 }: DeleteConfirmModalProps) {
   const [typed, setTyped] = useState("");
