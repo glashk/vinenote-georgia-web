@@ -1900,6 +1900,7 @@ export default function MarketClient() {
                   <div className="flex bg-slate-100/90 rounded-xl p-1 gap-0.5 shadow-inner shrink-0">
                     {(
                       [
+                        { mode: "grid" as const, icon: LayoutGrid },
                         { mode: "card" as const, icon: LayoutList },
                         { mode: "detailed" as const, icon: List },
                       ] as const

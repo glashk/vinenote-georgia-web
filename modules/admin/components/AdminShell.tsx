@@ -24,12 +24,16 @@ export default function AdminShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [dark, setDark] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return document.documentElement.classList.contains("dark");
-  });
+  // Use stable initial state to avoid hydration mismatch (no document/localStorage during SSR)
+  const [dark, setDark] = useState(false);
 
   useEffect(() => {
+    const stored = localStorage.getItem("admin-theme");
+    setDark(stored === "dark");
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
     if (dark) {
       document.documentElement.classList.add("dark");
       localStorage.setItem("admin-theme", "dark");
@@ -38,11 +42,6 @@ export default function AdminShell({
       localStorage.setItem("admin-theme", "light");
     }
   }, [dark]);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("admin-theme");
-    setDark(stored === "dark");
-  }, []);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {

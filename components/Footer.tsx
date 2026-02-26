@@ -161,7 +161,7 @@ export default function Footer() {
         </Container>
         {/* Bottom bar */}
         <Container className="relative z-10 gap-4 py-5 sm:flex-row">
-          <p className="text-sm text-center text-emerald-200/70">
+          <p className="text-sm text-center text-emerald-200/70" suppressHydrationWarning>
             {t("footer.copyright")} - {new Date().getFullYear()}
           </p>
           <Link

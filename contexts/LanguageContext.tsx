@@ -28,16 +28,17 @@ const LanguageContext = createContext<LanguageContextType | undefined>(
   undefined,
 );
 
-function getInitialLanguage(): Language {
-  if (typeof window === "undefined") return "ka";
-  const w = window as Window & { __LOCALE?: string };
-  return w.__LOCALE === "ka" || w.__LOCALE === "en" ? w.__LOCALE : "ka";
-}
+/**
+ * Use stable "ka" for initial render to avoid hydration mismatch.
+ * Server and client must render identically; we sync from localStorage in useEffect.
+ */
+const INITIAL_LANGUAGE: Language = "ka";
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(getInitialLanguage);
+  const [language, setLanguageState] = useState<Language>(INITIAL_LANGUAGE);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const saved = (localStorage.getItem("language") as Language) || "ka";
     if (saved === "en" || saved === "ka") setLanguageState(saved);
   }, []);
