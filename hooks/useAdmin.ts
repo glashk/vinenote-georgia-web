@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { checkIsAdmin } from "@/lib/isAdmin";
 
 export interface UseAdminResult {
@@ -16,35 +15,24 @@ export interface UseAdminResult {
  * Loads auth state, forces token refresh, and checks custom claim admin: true.
  */
 export function useAdmin(): UseAdminResult {
+  const { user, ready } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<import("firebase/auth").User | null>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !auth) {
+    if (!ready) return;
+
+    if (!user) {
+      setIsAdmin(false);
       setLoading(false);
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (u) => {
-      setUser(u ?? null);
-      if (!u) {
-        setIsAdmin(false);
-        setLoading(false);
-        return;
-      }
-      try {
-        const admin = await checkIsAdmin();
-        setIsAdmin(admin);
-      } catch {
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
+    checkIsAdmin()
+      .then(setIsAdmin)
+      .catch(() => setIsAdmin(false))
+      .finally(() => setLoading(false));
+  }, [user, ready]);
 
   return { isAdmin, loading, user };
 }

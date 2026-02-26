@@ -5,9 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Container from "@/components/Container";
-import { auth, getFirebaseStorage } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { getDb } from "@/lib/firebase";
+import { getFirebaseStorage, getDb } from "@/lib/firebase-app";
+import { useAuth } from "@/contexts/AuthContext";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
@@ -71,7 +70,7 @@ function CategoryIcon({
 export default function AddListingClient() {
   const { t } = useLanguage();
   const router = useRouter();
-  const [user, setUser] = useState(auth?.currentUser ?? null);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -116,12 +115,6 @@ export default function AddListingClient() {
                 : GRAPE_UNITS,
     [category],
   );
-
-  useEffect(() => {
-    if (!auth) return;
-    const unsub = onAuthStateChanged(auth, setUser);
-    return () => unsub();
-  }, []);
 
   useEffect(() => {
     const defaultUnit =

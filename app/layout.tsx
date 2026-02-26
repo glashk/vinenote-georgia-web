@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import FirebaseAnalytics from "@/components/FirebaseAnalytics";
 import VisitorPresence from "@/components/VisitorPresence";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
@@ -54,8 +55,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="preconnect" href="https://firebasestorage.googleapis.com" />
-        <link rel="preconnect" href="https://firestore.googleapis.com" />
+        {/* No firebaseapp.com or googleapis.com preconnect - auth loads after first paint */}
         <link rel="dns-prefetch" href="https://www.google-analytics.com" />
         <link rel="dns-prefetch" href="https://wsrv.nl" />
       </head>
@@ -66,11 +66,13 @@ export default function RootLayout({
           }}
         />
         <LanguageProvider>
-          <FirebaseAnalytics />
-          <VisitorPresence />
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <AuthProvider>
+            <FirebaseAnalytics />
+            <VisitorPresence />
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </AuthProvider>
         </LanguageProvider>
       </body>
     </html>

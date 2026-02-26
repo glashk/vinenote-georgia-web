@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Shield } from "lucide-react";
-import { auth } from "@/lib/firebase";
+import { getAuthLazy } from "@/lib/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { onAuthStateChanged } from "firebase/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { checkIsAdmin } from "@/lib/isAdmin";
 
@@ -20,21 +20,13 @@ export default function AdminLoginClient() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<{ email: string | null } | null>(null);
+  const { user: authUser, signOut: authSignOut } = useAuth();
+  const user = authUser ? { email: authUser.email ?? null } : null;
   const router = useRouter();
 
-  useEffect(() => {
-    if (!auth) return;
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u ? { email: u.email ?? null } : null);
-    });
-    return () => unsub();
-  }, []);
-
   const handleLogout = async () => {
-    if (!auth) return;
     try {
-      await signOut(auth);
+      await authSignOut();
       router.refresh();
     } catch {
       // ignore
@@ -45,12 +37,8 @@ export default function AdminLoginClient() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    if (!auth) {
-      setError(t("adminLogin.firebaseError"));
-      setLoading(false);
-      return;
-    }
     try {
+      const auth = await getAuthLazy();
       await signInWithEmailAndPassword(auth, email, password);
       const isAdmin = await checkIsAdmin();
       if (!isAdmin) {

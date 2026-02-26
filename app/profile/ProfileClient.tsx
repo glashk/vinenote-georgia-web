@@ -4,36 +4,30 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Container from "@/components/Container";
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged, updateProfile } from "firebase/auth";
+import { updateProfile } from "firebase/auth";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProfileClient() {
   const { t } = useLanguage();
-  const [user, setUser] = useState(auth?.currentUser ?? null);
+  const { user } = useAuth();
   const [displayName, setDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!auth) return;
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setDisplayName(u?.displayName ?? "");
-    });
-    return () => unsub();
-  }, []);
+    if (user) setDisplayName(user.displayName ?? "");
+  }, [user]);
 
   const handleSaveName = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !auth) return;
+    if (!user) return;
     setError(null);
     setSuccess(false);
     setSaving(true);
     try {
       await updateProfile(user, { displayName: displayName.trim() });
-      setUser({ ...user, displayName: displayName.trim() } as typeof user);
       setSuccess(true);
     } catch {
       setError(t("auth.errors.default"));

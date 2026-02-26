@@ -8,16 +8,14 @@ import Container from "./Container";
 import Logo from "./Logo";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import type { User } from "firebase/auth";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Header() {
   const { t } = useLanguage();
+  const { user, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState({
     top: 0,
     right: 0,
@@ -25,27 +23,6 @@ export default function Header() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const userButtonRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !auth) return;
-    let unsub: (() => void) | undefined;
-    let cancelled = false;
-    const run = () => {
-      if (cancelled || !auth) return;
-      unsub = onAuthStateChanged(auth, setUser);
-    };
-    const useIdle =
-      typeof requestIdleCallback !== "undefined" &&
-      typeof cancelIdleCallback !== "undefined";
-    const id = useIdle
-      ? requestIdleCallback(run, { timeout: 1500 })
-      : setTimeout(run, 500);
-    return () => {
-      cancelled = true;
-      useIdle ? cancelIdleCallback(id as number) : clearTimeout(id);
-      unsub?.();
-    };
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -423,7 +400,7 @@ export default function Header() {
                         <button
                           onClick={async () => {
                             setUserMenuOpen(false);
-                            if (auth) await signOut(auth);
+                            await signOut();
                           }}
                           className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-red-50 hover:text-red-600 transition-colors"
                         >
@@ -622,7 +599,7 @@ export default function Header() {
                     <button
                       onClick={async () => {
                         setMobileMenuOpen(false);
-                        if (auth) await signOut(auth);
+                        await signOut();
                       }}
                       className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-slate-800 hover:bg-red-50 hover:text-red-600"
                     >

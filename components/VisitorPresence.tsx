@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { getDb } from "@/lib/firebase";
+import { getDb } from "@/lib/firebase-app";
 import {
   doc,
   setDoc,

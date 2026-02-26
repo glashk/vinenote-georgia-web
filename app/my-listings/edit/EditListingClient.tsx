@@ -5,9 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Container from "@/components/Container";
-import { auth, getFirebaseStorage } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { getDb } from "@/lib/firebase";
+import { getFirebaseStorage, getDb } from "@/lib/firebase-app";
+import { useAuth } from "@/contexts/AuthContext";
 import { doc, getDoc, updateDoc, deleteField } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
@@ -77,7 +76,7 @@ export default function EditListingClient({
 }: EditListingClientProps) {
   const { t } = useLanguage();
   const router = useRouter();
-  const [user, setUser] = useState(auth?.currentUser ?? null);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -124,12 +123,6 @@ export default function EditListingClient({
                 : GRAPE_UNITS,
     [category],
   );
-
-  useEffect(() => {
-    if (!auth) return;
-    const unsub = onAuthStateChanged(auth, setUser);
-    return () => unsub();
-  }, []);
 
   useEffect(() => {
     if (!units.includes(unit)) setUnit(units[0]);

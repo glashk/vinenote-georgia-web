@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { getAnalyticsLazy } from "@/lib/firebase";
+import { getAnalyticsLazy } from "@/lib/firebase-app";
 
 export default function FirebaseAnalytics() {
   const pathname = usePathname();

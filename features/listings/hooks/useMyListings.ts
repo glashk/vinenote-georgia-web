@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged, type User } from "firebase/auth";
-import { getDb } from "@/lib/firebase";
+import { getDb } from "@/lib/firebase-app";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   collection,
   doc,
@@ -46,7 +45,7 @@ function mapDocToListing(docSnap: { id: string; data: () => Record<string, unkno
 }
 
 export function useMyListings(t?: (key: string) => string) {
-  const [user, setUser] = useState<User | null>(auth?.currentUser ?? null);
+  const { user } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,12 +77,6 @@ export function useMyListings(t?: (key: string) => string) {
 
     return matchStatus && matchCategory && matchSearch;
   });
-
-  useEffect(() => {
-    if (!auth) return;
-    const unsub = onAuthStateChanged(auth, setUser);
-    return () => unsub();
-  }, []);
 
   useEffect(() => {
     if (!user) {

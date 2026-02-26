@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { LogIn } from "lucide-react";
-import { auth } from "@/lib/firebase";
+import { getAuthLazy } from "@/lib/firebase";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -48,12 +48,8 @@ export default function LoginClient() {
     e.preventDefault();
     setError(null);
     setForgotLoading(true);
-    if (!auth) {
-      setError(t("auth.errors.default"));
-      setForgotLoading(false);
-      return;
-    }
     try {
+      const auth = await getAuthLazy();
       await sendPasswordResetEmail(auth, email);
       setForgotSuccess(true);
     } catch (err: unknown) {
@@ -68,12 +64,8 @@ export default function LoginClient() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    if (!auth) {
-      setError(t("auth.errors.default"));
-      setLoading(false);
-      return;
-    }
     try {
+      const auth = await getAuthLazy();
       await signInWithEmailAndPassword(auth, email, password);
       router.replace(redirect.startsWith("/") ? redirect : "/");
     } catch (err: unknown) {

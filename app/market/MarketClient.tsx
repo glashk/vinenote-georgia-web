@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { flushSync } from "react-dom";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getDb, auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { getDb } from "@/lib/firebase-app";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   collection,
   doc,
@@ -964,7 +964,7 @@ export default function MarketClient() {
   const [viewMode, setViewMode] = useState<"grid" | "card" | "detailed">(
     "grid",
   );
-  const [user, setUser] = useState(auth?.currentUser ?? null);
+  const { user } = useAuth();
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [favoriteToggling, setFavoriteToggling] = useState<string | null>(null);
   const [reportModalListing, setReportModalListing] = useState<Listing | null>(
@@ -1118,12 +1118,6 @@ export default function MarketClient() {
       clearTimeout(timeout);
       unsubscribe?.();
     };
-  }, []);
-
-  useEffect(() => {
-    if (!auth) return;
-    const unsub = onAuthStateChanged(auth, setUser);
-    return () => unsub();
   }, []);
 
   useEffect(() => {

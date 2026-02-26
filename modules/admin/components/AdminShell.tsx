@@ -3,8 +3,7 @@
 import { useEffect, useCallback, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NAV_ITEMS = [
   { href: "/admin/dashboard", label: "Dashboard", icon: "📊" },
@@ -24,6 +23,7 @@ export default function AdminShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { signOut } = useAuth();
   // Use stable initial state to avoid hydration mismatch (no document/localStorage during SSR)
   const [dark, setDark] = useState(false);
 
@@ -89,7 +89,7 @@ export default function AdminShell({
   }, [handleKeyDown]);
 
   const handleLogout = async () => {
-    if (auth) await signOut(auth);
+    await signOut();
     router.replace("/admin/login");
   };
 

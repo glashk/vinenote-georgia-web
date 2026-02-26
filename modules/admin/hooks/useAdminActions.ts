@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback } from "react";
-import { getDb, auth } from "@/lib/firebase";
+import { getDb } from "@/lib/firebase-app";
+import { getAuthLazy } from "@/lib/firebase-auth";
 import {
   doc,
   updateDoc,
@@ -30,7 +31,7 @@ export function useAdminActions() {
         note?: string;
       }
     ) => {
-      const db = await getDb();
+      const [db, auth] = await Promise.all([getDb(), getAuthLazy()]);
       if (!db || !auth?.currentUser) return;
       await addDoc(collection(db, "adminLogs"), {
         adminId: auth.currentUser.uid,

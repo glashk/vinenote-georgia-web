@@ -53,12 +53,8 @@ export default function SignupClient() {
       return;
     }
     setLoading(true);
-    if (!auth) {
-      setError(t("auth.errors.default"));
-      setLoading(false);
-      return;
-    }
     try {
+      const auth = await getAuthLazy();
       const { user } = await createUserWithEmailAndPassword(auth, email, password);
       if (name.trim()) {
         await updateProfile(user, { displayName: name.trim() });
