@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
-import OptimizedListingImage from "@/components/OptimizedListingImage";
+import ListingImage from "@/components/ListingImage";
 import { useReports } from "@/modules/admin/hooks/useReports";
 import { useAdminActions } from "@/modules/admin/hooks/useAdminActions";
 import { formatTimeAgo, getListingImageUrl } from "@/modules/admin/utils";
@@ -154,9 +154,9 @@ export default function ReportsClient() {
                   <div className="p-4 flex gap-4">
                     <div className="relative w-20 h-20 rounded-lg bg-slate-200 dark:bg-slate-600 overflow-hidden flex-shrink-0">
                       {imgUrl ? (
-                        <OptimizedListingImage
-                          src={imgUrl}
-                          context="card"
+                        <ListingImage
+                          listing={report.listing}
+                          variant="grid"
                           alt=""
                           fill
                           sizes="80px"
@@ -340,9 +340,9 @@ function ReportDetailPanel({
           <div className="space-y-3">
             {imgUrl && (
               <div className="relative w-full h-48 rounded-lg overflow-hidden">
-                <OptimizedListingImage
-                  src={imgUrl}
-                  context="detail"
+                <ListingImage
+                  listing={listing}
+                  variant="detail"
                   alt=""
                   fill
                   sizes="(max-width: 640px) 100vw, 400px"

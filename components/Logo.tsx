@@ -12,6 +12,7 @@ interface LogoProps {
 
 export default function Logo({ size = 48, className = "", animated = true, style }: LogoProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const logoSrc = size <= 72 ? "/logo-144.png" : "/logo.png";
 
   return (
     <div
@@ -23,7 +24,7 @@ export default function Logo({ size = 48, className = "", animated = true, style
       style={{ width: size, height: size, minWidth: size, minHeight: size, ...style }}
     >
       <Image
-        src="/logo.png"
+        src={logoSrc}
         alt="VineNote Georgia Logo"
         width={size}
         height={size}

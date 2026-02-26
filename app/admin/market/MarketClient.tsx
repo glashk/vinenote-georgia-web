@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import OptimizedListingImage from "@/components/OptimizedListingImage";
+import ListingImage from "@/components/ListingImage";
+import { getListingImage } from "@/features/listings/utils";
 import { getDb } from "@/lib/firebase";
 import {
   collection,
@@ -53,19 +54,7 @@ interface Listing {
 function getListingImageUrl(
   listing: Listing | null | undefined,
 ): string | null {
-  if (!listing) return null;
-  return (
-    listing.photoUrls?.[0] ??
-    listing.photoUrls200?.[0] ??
-    listing.imageUrl ??
-    listing.image ??
-    listing.image200 ??
-    listing.thumbnail ??
-    listing.photos?.[0] ??
-    listing.mainImage ??
-    listing.photo ??
-    null
-  );
+  return getListingImage(listing);
 }
 
 function formatTimeAgo(
@@ -101,7 +90,7 @@ function formatTimeAgo(
 
   if (diffMins < 1) return "ახლახან";
   if (diffMins < 60) return `${diffMins} წუთის წინ`;
-  if (diffHours < 24) return `${diffHours} საათის წინ`;
+  if (diffHours < 24) return `${diffHours} სთ. წინ`;
   if (diffDays < 7) return `${diffDays} დღის წინ`;
   return date.toLocaleDateString("ka-GE");
 }
@@ -339,9 +328,9 @@ export default function MarketClient() {
                     <div className="flex-shrink-0">
                       <div className="relative w-24 h-24 rounded-xl bg-slate-200 overflow-hidden flex items-center justify-center">
                         {imgUrl ? (
-                          <OptimizedListingImage
-                            src={imgUrl}
-                            context="card"
+                          <ListingImage
+                            listing={listing}
+                            variant="grid"
                             alt=""
                             fill
                             sizes="96px"

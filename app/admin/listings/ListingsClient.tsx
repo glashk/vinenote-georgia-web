@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import OptimizedListingImage from "@/components/OptimizedListingImage";
+import ListingImage from "@/components/ListingImage";
 import {
   useListings,
   type ListingFilter,
@@ -499,9 +499,9 @@ function ListingTableRow({
         <div className="flex items-center gap-3">
           {imgUrl && (
             <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 dark:bg-slate-700">
-              <OptimizedListingImage
-                src={imgUrl}
-                context="card"
+              <ListingImage
+                listing={listing}
+                variant="grid"
                 alt=""
                 fill
                 sizes="48px"
@@ -621,9 +621,9 @@ function ListingCard({
     >
       <div className="aspect-[4/3] bg-slate-200 dark:bg-slate-600 relative overflow-hidden">
         {imgUrl ? (
-          <OptimizedListingImage
-            src={imgUrl}
-            context="detail"
+          <ListingImage
+            listing={listing}
+            variant="detail"
             alt=""
             fill
             sizes="(max-width: 640px) 100vw, 400px"

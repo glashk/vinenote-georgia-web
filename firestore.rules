@@ -59,6 +59,12 @@ service cloud.firestore {
       allow update, delete: if isOwnerByResource() || isAdmin();
     }
 
+    // Presence: visitor tracking (anonymous create/update; admin read)
+    match /presence/{sessionId} {
+      allow read: if isAdmin();
+      allow create, update: if true;
+    }
+
     // Reports: moderation (App Store 1.2 safety)
     match /reports/{reportId} {
       allow create: if isSignedIn()

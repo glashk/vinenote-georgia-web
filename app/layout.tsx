@@ -5,8 +5,9 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import FirebaseAnalytics from "@/components/FirebaseAnalytics";
+import VisitorPresence from "@/components/VisitorPresence";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://vinenote.app"),
@@ -53,14 +54,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="preconnect" href="https://firestore.googleapis.com" />
-        <link rel="preconnect" href="https://www.gstatic.com" />
         <link rel="preconnect" href="https://firebasestorage.googleapis.com" />
-        <link
-          rel="preload"
-          href="/Grapevines-scaled-e5b6bd5d-a447-4b5f-9da8-6c8c55461efd.png"
-          as="image"
-        />
+        <link rel="preconnect" href="https://firestore.googleapis.com" />
+        <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+        <link rel="dns-prefetch" href="https://wsrv.nl" />
       </head>
       <body className={`${inter.className} flex flex-col min-h-screen`}>
         <script
@@ -70,6 +67,7 @@ export default function RootLayout({
         />
         <LanguageProvider>
           <FirebaseAnalytics />
+          <VisitorPresence />
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />

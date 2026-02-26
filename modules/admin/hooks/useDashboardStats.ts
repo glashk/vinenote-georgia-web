@@ -14,6 +14,8 @@ export interface DashboardStats {
   listingsToday: number;
   openReportsCount: number;
   messagesToday: number;
+  onlineNow: number;
+  visitorsToday: number;
 }
 
 export interface DailyPoint {
@@ -28,10 +30,13 @@ export function useDashboardStats() {
     listingsToday: 0,
     openReportsCount: 0,
     messagesToday: 0,
+    onlineNow: 0,
+    visitorsToday: 0,
   });
   const [dailyUsers, setDailyUsers] = useState<DailyPoint[]>([]);
   const [dailyListings, setDailyListings] = useState<DailyPoint[]>([]);
   const [dailyReports, setDailyReports] = useState<DailyPoint[]>([]);
+  const [dailyVisitors, setDailyVisitors] = useState<DailyPoint[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,6 +48,41 @@ export function useDashboardStats() {
         setLoading(false);
         return;
       }
+
+      // Presence: online now + visitors today + daily history (30 days)
+      unsubs.push(
+        onSnapshot(collection(db, "presence"), (snap) => {
+          const now = Date.now();
+          const onlineThresholdMs = 90 * 1000; // 90 seconds - more live
+          const onlineCutoff = now - onlineThresholdMs;
+          const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+          const todayStart = new Date();
+          todayStart.setHours(0, 0, 0, 0);
+          let online = 0;
+          let today = 0;
+          const byDay: Record<string, number> = {};
+          snap.docs.forEach((d) => {
+            const data = d.data();
+            const lastSeen = data.lastSeen as { seconds?: number } | undefined;
+            const createdAt = data.createdAt as { seconds?: number } | undefined;
+            if (lastSeen?.seconds && lastSeen.seconds * 1000 >= onlineCutoff) online++;
+            if (createdAt?.seconds) {
+              const createdDate = new Date(createdAt.seconds * 1000);
+              if (createdDate >= todayStart) today++;
+              if (createdDate.getTime() > thirtyDaysAgo) {
+                const key = createdDate.toISOString().slice(0, 10);
+                byDay[key] = (byDay[key] ?? 0) + 1;
+              }
+            }
+          });
+          setStats((s) => ({ ...s, onlineNow: online, visitorsToday: today }));
+          setDailyVisitors(
+            Object.entries(byDay)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([date, count]) => ({ date, count }))
+          );
+        })
+      );
 
       // Open reports count (real-time)
       unsubs.push(
@@ -56,8 +96,8 @@ export function useDashboardStats() {
       );
 
     // Listings today
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const listingsTodayStart = new Date();
+    listingsTodayStart.setHours(0, 0, 0, 0);
     const listingsRef = collection(db, "marketListings");
     unsubs.push(
       onSnapshot(listingsRef, (snap) => {
@@ -70,7 +110,7 @@ export function useDashboardStats() {
           const ts = data.createdAt as { seconds?: number } | undefined;
           if (!ts?.seconds) return;
           const date = new Date(ts.seconds * 1000);
-          if (date >= todayStart) today++;
+          if (date >= listingsTodayStart) today++;
           if (date.getTime() > thirtyDaysAgo) {
             const key = date.toISOString().slice(0, 10);
             byDay[key] = (byDay[key] ?? 0) + 1;
@@ -157,6 +197,7 @@ export function useDashboardStats() {
     dailyUsers,
     dailyListings,
     dailyReports,
+    dailyVisitors,
     loading,
   };
 }

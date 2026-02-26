@@ -14,7 +14,7 @@ const nextConfig = {
         pathname: "/**",
       },
     ],
-    formats: ["image/webp", "image/avif"],
+    formats: ["image/avif", "image/webp"],
   },
   trailingSlash: false,
   skipTrailingSlashRedirect: true,

@@ -3,8 +3,8 @@
 import { memo, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
-import OptimizedListingImage from "@/components/OptimizedListingImage";
-import { getListingImageUrl, CATEGORY_ICONS, CATEGORY_COLORS } from "../utils";
+import ListingImage from "@/components/ListingImage";
+import { getListingImage, CATEGORY_ICONS, CATEGORY_COLORS } from "../utils";
 import type { Listing, ListingStatus } from "../types";
 import { ListingStatusBadge } from "./ListingStatusBadge";
 import { ListingExpiryBar } from "./ListingExpiryBar";
@@ -34,7 +34,7 @@ export const ListingCard = memo(function ListingCard({
   const { t } = useLanguage();
   const router = useRouter();
   const status = (listing.status ?? "active") as ListingStatus;
-  const photoUrl = getListingImageUrl(listing);
+  const photoUrl = getListingImage(listing, 200);
   const variety =
     listing.variety ?? listing.title ?? t("market.unknownListing");
   const region =
@@ -74,9 +74,7 @@ export const ListingCard = memo(function ListingCard({
   const category = listing.category ?? "grapes";
   const categoryColor = CATEGORY_COLORS[category] ?? CATEGORY_COLORS.grapes;
   const categoryIcon = CATEGORY_ICONS[category] ?? "📦";
-  const [imgError, setImgError] = useState(false);
-
-  const showPlaceholder = !photoUrl || imgError;
+  const showPlaceholder = !photoUrl;
   const placeholderEmoji =
     listing.category === "wine"
       ? "🍷"
@@ -104,14 +102,13 @@ export const ListingCard = memo(function ListingCard({
           </div>
         ) : (
           <>
-            <OptimizedListingImage
-              src={photoUrl!}
-              image200={listing.photoUrls200?.[0] ?? listing.image200}
+            <ListingImage
+              listing={listing}
               alt=""
-              context="card"
+              variant="card"
               className="object-cover"
               fill
-              onError={() => setImgError(true)}
+              onError={() => {}}
             />
             {isExpired && (
               <div className="absolute inset-0 flex items-center justify-center bg-slate-900/50">

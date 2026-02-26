@@ -4,6 +4,7 @@
  */
 export const GEORGIA_REGIONS = [
   "tbilisi",
+  "abkhazia",
   "adjara",
   "kakheti",
   "imereti",

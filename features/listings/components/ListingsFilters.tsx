@@ -79,12 +79,12 @@ export function ListingsFilters({ filters, onFiltersChange, totalCount, statusCo
                 onClick={() => onFiltersChange({ ...filters, status: s })}
                 className={`rounded-xl px-3 py-2 text-sm font-medium transition-all sm:px-4 ${
                   filters.status === s
-                    ? "bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200/50"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white text-emerald-800 shadow-sm ring-1 ring-slate-200/50"
+                    : "text-slate-800 hover:text-slate-900"
                 }`}
               >
                 {s === "all" ? t("common.all") : t(`market.status${s.charAt(0).toUpperCase() + s.slice(1)}`)}
-                <span className="ml-1.5 text-slate-500">({statusCounts[s] ?? 0})</span>
+                <span className="ml-1.5 text-slate-700">({statusCounts[s] ?? 0})</span>
               </button>
             ))}
           </div>
@@ -103,8 +103,8 @@ export function ListingsFilters({ filters, onFiltersChange, totalCount, statusCo
                 onClick={() => onFiltersChange({ ...filters, category: c })}
                 className={`inline-flex min-h-[44px] items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all ${
                   filters.category === c
-                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/20"
-                    : "bg-slate-50 text-slate-600 ring-1 ring-slate-200/60 hover:bg-slate-100 hover:ring-slate-300"
+                    ? "bg-emerald-700 text-white shadow-md shadow-emerald-600/20"
+                    : "bg-slate-50 text-slate-800 ring-1 ring-slate-200/60 hover:bg-slate-100 hover:ring-slate-300"
                 }`}
               >
                 <span className="text-lg">{CATEGORY_ICONS[c] ?? "📦"}</span>

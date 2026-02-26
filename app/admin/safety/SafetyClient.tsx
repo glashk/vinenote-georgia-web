@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import OptimizedListingImage from "@/components/OptimizedListingImage";
+import ListingImage from "@/components/ListingImage";
 import { getDb } from "@/lib/firebase";
 import {
   collection,
@@ -183,9 +183,9 @@ export default function SafetyClient() {
                 >
                   <div className="relative w-20 h-20 rounded-lg bg-slate-200 dark:bg-slate-600 overflow-hidden flex-shrink-0">
                     {imgUrl ? (
-                      <OptimizedListingImage
-                        src={imgUrl}
-                        context="card"
+                      <ListingImage
+                        listing={listing}
+                        variant="grid"
                         alt=""
                         fill
                         sizes="80px"

@@ -1,6 +1,31 @@
-import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import type { Metadata } from "next";
-import MarketClient from "@/app/market/MarketClient";
+import ListingCardSkeleton from "@/components/ListingCardSkeleton";
+
+const MarketClient = dynamic(() => import("@/app/market/MarketClient"), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-screen py-4 sm:py-8 px-4 sm:px-6 bg-white">
+      <div className="max-w-7xl mx-auto">
+        <header className="mb-6 sm:mb-8 bg-white rounded-2xl border border-slate-200/80 overflow-visible animate-pulse">
+          <div className="p-4 space-y-4">
+            <div className="h-12 rounded-2xl bg-slate-200 w-full max-w-md" />
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-10 rounded-xl bg-slate-200 w-20" />
+              ))}
+            </div>
+          </div>
+        </header>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <ListingCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    </div>
+  ),
+});
 
 export const metadata: Metadata = {
   title: "VineNote Georgia - Market",
@@ -30,15 +55,5 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-slate-50 flex justify-center items-center">
-          <div className="w-10 h-10 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
-        </div>
-      }
-    >
-      <MarketClient />
-    </Suspense>
-  );
+  return <MarketClient />;
 }

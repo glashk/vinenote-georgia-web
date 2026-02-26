@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /login
+Disallow: /signup
+Disallow: /profile
+Disallow: /my-listings/add
+Disallow: /my-listings/edit

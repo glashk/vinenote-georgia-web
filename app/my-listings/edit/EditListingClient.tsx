@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import RegionSearchInput from "@/components/RegionSearchInput";
+import { buildThumbUrls } from "@/lib/imageUtils";
 
 type Category = "wine" | "grapes" | "nobati" | "inventory" | "seedlings";
 
@@ -247,7 +248,10 @@ export default function EditListingClient({
         const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
         const path = `marketListings/${user.uid}/${filename}`;
         const storageRef = ref(storage, path);
-        await uploadBytes(storageRef, file);
+        await uploadBytes(storageRef, file, {
+          cacheControl: "public,max-age=31536000,immutable",
+          contentType: "image/jpeg",
+        });
         const url = await getDownloadURL(storageRef);
         setPhotoUrls((prev) => (prev.length < 5 ? [...prev, url] : prev));
       } catch (err: unknown) {
@@ -333,6 +337,9 @@ export default function EditListingClient({
       if (contactName.trim()) payload.contactName = contactName.trim();
       if (notes.trim()) payload.notes = notes.trim();
       payload.photoUrls = photoUrls;
+      const { photoUrls200, photoUrls400 } = buildThumbUrls(photoUrls);
+      payload.photoUrls200 = photoUrls200;
+      payload.photoUrls400 = photoUrls400;
       await updateDoc(doc(db, "marketListings", listingId), payload);
       router.push("/my-listings");
     } catch (err: unknown) {
@@ -426,9 +433,9 @@ export default function EditListingClient({
             </p>
           </div>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="overflow-x-hidden">
             <div
-              className="bg-white rounded-[18px] p-5 sm:p-6 shadow-sm"
+              className="bg-white rounded-[18px] p-5 sm:p-6 shadow-sm min-w-0"
               style={{
                 boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
               }}
@@ -637,13 +644,15 @@ export default function EditListingClient({
                     placeholder={t("market.sugarBrixPlaceholder")}
                     className={`${inputBase} placeholder-[#8a9a85]`}
                   />
-                  <label className={labelBase}>{t("market.harvestDate")}</label>
-                  <input
-                    type="date"
-                    value={harvestDate}
-                    onChange={(e) => setHarvestDate(e.target.value)}
-                    className={inputBase}
-                  />
+                  <div className="min-w-0">
+                    <label className={labelBase}>{t("market.harvestDate")}</label>
+                    <input
+                      type="date"
+                      value={harvestDate}
+                      onChange={(e) => setHarvestDate(e.target.value)}
+                      className={`${inputBase} min-w-0 max-w-full`}
+                    />
+                  </div>
                 </>
               )}
 

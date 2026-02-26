@@ -54,7 +54,7 @@ export default function RegionSearchInput({
     return !q || label.includes(q) || key.toLowerCase().includes(q);
   });
 
-  // Include legacy value if it's not in the list
+  // Include legacy value if it's not in the list; keep selected region visible
   const options = [
     ...(value &&
     !GEORGIA_REGIONS.includes(value as GeorgiaRegion) &&
@@ -62,7 +62,7 @@ export default function RegionSearchInput({
       getRegionLabel(value, t).toLowerCase().includes(query.trim().toLowerCase()))
       ? [value]
       : []),
-    ...filteredRegions.filter((r) => r !== value),
+    ...filteredRegions,
   ];
 
   useEffect(() => {
@@ -131,9 +131,21 @@ export default function RegionSearchInput({
             setQuery(e.target.value);
             setIsOpen(true);
           }}
+          onMouseDown={(e) => {
+            if (isOpen) {
+              e.preventDefault();
+              setIsOpen(false);
+              setQuery("");
+            } else {
+              setIsOpen(true);
+              setQuery(displayValue);
+            }
+          }}
           onFocus={() => {
-            setIsOpen(true);
-            setQuery(displayValue);
+            if (!isOpen) {
+              setIsOpen(true);
+              setQuery(displayValue);
+            }
           }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder ?? t("market.selectRegion")}

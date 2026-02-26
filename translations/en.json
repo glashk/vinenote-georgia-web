@@ -215,8 +215,13 @@
     "region": "Region",
     "selectRegion": "Search or select region",
     "regionNoMatches": "No regions match",
+    "viewPhotoNOfTotal": "View photo {{current}} of {{total}}",
+    "filters": "Filters",
+    "prevPhoto": "Previous photo",
+    "nextPhoto": "Next photo",
     "regions": {
       "tbilisi": "Tbilisi",
+      "abkhazia": "Abkhazia",
       "adjara": "Adjara",
       "kakheti": "Kakheti",
       "imereti": "Imereti",

@@ -27,9 +27,24 @@ export default function Header() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!auth) return;
-    const unsub = onAuthStateChanged(auth, setUser);
-    return () => unsub();
+    if (typeof window === "undefined" || !auth) return;
+    let unsub: (() => void) | undefined;
+    let cancelled = false;
+    const run = () => {
+      if (cancelled || !auth) return;
+      unsub = onAuthStateChanged(auth, setUser);
+    };
+    const useIdle =
+      typeof requestIdleCallback !== "undefined" &&
+      typeof cancelIdleCallback !== "undefined";
+    const id = useIdle
+      ? requestIdleCallback(run, { timeout: 1500 })
+      : setTimeout(run, 500);
+    return () => {
+      cancelled = true;
+      useIdle ? cancelIdleCallback(id as number) : clearTimeout(id);
+      unsub?.();
+    };
   }, []);
 
   useEffect(() => {
@@ -166,6 +181,17 @@ export default function Header() {
     setIsClosing(false);
   }, [pathname]);
 
+  // Prevent background scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [mobileMenuOpen]);
+
   const closeMobileMenu = () => {
     if (isClosing) return;
     setIsClosing(true);
@@ -196,7 +222,7 @@ export default function Header() {
           <div className="flex items-center gap-2 shrink-0">
             <Link
               href="/my-listings/add"
-              className="flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-emerald-600 text-white font-semibold text-sm shadow-md shadow-emerald-500/25 hover:bg-emerald-700 active:scale-[0.98] transition-all"
+              className="flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-emerald-700 text-white font-semibold text-sm shadow-md shadow-emerald-600/25 hover:bg-emerald-800 active:scale-[0.98] transition-all"
             >
               <svg
                 className="w-4 h-4"
@@ -282,7 +308,7 @@ export default function Header() {
               </Link>
               <Link
                 href="/my-listings/add"
-                className="flex items-center gap-3 h-10 px-4 rounded-full bg-emerald-600 text-white font-semibold text-sm shadow-md shadow-emerald-500/25 hover:bg-emerald-700 transition-all duration-200"
+                className="flex items-center gap-3 h-10 px-4 rounded-full bg-emerald-700 text-white font-semibold text-sm shadow-md shadow-emerald-600/25 hover:bg-emerald-800 transition-all duration-200"
               >
                 <svg
                   className="w-4 h-4"
@@ -423,7 +449,7 @@ export default function Header() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex items-center gap-3 h-10 px-4 rounded-full bg-emerald-600 text-white font-semibold text-sm shadow-md shadow-emerald-500/25 hover:bg-emerald-700 transition-all duration-200"
+                  className="flex items-center gap-3 h-10 px-4 rounded-full bg-emerald-700 text-white font-semibold text-sm shadow-md shadow-emerald-600/25 hover:bg-emerald-800 transition-all duration-200"
                 >
                   <svg
                     className="w-4 h-4"
@@ -527,7 +553,7 @@ export default function Header() {
                 <Link
                   href="/my-listings/add"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-emerald-600 text-white font-semibold mt-4 shadow-md shadow-emerald-500/25 hover:bg-emerald-700 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-emerald-700 text-white font-semibold mt-4 shadow-md shadow-emerald-600/25 hover:bg-emerald-800 transition-colors"
                 >
                   <svg
                     className="w-5 h-5"
@@ -620,7 +646,7 @@ export default function Header() {
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-emerald-600 text-white font-semibold shadow-md shadow-emerald-500/25 hover:bg-emerald-700 transition-colors"
+                    className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-emerald-700 text-white font-semibold shadow-md shadow-emerald-600/25 hover:bg-emerald-800 transition-colors"
                   >
                     <svg
                       className="w-5 h-5"

@@ -17,7 +17,7 @@ const SimpleBarChart = dynamic(
 );
 
 export default function DashboardClient() {
-  const { stats, dailyUsers, dailyListings, dailyReports, loading } =
+  const { stats, dailyUsers, dailyListings, dailyReports, dailyVisitors, loading } =
     useDashboardStats();
 
   if (loading) {
@@ -38,7 +38,17 @@ export default function DashboardClient() {
         <KeyboardShortcutsHelp />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
+        <StatCard
+          label="Online now"
+          value={stats.onlineNow}
+          icon="🟢"
+        />
+        <StatCard
+          label="Visitors today"
+          value={stats.visitorsToday}
+          icon="👁"
+        />
         <StatCard
           label="Active users today"
           value={stats.activeUsersToday}
@@ -66,7 +76,12 @@ export default function DashboardClient() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+        <SimpleBarChart
+          data={dailyVisitors}
+          title="Visitors per day (30 days)"
+          color="#8b5cf6"
+        />
         <SimpleBarChart
           data={dailyUsers}
           title="Daily active users (30 days)"

@@ -17,6 +17,9 @@ import {
   updateDoc,
   serverTimestamp,
   Timestamp,
+  query,
+  orderBy,
+  limit,
 } from "firebase/firestore";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -37,9 +40,9 @@ import {
   Phone,
   Package,
 } from "lucide-react";
-import OptimizedListingImage, {
-  ThumbnailImage,
-} from "@/components/OptimizedListingImage";
+import ListingImage from "@/components/ListingImage";
+import { ThumbnailImage } from "@/components/OptimizedListingImage";
+import { getListingImage, getListingImageUrl } from "@/features/listings/utils";
 import ListingCardSkeleton from "@/components/ListingCardSkeleton";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { GEORGIA_REGIONS } from "@/lib/georgiaRegions";
@@ -114,7 +117,10 @@ interface Listing {
   photoUrls?: string[];
   photoUrls200?: string[];
   photoUrls400?: string[];
+  photoUrlsThumb?: string[];
   imageUrl?: string;
+  imageFullUrl?: string;
+  imageThumbUrl?: string;
   image?: string;
   image200?: string;
   image400?: string;
@@ -124,20 +130,6 @@ interface Listing {
   status?: string;
   userId?: string;
   createdAt?: Timestamp | { seconds: number; nanoseconds?: number } | Date;
-}
-
-function getListingImageUrl(
-  listing: Listing | null | undefined,
-): string | null {
-  if (!listing) return null;
-  return (
-    listing.photoUrls?.[0] ??
-    listing.imageUrl ??
-    listing.image ??
-    listing.thumbnail ??
-    listing.photos?.[0] ??
-    null
-  );
 }
 
 function getPhotoUrls(listing: Listing | null): string[] {
@@ -202,7 +194,7 @@ function formatTimeAgo(
 
   if (diffMins < 1) return "ახლახან";
   if (diffMins < 60) return `${diffMins} წუთის წინ`;
-  if (diffHours < 24) return `${diffHours} საათის წინ`;
+  if (diffHours < 24) return `${diffHours} სთ. წინ`;
   if (diffDays < 7) return `${diffDays} დღის წინ`;
   return date.toLocaleDateString("ka-GE");
 }
@@ -238,7 +230,189 @@ function ListingDetailView({
   onRenewClick?: (listingId: string) => void;
   renewLoading?: boolean;
 }) {
-  const [carouselIndex, setCarouselIndex] = useState(0);
+  const photoUrls = listing ? getPhotoUrls(listing) : [];
+  const photoCount = photoUrls.length;
+
+  // Infinite carousel: [last, first, second, ..., last, first]
+  const carouselItems = useMemo(() => {
+    if (photoCount <= 1) return photoUrls;
+    const last = photoUrls[photoCount - 1]!;
+    const first = photoUrls[0]!;
+    return [last, ...photoUrls, first];
+  }, [photoUrls, photoCount]);
+
+  // virtualIndex: 0=clone last, 1..n=real, n+1=clone first. Start at 1 (first image).
+  const [virtualIndex, setVirtualIndex] = useState(1);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [disableTransition, setDisableTransition] = useState(false);
+  const touchStartX = useRef<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isAnimatingRef = useRef(false);
+
+  // Real index for thumbnails: 0..n-1
+  const carouselIndex =
+    virtualIndex <= 0
+      ? photoCount - 1
+      : virtualIndex >= photoCount + 1
+        ? 0
+        : virtualIndex - 1;
+
+  const goPrev = useCallback(() => {
+    if (photoCount <= 1 || isAnimatingRef.current) return;
+    isAnimatingRef.current = true;
+    setVirtualIndex((i) => i - 1);
+  }, [photoCount]);
+
+  const goNext = useCallback(() => {
+    if (photoCount <= 1 || isAnimatingRef.current) return;
+    isAnimatingRef.current = true;
+    setVirtualIndex((i) => i + 1);
+  }, [photoCount]);
+
+  const handleSnapFromEdge = useCallback(() => {
+    if (photoCount <= 1) return;
+    if (virtualIndex === 0) {
+      setDisableTransition(true);
+      setVirtualIndex(photoCount);
+    } else if (virtualIndex === photoCount + 1) {
+      setDisableTransition(true);
+      setVirtualIndex(1);
+    }
+  }, [virtualIndex, photoCount]);
+
+  useEffect(() => {
+    if (!disableTransition) return;
+    const id = requestAnimationFrame(() => {
+      setDisableTransition(false);
+      isAnimatingRef.current = false;
+    });
+    return () => cancelAnimationFrame(id);
+  }, [disableTransition]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (isAnimatingRef.current) return;
+    touchStartX.current = e.touches[0]?.clientX ?? 0;
+    setIsDragging(true);
+  }, []);
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!isDragging || photoCount <= 1) return;
+      const x = e.touches[0]?.clientX ?? 0;
+      const diff = x - touchStartX.current;
+      const width = containerRef.current?.offsetWidth ?? 300;
+      const maxDrag = width;
+      const clamped = Math.max(-maxDrag, Math.min(maxDrag, diff));
+      setDragOffset(clamped);
+    },
+    [isDragging, photoCount],
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    if (!isDragging || photoCount <= 1) {
+      setIsDragging(false);
+      setDragOffset(0);
+      return;
+    }
+    const width = containerRef.current?.offsetWidth ?? 300;
+    const threshold = width * 0.2;
+    if (dragOffset > threshold) {
+      isAnimatingRef.current = true;
+      setVirtualIndex((i) => {
+        if (i === 0) {
+          setDisableTransition(true);
+          return photoCount;
+        }
+        return i - 1;
+      });
+    } else if (dragOffset < -threshold) {
+      isAnimatingRef.current = true;
+      setVirtualIndex((i) => {
+        if (i === photoCount + 1) {
+          setDisableTransition(true);
+          return 1;
+        }
+        return i + 1;
+      });
+    }
+    setIsDragging(false);
+    setDragOffset(0);
+  }, [isDragging, photoCount, dragOffset]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (isAnimatingRef.current) return;
+    touchStartX.current = e.clientX;
+    setIsDragging(true);
+  }, []);
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging || photoCount <= 1) return;
+      const diff = e.clientX - touchStartX.current;
+      const width = containerRef.current?.offsetWidth ?? 300;
+      const maxDrag = width;
+      const clamped = Math.max(-maxDrag, Math.min(maxDrag, diff));
+      setDragOffset(clamped);
+    },
+    [isDragging, photoCount],
+  );
+
+  const handleMouseUp = useCallback(() => {
+    if (!isDragging || photoCount <= 1) {
+      setIsDragging(false);
+      setDragOffset(0);
+      return;
+    }
+    const width = containerRef.current?.offsetWidth ?? 300;
+    const threshold = width * 0.2;
+    if (dragOffset > threshold) {
+      isAnimatingRef.current = true;
+      setVirtualIndex((i) => {
+        if (i === 0) {
+          setDisableTransition(true);
+          return photoCount;
+        }
+        return i - 1;
+      });
+    } else if (dragOffset < -threshold) {
+      isAnimatingRef.current = true;
+      setVirtualIndex((i) => {
+        if (i === photoCount + 1) {
+          setDisableTransition(true);
+          return 1;
+        }
+        return i + 1;
+      });
+    }
+    setIsDragging(false);
+    setDragOffset(0);
+  }, [isDragging, photoCount, dragOffset]);
+
+  useEffect(() => {
+    if (!isDragging) return;
+    const onMove = (e: MouseEvent) => handleMouseMove(e);
+    const onUp = () => handleMouseUp();
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
+  const handleTransitionEnd = useCallback(
+    (e: React.TransitionEvent) => {
+      if (e.propertyName !== "transform" || photoCount <= 1) return;
+      if (virtualIndex === 0 || virtualIndex === photoCount + 1) {
+        setDisableTransition(true);
+        setVirtualIndex(virtualIndex === 0 ? photoCount : 1);
+      } else {
+        isAnimatingRef.current = false;
+      }
+    },
+    [virtualIndex, photoCount],
+  );
 
   if (loading && !listing) {
     return (
@@ -250,7 +424,8 @@ function ListingDetailView({
 
   if (!listing || listing.hidden || listing.status === "expired") {
     const isExpired = listing?.status === "expired";
-    const isOwner = listing && currentUserId && listing.userId === currentUserId;
+    const isOwner =
+      listing && currentUserId && listing.userId === currentUserId;
     const canRenew = isExpired && isOwner && (onRenew || onRenewClick);
 
     return (
@@ -319,14 +494,10 @@ function ListingDetailView({
     );
   }
 
-  const photoUrls = getPhotoUrls(listing);
   const displayTitle =
     listing.variety ?? listing.title ?? t("market.unknownListing");
   const category = listing.category ?? "grapes";
-  const locationText = [
-    getRegionLabel(listing.region, t),
-    listing.village,
-  ]
+  const locationText = [getRegionLabel(listing.region, t), listing.village]
     .filter(Boolean)
     .join(", ");
   const status = listing.status ?? "active";
@@ -345,24 +516,51 @@ function ListingDetailView({
         <div className="vn-glass vn-card overflow-hidden rounded-2xl mb-6">
           {photoUrls.length > 0 ? (
             <div className="relative">
-              <div className="relative aspect-[4/3] bg-slate-200 overflow-hidden">
-                <OptimizedListingImage
-                  src={photoUrls[carouselIndex] ?? photoUrls[0]!}
-                  image200={
-                    listing.photoUrls200?.[carouselIndex] ??
-                    listing.photoUrls200?.[0] ??
-                    listing.image200
-                  }
-                  image400={
-                    listing.photoUrls400?.[carouselIndex] ??
-                    listing.photoUrls400?.[0] ??
-                    listing.image400
-                  }
-                  context="detail"
-                  sizes="(max-width: 672px) 100vw, 672px"
-                  fill
-                  objectFit="cover"
-                />
+              <div
+                ref={containerRef}
+                className="relative min-h-[280px] aspect-[4/3] bg-slate-100 overflow-hidden touch-pan-y select-none cursor-grab active:cursor-grabbing"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onMouseDown={handleMouseDown}
+              >
+                <div
+                  className="flex h-full w-full"
+                  style={{
+                    transform: `translate3d(calc(-${(photoCount <= 1 ? 0 : virtualIndex) * 100}% + ${dragOffset}px), 0, 0)`,
+                    transition:
+                      isDragging || disableTransition
+                        ? "none"
+                        : "transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)",
+                    willChange: isDragging || disableTransition ? "auto" : "transform",
+                    backfaceVisibility: "hidden",
+                  }}
+                  onTransitionEnd={handleTransitionEnd}
+                >
+                  {carouselItems.map((url, i) => {
+                    const realIndex =
+                      i === 0
+                        ? photoCount - 1
+                        : i === carouselItems.length - 1
+                          ? 0
+                          : i - 1;
+                    return (
+                      <div
+                        key={i}
+                        className="relative w-full flex-shrink-0 flex-grow-0 basis-full"
+                      >
+                        <ListingImage
+                          src={url}
+                          listing={listing}
+                          sizes="(max-width: 672px) 100vw, 672px"
+                          fill
+                          objectFit="contain"
+                          variant="detail"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
               {photoUrls.length > 1 && (
                 <>
@@ -371,42 +569,50 @@ function ListingDetailView({
                       <button
                         key={i}
                         type="button"
-                        onClick={() => setCarouselIndex(i)}
+                        onClick={() => {
+                          if (isAnimatingRef.current) return;
+                          isAnimatingRef.current = true;
+                          setVirtualIndex(photoCount <= 1 ? 0 : i + 1);
+                        }}
+                        aria-label={t("market.viewPhotoNOfTotal")
+                          .replace("{{current}}", String(i + 1))
+                          .replace("{{total}}", String(photoUrls.length))}
                         className={`relative w-16 h-16 rounded-lg overflow-hidden bg-slate-200 flex-shrink-0 transition-all ${
                           i === carouselIndex
                             ? "ring-2 ring-[#04AA6D] ring-offset-1"
                             : "opacity-80 hover:opacity-100"
                         }`}
                       >
-                        <ThumbnailImage
-                          src={url}
-                          image200={
-                            listing.photoUrls200?.[i] ?? listing.image200
-                          }
+                        <ListingImage
+                          listing={listing}
+                          photoIndex={i}
+                          variant="thumb"
                           className="object-cover"
                           fill
                         />
                       </button>
                     ))}
                   </div>
-                  <div className="absolute top-1/2 -translate-y-1/2 left-2 right-2 flex justify-between">
+                  <div className="absolute top-1/2 -translate-y-1/2 left-2 right-2 flex justify-between pointer-events-none">
                     <button
-                      onClick={() =>
-                        setCarouselIndex((i) =>
-                          i === 0 ? photoUrls.length - 1 : i - 1,
-                        )
-                      }
-                      className="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center text-white hover:bg-black/60"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        goPrev();
+                      }}
+                      aria-label={t("market.prevPhoto")}
+                      className="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center text-white hover:bg-black/60 pointer-events-auto"
                     >
                       ‹
                     </button>
                     <button
-                      onClick={() =>
-                        setCarouselIndex((i) =>
-                          i === photoUrls.length - 1 ? 0 : i + 1,
-                        )
-                      }
-                      className="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center text-white hover:bg-black/60"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        goNext();
+                      }}
+                      aria-label={t("market.nextPhoto")}
+                      className="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center text-white hover:bg-black/60 pointer-events-auto"
                     >
                       ›
                     </button>
@@ -550,9 +756,9 @@ function ListingDetailView({
 
           {listing.description && (
             <div className="mb-6">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">
+              <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">
                 {t("market.description")}
-              </h3>
+              </h2>
               <p className="text-slate-700 leading-relaxed">
                 {listing.description}
               </p>
@@ -561,9 +767,9 @@ function ListingDetailView({
 
           {listing.notes && (
             <div className="mb-6">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">
+              <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">
                 {t("common.notes")}
-              </h3>
+              </h2>
               <p className="text-slate-700 leading-relaxed">{listing.notes}</p>
             </div>
           )}
@@ -639,7 +845,8 @@ function ReportModal({
         className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         style={{
-          boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05)",
+          boxShadow:
+            "0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05)",
         }}
       >
         <div className="bg-gradient-to-b from-amber-50 to-white px-6 pt-6 pb-4 border-b border-amber-100/80">
@@ -648,7 +855,9 @@ function ReportModal({
               <h2 className="text-lg font-bold text-slate-900">
                 {t("market.reportTitle")}
               </h2>
-              <p className="text-slate-600 text-sm mt-1 truncate">{displayTitle}</p>
+              <p className="text-slate-600 text-sm mt-1 truncate">
+                {displayTitle}
+              </p>
             </div>
             <button
               onClick={onClose}
@@ -755,12 +964,6 @@ export default function MarketClient() {
   const [viewMode, setViewMode] = useState<"grid" | "card" | "detailed">(
     "grid",
   );
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.innerWidth < 768) {
-      setViewMode("grid");
-    }
-  }, []);
   const [user, setUser] = useState(auth?.currentUser ?? null);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [favoriteToggling, setFavoriteToggling] = useState<string | null>(null);
@@ -830,9 +1033,14 @@ export default function MarketClient() {
         }
 
         const listingsRef = collection(db, "marketListings");
+        const q = query(
+          listingsRef,
+          orderBy("createdAt", "desc"),
+          limit(50)
+        );
 
         unsubscribe = onSnapshot(
-          listingsRef,
+          q,
           (snapshot) => {
             const list: Listing[] = snapshot.docs
               .map((docSnap) => {
@@ -859,7 +1067,10 @@ export default function MarketClient() {
                   photoUrls: data.photoUrls,
                   photoUrls200: data.photoUrls200,
                   photoUrls400: data.photoUrls400,
+                  photoUrlsThumb: data.photoUrlsThumb,
                   imageUrl: data.imageUrl,
+                  imageFullUrl: data.imageFullUrl,
+                  imageThumbUrl: data.imageThumbUrl,
                   image: data.image,
                   image200: data.image200,
                   image400: data.image400,
@@ -1109,7 +1320,7 @@ export default function MarketClient() {
         setListingDetail((prev) =>
           prev && prev.id === listingId
             ? { ...prev, status: "active", createdAt: Timestamp.now() }
-            : prev
+            : prev,
         );
       } catch (e) {
         console.error("Renew listing error:", e);
@@ -1117,7 +1328,7 @@ export default function MarketClient() {
         setRenewLoading(false);
       }
     },
-    [user]
+    [user],
   );
 
   const uniqueRegions = useMemo(() => {
@@ -1517,8 +1728,8 @@ export default function MarketClient() {
                     }
                     className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border-2 shrink-0 transition-all duration-200 ${
                       categoryFilter === c
-                        ? "bg-[#04AA6D] border-[#04AA6D] text-white"
-                        : "bg-white border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                        ? "bg-emerald-700 border-emerald-700 text-white"
+                        : "bg-white border-slate-200/80 text-slate-800 hover:border-slate-300 hover:bg-slate-50"
                     }`}
                   >
                     {c !== "all" && (
@@ -1556,7 +1767,7 @@ export default function MarketClient() {
                       aria-expanded={sortDropdownOpen}
                       aria-haspopup="listbox"
                       aria-label={t("market.sortByLabel")}
-                      className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border-2 border-slate-200/80 bg-white text-slate-700 text-sm font-semibold shadow-[0_2px_6px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:shadow-[0_4px_12px_rgba(15,23,42,0.1),0_2px_4px_rgba(15,23,42,0.06)] focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all cursor-pointer h-11 sm:h-[52px]"
+                      className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border-2 border-slate-200/80 bg-white text-slate-800 text-sm font-semibold shadow-[0_2px_6px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:shadow-[0_4px_12px_rgba(15,23,42,0.1),0_2px_4px_rgba(15,23,42,0.06)] focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all cursor-pointer h-11 sm:h-[52px]"
                     >
                       <ArrowUpDown
                         size={18}
@@ -1600,7 +1811,7 @@ export default function MarketClient() {
                             className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors first:pt-3 last:pb-3 ${
                               sortBy === value
                                 ? "bg-[#04AA6D]/10 text-[#04AA6D]"
-                                : "text-slate-700 hover:bg-slate-50"
+                                : "text-slate-800 hover:bg-slate-50"
                             }`}
                           >
                             {t(`market.sortBy.${value}`)}
@@ -1615,9 +1826,10 @@ export default function MarketClient() {
                     onClick={() => setFiltersOpen((v) => !v)}
                     aria-expanded={filtersOpen}
                     aria-controls="market-filters"
+                    aria-label={t("market.filters")}
                     className={`relative flex items-center justify-center sm:justify-start gap-2 sm:gap-3 flex-1 sm:flex-initial min-w-0 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl text-sm font-semibold border-2 transition-all h-11 sm:h-[52px] ${
                       filtersOpen
-                        ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-[0_2px_8px_rgba(4,170,109,0.3),0_4px_12px_rgba(0,0,0,0.08)]"
+                        ? "bg-emerald-700 border-emerald-700 text-white shadow-[0_2px_8px_rgba(4,120,87,0.3),0_4px_12px_rgba(0,0,0,0.08)]"
                         : "bg-white border-slate-200/80 text-slate-600 shadow-[0_2px_6px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_4px_12px_rgba(15,23,42,0.1),0_2px_4px_rgba(15,23,42,0.06)]"
                     }`}
                   >
@@ -1651,7 +1863,7 @@ export default function MarketClient() {
                       aria-label={t("market.favorites")}
                       className={`flex items-center justify-center gap-2 sm:gap-3 shrink-0 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl text-sm font-semibold border-2 transition-all h-11 sm:h-[52px] ${
                         favoritesOnly
-                          ? "bg-[#04AA6D] border-[#04AA6D] text-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]"
+                          ? "bg-emerald-700 border-emerald-700 text-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]"
                           : "bg-white border-slate-200/80 text-slate-600 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
                       }`}
                     >
@@ -1667,7 +1879,7 @@ export default function MarketClient() {
                     </button>
                   )}
                 </div>
-                {/* Container 2: Counter, Grid switcher - mobile only */}
+                {/* Container 2: Counter + View switcher (card/list only on mobile) */}
                 <div className="md:hidden flex items-center gap-2 shrink-0">
                   <div
                     className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-slate-100/80 border border-slate-200/60 h-11 sm:h-[52px] shrink-0"
@@ -1686,21 +1898,20 @@ export default function MarketClient() {
                     </span>
                   </div>
                   <div className="flex bg-slate-100/90 rounded-xl p-1 gap-0.5 shadow-inner shrink-0">
-                    {[
-                      { mode: "grid" as const, icon: LayoutGrid },
-                      { mode: "card" as const, icon: LayoutList },
-                      { mode: "detailed" as const, icon: List },
-                    ].map(({ mode, icon: Icon }) => (
+                    {(
+                      [
+                        { mode: "card" as const, icon: LayoutList },
+                        { mode: "detailed" as const, icon: List },
+                      ] as const
+                    ).map(({ mode, icon: Icon }) => (
                       <button
                         key={mode}
-                        onClick={() =>
-                          withViewTransition(() => setViewMode(mode))
-                        }
+                        onClick={() => setViewMode(mode)}
                         className={`p-2 sm:p-2.5 rounded-lg transition-all duration-300 ${
                           viewMode === mode
                             ? "bg-white text-[#04AA6D] shadow-md"
                             : "text-slate-500 hover:text-slate-700 hover:bg-white/60"
-                        } ${mode === "card" ? "hidden" : ""}`}
+                        }`}
                         aria-label={`${mode} view`}
                       >
                         <Icon size={18} strokeWidth={2} />
@@ -1746,7 +1957,7 @@ export default function MarketClient() {
                       aria-expanded={sortDropdownOpen}
                       aria-haspopup="listbox"
                       aria-label={t("market.sortByLabel")}
-                      className="flex items-center gap-2 px-4 py-3.5 rounded-2xl border-2 border-slate-200/80 bg-white text-slate-700 text-sm font-semibold shadow-[0_2px_6px_rgba(15,23,42,0.06)] hover:border-slate-300 focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all cursor-pointer h-[52px]"
+                      className="flex items-center gap-2 px-4 py-3.5 rounded-2xl border-2 border-slate-200/80 bg-white text-slate-800 text-sm font-semibold shadow-[0_2px_6px_rgba(15,23,42,0.06)] hover:border-slate-300 focus:ring-2 focus:ring-[#04AA6D]/25 focus:border-[#04AA6D] outline-none transition-all cursor-pointer h-[52px]"
                     >
                       <span className="truncate">
                         {t(`market.sortBy.${sortBy}`)}
@@ -1782,7 +1993,7 @@ export default function MarketClient() {
                                 setSortDropdownOpen(false);
                               });
                             }}
-                            className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors first:pt-3 last:pb-3 ${sortBy === value ? "bg-[#04AA6D]/10 text-[#04AA6D]" : "text-slate-700 hover:bg-slate-50"}`}
+                            className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors first:pt-3 last:pb-3 ${sortBy === value ? "bg-[#04AA6D]/10 text-[#04AA6D]" : "text-slate-800 hover:bg-slate-50"}`}
                           >
                             {t(`market.sortBy.${value}`)}
                           </button>
@@ -1796,7 +2007,7 @@ export default function MarketClient() {
                     aria-controls="market-filters"
                     className={`relative flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-semibold border-2 transition-all h-[52px] ${
                       filtersOpen
-                        ? "bg-[#04AA6D] border-[#04AA6D] text-white"
+                        ? "bg-emerald-700 border-emerald-700 text-white"
                         : "bg-white border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                     }`}
                   >
@@ -1830,7 +2041,7 @@ export default function MarketClient() {
                       aria-label={t("market.favorites")}
                       className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-semibold border-2 transition-all h-[52px] ${
                         favoritesOnly
-                          ? "bg-[#04AA6D] border-[#04AA6D] text-white"
+                          ? "bg-emerald-700 border-emerald-700 text-white"
                           : "bg-white border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                       }`}
                     >
@@ -1867,8 +2078,8 @@ export default function MarketClient() {
                       }
                       className={`inline-flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold border-2 shrink-0 transition-all duration-200 ${
                         categoryFilter === c
-                          ? "bg-[#04AA6D] border-[#04AA6D] text-white"
-                          : "bg-white border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                          ? "bg-emerald-700 border-emerald-700 text-white"
+                          : "bg-white border-slate-200/80 text-slate-800 hover:border-slate-300 hover:bg-slate-50"
                       }`}
                     >
                       {c !== "all" && (
@@ -1887,13 +2098,13 @@ export default function MarketClient() {
                   ))}
                 </nav>
                 <div className="hidden md:flex items-center justify-between gap-3 shrink-0">
-                  <span className="px-3 py-2 rounded-xl bg-slate-100/90 text-slate-700 font-bold tabular-nums text-sm shadow-[0_1px_4px_rgba(15,23,42,0.05)]">
+                  <span className="px-3 py-2 rounded-xl bg-slate-100/90 text-slate-800 font-bold tabular-nums text-sm shadow-[0_1px_4px_rgba(15,23,42,0.05)]">
                     {t("market.listingsFound").replace(
                       "{{count}}",
                       String(filteredListings.length),
                     )}
                   </span>
-                  {/* View mode - desktop only */}
+                  {/* View mode */}
                   <div className="flex bg-slate-100/90 rounded-xl p-1 gap-0.5 shadow-inner">
                     {[
                       { mode: "grid" as const, icon: LayoutGrid },
@@ -1902,14 +2113,12 @@ export default function MarketClient() {
                     ].map(({ mode, icon: Icon }) => (
                       <button
                         key={mode}
-                        onClick={() =>
-                          withViewTransition(() => setViewMode(mode))
-                        }
+                        onClick={() => setViewMode(mode)}
                         className={`p-2.5 rounded-lg transition-all duration-300 ${
                           viewMode === mode
                             ? "bg-white text-[#04AA6D] shadow-md"
                             : "text-slate-500 hover:text-slate-700 hover:bg-white/60"
-                        } ${mode === "card" ? "hidden md:flex" : ""}`}
+                        }`}
                         aria-label={`${mode} view`}
                       >
                         <Icon size={18} strokeWidth={2} />
@@ -1939,7 +2148,7 @@ export default function MarketClient() {
                           onClick={() =>
                             withViewTransition(() => setRegionFilter(""))
                           }
-                          className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-[0.98] ${!regionFilter ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                          className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-[0.98] ${!regionFilter ? "bg-emerald-700 text-white shadow-md" : "bg-slate-100 text-slate-800 hover:bg-slate-200"}`}
                         >
                           {t("market.allRegions")}
                         </button>
@@ -1949,7 +2158,7 @@ export default function MarketClient() {
                             onClick={() =>
                               withViewTransition(() => setRegionFilter(r))
                             }
-                            className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-[0.98] whitespace-nowrap ${regionFilter === r ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                            className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-[0.98] whitespace-nowrap ${regionFilter === r ? "bg-emerald-700 text-white shadow-md" : "bg-slate-100 text-slate-800 hover:bg-slate-200"}`}
                           >
                             {getRegionLabel(r, t)}
                           </button>
@@ -1964,7 +2173,7 @@ export default function MarketClient() {
                         <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide touch-pan-x">
                           <button
                             onClick={() => setVillageFilter("")}
-                            className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-[0.98] ${!villageFilter ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                            className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-[0.98] ${!villageFilter ? "bg-emerald-700 text-white shadow-md" : "bg-slate-100 text-slate-800 hover:bg-slate-200"}`}
                           >
                             {t("market.allVillages")}
                           </button>
@@ -1974,7 +2183,7 @@ export default function MarketClient() {
                               onClick={() =>
                                 withViewTransition(() => setVillageFilter(v))
                               }
-                              className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-[0.98] whitespace-nowrap ${villageFilter === v ? "bg-[#04AA6D] text-white shadow-md" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                              className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-[0.98] whitespace-nowrap ${villageFilter === v ? "bg-emerald-700 text-white shadow-md" : "bg-slate-100 text-slate-800 hover:bg-slate-200"}`}
                             >
                               {v}
                             </button>
@@ -2145,21 +2354,11 @@ export default function MarketClient() {
                 >
                   <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
                     {imgUrl ? (
-                      <OptimizedListingImage
-                        src={imgUrl}
-                        image200={
-                          listing.image200 ??
-                          listing.photoUrls200?.[selectedIdx] ??
-                          listing.photoUrls200?.[0]
-                        }
-                        image400={
-                          listing.image400 ??
-                          listing.photoUrls400?.[selectedIdx] ??
-                          listing.photoUrls400?.[0]
-                        }
-                        context="card"
+                      <ListingImage
+                        listing={listing}
+                        photoIndex={selectedIdx}
+                        variant="grid"
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                        priority={index === 0}
                         fill
                         className=""
                       />
@@ -2183,17 +2382,19 @@ export default function MarketClient() {
                               setListingImage(listing.id, i);
                             }}
                             onPointerDown={(e) => e.stopPropagation()}
+                            aria-label={t("market.viewPhotoNOfTotal")
+                              .replace("{{current}}", String(i + 1))
+                              .replace("{{total}}", String(photoUrls.length))}
                             className={`relative w-8 h-8 rounded overflow-hidden bg-white/95 shadow-sm flex-shrink-0 transition-all touch-manipulation ${
                               selectedIdx === i
                                 ? "ring-2 ring-[#04AA6D] ring-offset-1"
                                 : "opacity-80 hover:opacity-100"
                             }`}
                           >
-                            <ThumbnailImage
-                              src={url}
-                              image200={
-                                listing.photoUrls200?.[i] ?? listing.image200
-                              }
+                            <ListingImage
+                              listing={listing}
+                              photoIndex={i}
+                              variant="thumb"
                               fill
                               className="object-cover"
                             />
@@ -2302,7 +2503,7 @@ export default function MarketClient() {
             key="card"
             className="grid grid-cols-1 lg:grid-cols-2 gap-5 animate-fade-in market-grid-transition"
           >
-            {filteredListings.map((listing) => {
+            {filteredListings.map((listing, index) => {
               const photoUrls = getPhotoUrls(listing);
               const selectedIdx = selectedImageByListing[listing.id] ?? 0;
               const imgUrl =
@@ -2344,22 +2545,14 @@ export default function MarketClient() {
                 >
                   <div className="relative w-full sm:w-2/5 sm:min-w-[160px] aspect-[4/3] bg-slate-100 overflow-hidden flex-shrink-0">
                     {imgUrl ? (
-                      <OptimizedListingImage
-                        src={imgUrl}
-                        image200={
-                          listing.image200 ??
-                          listing.photoUrls200?.[selectedIdx] ??
-                          listing.photoUrls200?.[0]
-                        }
-                        image400={
-                          listing.image400 ??
-                          listing.photoUrls400?.[selectedIdx] ??
-                          listing.photoUrls400?.[0]
-                        }
-                        context="card"
+                      <ListingImage
+                        listing={listing}
+                        photoIndex={selectedIdx}
+                        variant="grid"
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                         fill
                         className=""
+                        priority={index < 2}
                       />
                     ) : (
                       <span className="absolute inset-0 flex items-center justify-center text-slate-300 text-3xl">
@@ -2387,11 +2580,10 @@ export default function MarketClient() {
                                 : "opacity-80 hover:opacity-100"
                             }`}
                           >
-                            <ThumbnailImage
-                              src={url}
-                              image200={
-                                listing.photoUrls200?.[i] ?? listing.image200
-                              }
+                            <ListingImage
+                              listing={listing}
+                              photoIndex={i}
+                              variant="thumb"
                               fill
                               className="object-cover"
                             />
@@ -2506,7 +2698,7 @@ export default function MarketClient() {
               key="list-mobile"
               className="block sm:hidden space-y-4 animate-fade-in"
             >
-              {filteredListings.map((listing) => {
+              {filteredListings.map((listing, index) => {
                 const photoUrls = getPhotoUrls(listing);
                 const selectedIdx = selectedImageByListing[listing.id] ?? 0;
                 const imgUrl =
@@ -2550,22 +2742,14 @@ export default function MarketClient() {
                   >
                     <div className="relative w-full aspect-[4/3] bg-slate-100 overflow-hidden flex-shrink-0">
                       {imgUrl ? (
-                        <OptimizedListingImage
-                          src={imgUrl}
-                          image200={
-                            listing.image200 ??
-                            listing.photoUrls200?.[selectedIdx] ??
-                            listing.photoUrls200?.[0]
-                          }
-                          image400={
-                            listing.image400 ??
-                            listing.photoUrls400?.[selectedIdx] ??
-                            listing.photoUrls400?.[0]
-                          }
-                          context="card"
-                          sizes="100vw"
+                        <ListingImage
+                          listing={listing}
+                          photoIndex={selectedIdx}
+                          variant="grid"
+                          sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 25vw"
                           fill
                           className=""
+                          priority={index < 2}
                         />
                       ) : (
                         <span className="absolute inset-0 flex items-center justify-center text-slate-300 text-4xl">
@@ -2587,17 +2771,19 @@ export default function MarketClient() {
                                 setListingImage(listing.id, i);
                               }}
                               onPointerDown={(e) => e.stopPropagation()}
+                              aria-label={t("market.viewPhotoNOfTotal")
+                                .replace("{{current}}", String(i + 1))
+                                .replace("{{total}}", String(photoUrls.length))}
                               className={`relative w-8 h-8 rounded overflow-hidden bg-white/95 shadow-sm flex-shrink-0 transition-all touch-manipulation ${
                                 selectedIdx === i
                                   ? "ring-2 ring-[#04AA6D] ring-offset-1"
                                   : "opacity-80 hover:opacity-100"
                               }`}
                             >
-                              <ThumbnailImage
-                                src={url}
-                                image200={
-                                  listing.photoUrls200?.[i] ?? listing.image200
-                                }
+                              <ListingImage
+                                listing={listing}
+                                photoIndex={i}
+                                variant="thumb"
                                 fill
                                 className="object-cover"
                               />
@@ -2719,7 +2905,7 @@ export default function MarketClient() {
               key="list-desktop"
               className="hidden sm:block space-y-4 animate-fade-in"
             >
-              {filteredListings.map((listing) => {
+              {filteredListings.map((listing, index) => {
                 const photoUrls = getPhotoUrls(listing);
                 const selectedIdx = selectedImageByListing[listing.id] ?? 0;
                 const imgUrl = photoUrls[selectedIdx] ?? photoUrls[0] ?? null;
@@ -2764,22 +2950,14 @@ export default function MarketClient() {
                       <div className="w-[42%] lg:w-[38%] flex-shrink-0 relative">
                         <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
                           {imgUrl ? (
-                            <OptimizedListingImage
-                              src={imgUrl}
-                              image200={
-                                listing.image200 ??
-                                listing.photoUrls200?.[selectedIdx] ??
-                                listing.photoUrls200?.[0]
-                              }
-                              image400={
-                                listing.image400 ??
-                                listing.photoUrls400?.[selectedIdx] ??
-                                listing.photoUrls400?.[0]
-                              }
-                              context="card"
+                            <ListingImage
+                              listing={listing}
+                              photoIndex={selectedIdx}
+                              variant="grid"
                               sizes="(max-width: 1024px) 33vw, 20vw"
                               fill
                               className=""
+                              priority={index < 2}
                             />
                           ) : (
                             <span className="absolute inset-0 flex items-center justify-center text-slate-300 text-4xl select-none">

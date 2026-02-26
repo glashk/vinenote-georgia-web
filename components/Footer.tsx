@@ -139,7 +139,7 @@ export default function Footer() {
                     <h3 className="text-xs font-semibold uppercase tracking-widest text-emerald-300/70">
                       {t("footer.followUs")}
                     </h3>
-                    <div className="mt-3 flex gap-3">
+                    <div className="mt-3 flex justify-center gap-3 lg:justify-start">
                       {SOCIAL_LINKS.map(({ href, label, icon }) => (
                         <a
                           key={label}

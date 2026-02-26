@@ -22,8 +22,16 @@
     color-scheme: light;
   }
 
+  /* Allow text selection everywhere by default */
+  *,
+  *::before,
+  *::after {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
   body {
-    @apply text-slate-900 antialiased select-text;
+    @apply text-slate-900 antialiased;
     /* Subtle "photo-friendly" base that works under glass cards */
     background:
       radial-gradient(1200px 600px at 10% 0%, rgba(45, 90, 39, 0.12), transparent 55%),

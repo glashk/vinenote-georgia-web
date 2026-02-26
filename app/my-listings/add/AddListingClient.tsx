@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import RegionSearchInput from "@/components/RegionSearchInput";
+import { buildThumbUrls } from "@/lib/imageUtils";
 
 type Category = "wine" | "grapes" | "nobati" | "inventory" | "seedlings";
 
@@ -189,7 +190,10 @@ export default function AddListingClient() {
         const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
         const path = `marketListings/${user.uid}/${filename}`;
         const storageRef = ref(storage, path);
-        await uploadBytes(storageRef, file);
+        await uploadBytes(storageRef, file, {
+          cacheControl: "public,max-age=31536000,immutable",
+          contentType: file.type || "image/jpeg",
+        });
         const url = await getDownloadURL(storageRef);
         setPhotoUrls((prev) => (prev.length < 5 ? [...prev, url] : prev));
       } catch (err: unknown) {
@@ -276,7 +280,12 @@ export default function AddListingClient() {
         payload.wineType = wineType.trim();
       if (contactName.trim()) payload.contactName = contactName.trim();
       if (notes.trim()) payload.notes = notes.trim();
-      if (photoUrls.length > 0) payload.photoUrls = photoUrls;
+      if (photoUrls.length > 0) {
+        payload.photoUrls = photoUrls;
+        const { photoUrls200, photoUrls400 } = buildThumbUrls(photoUrls);
+        payload.photoUrls200 = photoUrls200;
+        payload.photoUrls400 = photoUrls400;
+      }
       await addDoc(collection(db, "marketListings"), payload);
       router.push("/my-listings");
     } catch (err: unknown) {
@@ -380,9 +389,9 @@ export default function AddListingClient() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="overflow-x-hidden">
             <div
-              className="bg-white rounded-[18px] p-5 sm:p-6 shadow-sm"
+              className="bg-white rounded-[18px] p-5 sm:p-6 shadow-sm min-w-0"
               style={{
                 boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
               }}
@@ -634,15 +643,15 @@ export default function AddListingClient() {
 
               {/* Grapes: harvest date (sugar Brix is beside variety above) */}
               {category === "grapes" && (
-                <>
+                <div className="min-w-0">
                   <label className={labelBase}>{t("market.harvestDate")}</label>
                   <input
                     type="date"
                     value={harvestDate}
                     onChange={(e) => setHarvestDate(e.target.value)}
-                    className={inputBase}
+                    className={`${inputBase} min-w-0 max-w-full`}
                   />
-                </>
+                </div>
               )}
 
               {/* Wine: vintage year (wine type is beside variety above) */}

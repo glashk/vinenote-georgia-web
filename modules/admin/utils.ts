@@ -33,31 +33,8 @@ export function formatTimeAgo(
   return date.toLocaleDateString();
 }
 
-export function getListingImageUrl(listing: {
-  photoUrls?: string[];
-  photoUrls200?: string[];
-  imageUrl?: string;
-  image?: string;
-  image200?: string;
-  photos?: string[];
-  thumbnail?: string;
-  mainImage?: string;
-  photo?: string;
-} | null | undefined): string | null {
-  if (!listing) return null;
-  return (
-    listing.photoUrls?.[0] ??
-    listing.photoUrls200?.[0] ??
-    listing.imageUrl ??
-    listing.image ??
-    listing.image200 ??
-    listing.thumbnail ??
-    listing.photos?.[0] ??
-    listing.mainImage ??
-    listing.photo ??
-    null
-  );
-}
+import { getListingImage } from "@/features/listings/utils";
+export const getListingImageUrl = getListingImage;
 
 /**
  * Returns a thumbnail URL for Firebase Storage images (400px width).

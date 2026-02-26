@@ -10,7 +10,9 @@ export default function FirebaseAnalytics() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    getAnalyticsLazy().then((analytics) => {
+    // Defer analytics until after first paint to improve LCP
+    const run = () => {
+      getAnalyticsLazy().then((analytics) => {
       if (analytics) {
         import("firebase/analytics").then(({ logEvent }) => {
           const pagePath = pathname || window.location.pathname;
@@ -21,6 +23,16 @@ export default function FirebaseAnalytics() {
         });
       }
     });
+    };
+
+    const useIdle =
+      typeof requestIdleCallback !== "undefined" &&
+      typeof cancelIdleCallback !== "undefined";
+    const id = useIdle
+      ? requestIdleCallback(run, { timeout: 2000 })
+      : setTimeout(run, 1500);
+    return () =>
+      useIdle ? cancelIdleCallback(id as number) : clearTimeout(id);
   }, [pathname]);
 
   return null;
