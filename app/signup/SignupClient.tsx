@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { UserPlus } from "lucide-react";
-import { auth } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { getAuthLazy } from "@/lib/firebase-auth";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 function getAuthErrorMessage(code: string, t: (key: string) => string): string {
@@ -55,7 +54,14 @@ export default function SignupClient() {
     setLoading(true);
     try {
       const auth = await getAuthLazy();
-      const { user } = await createUserWithEmailAndPassword(auth, email, password);
+      const { createUserWithEmailAndPassword, updateProfile } = await import(
+        "firebase/auth"
+      );
+      const { user } = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       if (name.trim()) {
         await updateProfile(user, { displayName: name.trim() });
       }

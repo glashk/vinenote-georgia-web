@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Shield } from "lucide-react";
-import { getAuthLazy } from "@/lib/firebase";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { getAuthLazy } from "@/lib/firebase-auth";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { checkIsAdmin } from "@/lib/isAdmin";
@@ -39,6 +38,9 @@ export default function AdminLoginClient() {
     setLoading(true);
     try {
       const auth = await getAuthLazy();
+      const { signInWithEmailAndPassword, signOut } = await import(
+        "firebase/auth"
+      );
       await signInWithEmailAndPassword(auth, email, password);
       const isAdmin = await checkIsAdmin();
       if (!isAdmin) {

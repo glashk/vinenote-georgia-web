@@ -1,5 +1,5 @@
 import { getAuthLazy } from "@/lib/firebase-auth";
-import { onAuthStateChanged, type User } from "firebase/auth";
+import type { User } from "firebase/auth";
 
 /**
  * Checks if the currently logged-in user has admin custom claim.
@@ -35,6 +35,7 @@ export function getAdminStatus(): Promise<boolean> {
     }
     try {
       const auth = await getAuthLazy();
+      const { onAuthStateChanged } = await import("firebase/auth");
       const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
         unsubscribe();
         if (!user) {

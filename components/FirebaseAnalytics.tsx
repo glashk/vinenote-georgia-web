@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { getAnalyticsLazy } from "@/lib/firebase-app";
 
 export default function FirebaseAnalytics() {
   const pathname = usePathname();
@@ -12,17 +11,19 @@ export default function FirebaseAnalytics() {
 
     // Defer analytics until after first paint to improve LCP
     const run = () => {
-      getAnalyticsLazy().then((analytics) => {
-      if (analytics) {
-        import("firebase/analytics").then(({ logEvent }) => {
-          const pagePath = pathname || window.location.pathname;
-          logEvent(analytics, "page_view", {
-            page_path: pagePath,
-            page_title: document.title,
-          });
+      import("@/lib/firebase-app")
+        .then(({ getAnalyticsLazy }) => getAnalyticsLazy())
+        .then((analytics) => {
+          if (analytics) {
+            import("firebase/analytics").then(({ logEvent }) => {
+              const pagePath = pathname || window.location.pathname;
+              logEvent(analytics, "page_view", {
+                page_path: pagePath,
+                page_title: document.title,
+              });
+            });
+          }
         });
-      }
-    });
     };
 
     const useIdle =

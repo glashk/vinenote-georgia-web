@@ -1,10 +1,9 @@
 /**
- * Firebase - re-exports from firebase-app (no auth in critical path).
+ * Firebase - re-exports from firebase-app (no top-level firebase imports).
  * For auth: use getAuthLazy() or useAuth() from AuthContext.
  * Do NOT import auth here - it would block LCP.
  */
 export {
-  app,
   getDb,
   getFirebaseStorage,
   getAnalyticsLazy,

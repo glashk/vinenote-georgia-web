@@ -1,12 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { getDb } from "@/lib/firebase-app";
-import {
-  doc,
-  setDoc,
-  serverTimestamp,
-} from "firebase/firestore";
 
 const HEARTBEAT_INTERVAL_MS = 15_000; // 15 seconds for more live updates
 const SESSION_KEY = "vn_session_id";
@@ -16,7 +10,9 @@ function getOrCreateSessionId(): string {
   if (typeof window === "undefined") return "";
   let id = sessionStorage.getItem(SESSION_KEY);
   if (!id) {
-    id = crypto.randomUUID?.() ?? `s-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    id =
+      crypto.randomUUID?.() ??
+      `s-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     sessionStorage.setItem(SESSION_KEY, id);
   }
   return id;
@@ -32,11 +28,17 @@ export default function VisitorPresence() {
     if (!sessionId) return;
 
     const writePresence = async () => {
+      const [{ getDb }, { doc, setDoc, serverTimestamp }] = await Promise.all([
+        import("@/lib/firebase-app"),
+        import("firebase/firestore"),
+      ]);
       const db = await getDb();
       if (!db) return;
       try {
         const isFirst = !sessionStorage.getItem(CREATED_FLAG);
-        const data: Record<string, unknown> = { lastSeen: serverTimestamp() };
+        const data: Record<string, unknown> = {
+          lastSeen: serverTimestamp(),
+        };
         if (isFirst) {
           data.createdAt = serverTimestamp();
           sessionStorage.setItem(CREATED_FLAG, "1");

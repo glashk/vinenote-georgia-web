@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Container from "@/components/Container";
-import { updateProfile } from "firebase/auth";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -27,6 +26,7 @@ export default function ProfileClient() {
     setSuccess(false);
     setSaving(true);
     try {
+      const { updateProfile } = await import("firebase/auth");
       await updateProfile(user, { displayName: displayName.trim() });
       setSuccess(true);
     } catch {

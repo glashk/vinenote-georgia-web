@@ -1,58 +1,40 @@
 /**
- * Firebase app, Firestore, Storage, Analytics - NO auth.
- * Use this for public pages to avoid loading firebase/auth in the critical path.
+ * Firebase app, Firestore, Storage, Analytics - NO top-level firebase imports.
+ * All firebase code is loaded via dynamic import only when these functions are called.
+ * Use this for public pages - firebase loads only when getDb/getAnalyticsLazy is invoked.
  */
-import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { getAnalytics, Analytics, isSupported } from "firebase/analytics";
-import type { Firestore } from "firebase/firestore";
+import { getFirebase } from "./firebase/client";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyA8Ih_m5ZfvAl3mYaixu0-eWUh9e_t1ddw",
-  authDomain: "vinenote-georgia.firebaseapp.com",
-  projectId: "vinenote-georgia",
-  storageBucket: "vinenote-georgia.firebasestorage.app",
-  messagingSenderId: "360665380354",
-  appId: "1:360665380354:web:e2198ef58d00e327cc991b",
-  measurementId: "G-7BGKPELHWJ",
-};
+let _db: import("firebase/firestore").Firestore | null = null;
+let _storage: import("firebase/storage").FirebaseStorage | null = null;
+let _analytics: import("firebase/analytics").Analytics | null = null;
 
-let app: FirebaseApp;
-if (typeof window !== "undefined") {
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-} else {
-  app = null as unknown as FirebaseApp;
-}
-
-let _db: Firestore | null = null;
-export async function getDb(): Promise<Firestore | null> {
+export async function getDb(): Promise<import("firebase/firestore").Firestore | null> {
   if (typeof window === "undefined") return null;
   if (_db) return _db;
-  const firebaseApp =
-    app ?? (getApps().length > 0 ? getApp() : initializeApp(firebaseConfig));
+  const { app } = await getFirebase();
   const { getFirestore } = await import("firebase/firestore");
-  _db = getFirestore(firebaseApp);
+  _db = getFirestore(app);
   return _db;
 }
 
-let _storage: import("firebase/storage").FirebaseStorage | null = null;
 export async function getFirebaseStorage(): Promise<import("firebase/storage").FirebaseStorage | null> {
   if (typeof window === "undefined") return null;
-  if (!app) return null;
   if (_storage) return _storage;
+  const { app } = await getFirebase();
   const { getStorage } = await import("firebase/storage");
   _storage = getStorage(app);
   return _storage;
 }
 
-let _analytics: Analytics | null = null;
-export async function getAnalyticsLazy(): Promise<Analytics | null> {
+export async function getAnalyticsLazy(): Promise<import("firebase/analytics").Analytics | null> {
   if (typeof window === "undefined") return null;
   if (_analytics) return _analytics;
+  const { app } = await getFirebase();
+  const { getAnalytics, isSupported } = await import("firebase/analytics");
   const supported = await isSupported();
   if (supported) {
     _analytics = getAnalytics(app);
   }
   return _analytics;
 }
-
-export { app };

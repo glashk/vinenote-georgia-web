@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
@@ -6,7 +7,12 @@ import Footer from "@/components/Footer";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import FirebaseAnalytics from "@/components/FirebaseAnalytics";
 import VisitorPresence from "@/components/VisitorPresence";
-import { AuthProvider } from "@/contexts/AuthContext";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
+
+const AuthProvider = dynamic(
+  () => import("@/contexts/AuthContext").then((m) => ({ default: m.AuthProvider })),
+  { ssr: false }
+);
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
@@ -68,6 +74,7 @@ export default function RootLayout({
         <LanguageProvider>
           <AuthProvider>
             <FirebaseAnalytics />
+            <GoogleAnalytics />
             <VisitorPresence />
             <Header />
             <main className="flex-1">{children}</main>

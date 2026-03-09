@@ -1895,7 +1895,6 @@ export default function MarketClient() {
                     {(
                       [
                         { mode: "grid" as const, icon: LayoutGrid },
-                        { mode: "card" as const, icon: LayoutList },
                         { mode: "detailed" as const, icon: List },
                       ] as const
                     ).map(({ mode, icon: Icon }) => (
