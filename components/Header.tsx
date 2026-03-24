@@ -357,6 +357,26 @@ export default function Header() {
                         }}
                       >
                         <Link
+                          href="/dashboard"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-vineyard-50 hover:text-vineyard-800 transition-colors"
+                        >
+                          <svg
+                            className="w-4 h-4 text-vineyard-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                            />
+                          </svg>
+                          {t("nav.myVineyard")}
+                        </Link>
+                        <Link
                           href="/my-listings"
                           onClick={() => setUserMenuOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-vineyard-50 hover:text-vineyard-800 transition-colors"
@@ -395,6 +415,26 @@ export default function Header() {
                             />
                           </svg>
                           {t("nav.profile")}
+                        </Link>
+                        <Link
+                          href="/more"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-vineyard-50 hover:text-vineyard-800 transition-colors"
+                        >
+                          <svg
+                            className="w-4 h-4 text-vineyard-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 6h16M4 12h16M4 18h16"
+                            />
+                          </svg>
+                          {t("more.title")}
                         </Link>
                         <div className="my-1 border-t border-slate-200" />
                         <button
@@ -557,6 +597,26 @@ export default function Header() {
                         t("nav.profile")}
                     </div>
                     <Link
+                      href="/dashboard"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-800 hover:bg-emerald-50 hover:text-emerald-600"
+                    >
+                      <svg
+                        className="w-5 h-5 text-emerald-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                        />
+                      </svg>
+                      {t("nav.myVineyard")}
+                    </Link>
+                    <Link
                       href="/my-listings"
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-800 hover:bg-emerald-50 hover:text-emerald-600"
@@ -595,6 +655,26 @@ export default function Header() {
                         />
                       </svg>
                       {t("nav.profile")}
+                    </Link>
+                    <Link
+                      href="/more"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-800 hover:bg-emerald-50 hover:text-emerald-600"
+                    >
+                      <svg
+                        className="w-5 h-5 text-emerald-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 6h16M4 12h16M4 18h16"
+                        />
+                      </svg>
+                      {t("more.title")}
                     </Link>
                     <button
                       onClick={async () => {
