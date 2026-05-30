@@ -1,12 +1,13 @@
 {
   "nav": {
     "home": "Home",
-    "app": "Get the App",
+    "app": "App Store",
+    "googlePlay": "Google Play",
     "menu": "Menu",
     "closeMenu": "Close menu",
     "toggleMenu": "Toggle menu",
     "tagline": "Vinery & Market",
-    "homeAria": "VineNote Georgia Home",
+    "homeAria": "Memarne Home",
     "browse": "Browse",
     "account": "Account",
     "aboutUs": "About us",
@@ -583,7 +584,7 @@
     }
   },
   "hero": {
-    "title": "VineNote Georgia",
+    "title": "Memarne",
     "tagline": "Simple vineyard & qvevri management for Georgian winemakers",
     "description": "Track your vineyards, manage harvests, monitor qvevri and tanks, and maintain a complete history of your wine batches all in one simple app."
   },
@@ -634,7 +635,7 @@
     "subtitle": "Available on App Store & Google Play",
     "comingSoon": "Coming soon",
     "appStoreButton": "Download on the App Store",
-    "googlePlayComingSoon": "Google Play (coming soon)"
+    "googlePlayButton": "Get it on Google Play"
   },
   "common": {
     "quantity": "Quantity",
@@ -672,7 +673,7 @@
     },
     "signUp": {
       "title": "Create Account",
-      "subtitle": "Join VineNote to list and discover grapes, wine, and more.",
+      "subtitle": "Join Memarne to list and discover grapes, wine, and more.",
       "name": "Name",
       "namePlaceholder": "Your name",
       "email": "Email",
@@ -710,7 +711,7 @@
   },
   "market": {
     "title": "Market",
-    "subtitle": "Browse listings from VineNote users",
+    "subtitle": "Browse listings from Memarne users",
     "listings": "listings",
     "listingsFound": "Found {{count}} listings",
     "empty": "No listings yet",
@@ -764,7 +765,7 @@
     "editListing": "Edit listing",
     "editListingSubtitle": "Update your listing details",
     "createFirst": "Get the app",
-    "createFirstHint": "Create listings from the VineNote app.",
+    "createFirstHint": "Create listings from the Memarne app.",
     "renewListing": "Renew listing",
     "renewConfirm": "Renew this listing?",
     "renewConfirmMessage": "The listing will be active again and visible in the market for 30 days.",
@@ -805,6 +806,9 @@
     "unit": "Unit",
     "contactName": "Contact name",
     "phone": "Phone",
+    "showPhone": "Show phone number",
+    "callPhone": "Call",
+    "views": "views",
     "price": "Price",
     "varietyPlaceholder": "e.g. Rkatsiteli",
     "productPlaceholder": "e.g. Churchkhela",
@@ -888,7 +892,7 @@
     "accessDenied": "You do not have administrator access."
   },
   "footer": {
-    "copyright": "© VineNote Georgia",
+    "copyright": "© Memarne",
     "email": "support@vinenote.app",
     "links": "Links",
     "admin": "Admin",
@@ -898,8 +902,8 @@
   "support": {
     "title": "Support",
     "about": {
-      "title": "About VineNote Georgia",
-      "description1": "VineNote Georgia is a mobile application designed to help Georgian winemakers manage their vineyards and qvevri operations. The app provides tools for tracking vineyards, recording harvests, managing qvevri and tanks, and maintaining a complete history of wine batches.",
+      "title": "About Memarne",
+      "description1": "Memarne is a mobile application designed to help Georgian winemakers manage their vineyards and qvevri operations. The app provides tools for tracking vineyards, recording harvests, managing qvevri and tanks, and maintaining a complete history of wine batches.",
       "description2": "The app works offline, allowing you to record data in your vineyard even without internet connectivity. All data syncs automatically when you're back online."
     },
     "contact": {
@@ -914,7 +918,7 @@
       },
       "offline": {
         "question": "Does the app work offline?",
-        "answer": "Yes, VineNote Georgia works completely offline. You can record all your data in the vineyard without internet connectivity. When you're back online, the app will automatically sync your data."
+        "answer": "Yes, Memarne works completely offline. You can record all your data in the vineyard without internet connectivity. When you're back online, the app will automatically sync your data."
       },
       "export": {
         "question": "Can I export my data?",
@@ -926,7 +930,7 @@
       },
       "devices": {
         "question": "What devices are supported?",
-        "answer": "VineNote Georgia is available for iOS (iPhone and iPad) and Android devices. The app is optimized for mobile use and works best on smartphones and tablets."
+        "answer": "Memarne is available for iOS (iPhone and iPad) and Android devices. The app is optimized for mobile use and works best on smartphones and tablets."
       },
       "deleteAccount": {
         "question": "How do I delete my account?",
@@ -940,7 +944,7 @@
     "sections": {
       "introduction": {
         "title": "1. Introduction",
-        "content": "VineNote Georgia (\"we,\" \"our,\" or \"us\") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application (\"App\"). Please read this Privacy Policy carefully. If you do not agree with the terms of this Privacy Policy, please do not access or use the App."
+        "content": "Memarne (\"we,\" \"our,\" or \"us\") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application (\"App\"). Please read this Privacy Policy carefully. If you do not agree with the terms of this Privacy Policy, please do not access or use the App."
       },
       "informationWeCollect": {
         "title": "2. Information We Collect",
@@ -977,7 +981,7 @@
       },
       "offlineUsage": {
         "title": "4. Offline Usage",
-        "content": "VineNote Georgia is designed to work offline. When you use the App without an internet connection, all data is stored locally on your device. When you reconnect to the internet, your data is automatically synchronized with our servers to ensure it is backed up and accessible across your devices. No data is transmitted while you are offline."
+        "content": "Memarne is designed to work offline. When you use the App without an internet connection, all data is stored locally on your device. When you reconnect to the internet, your data is automatically synchronized with our servers to ensure it is backed up and accessible across your devices. No data is transmitted while you are offline."
       },
       "dataSharing": {
         "title": "5. Data Sharing and Disclosure",

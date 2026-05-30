@@ -61,7 +61,7 @@ export default function SupportClient() {
                   <div className="flex items-center justify-center sm:justify-start gap-3 mb-5">
                     <span className="vn-pill">
                       <span className="inline-flex w-2 h-2 rounded-full bg-vineyard-700" />
-                      VineNote Georgia
+                      Memarne
                     </span>
                   </div>
 

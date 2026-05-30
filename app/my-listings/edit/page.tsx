@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import EditPageWrapper from "./EditPageWrapper";
 
 export const metadata: Metadata = {
-  title: "Edit Listing - VineNote Georgia",
+  title: "Edit Listing - Memarne",
   description: "Edit your marketplace listing.",
 };
 

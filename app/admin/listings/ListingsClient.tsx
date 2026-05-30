@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import ListingImage from "@/components/ListingImage";
+import ListingAnalyticsPanel from "@/components/listings/ListingAnalyticsPanel";
+import {
+  getListingViewsCount,
+  getListingPhoneClicksCount,
+} from "@/features/listings/analytics";
 import {
   useListings,
   type ListingFilter,
@@ -11,6 +16,9 @@ import { useAdminActions } from "@/modules/admin/hooks/useAdminActions";
 import { formatTimeAgo, getListingImageUrl } from "@/modules/admin/utils";
 import type { Listing, MarketCategory } from "@/modules/admin/types";
 import { ConfirmModal } from "@/components/ConfirmModal";
+
+type SortField = "createdAt" | "viewsCount" | "phoneClicksCount";
+type SortDir = "asc" | "desc";
 
 const FILTERS: { value: ListingFilter; label: string }[] = [
   { value: "all", label: "All" },
@@ -44,6 +52,69 @@ export default function ListingsClient() {
   const [modal, setModal] = useState<ModalType>(null);
   const [modalConfirming, setModalConfirming] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<SortField>("createdAt");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [analyticsListing, setAnalyticsListing] = useState<Listing | null>(
+    null
+  );
+
+  const sortedListings = useMemo(() => {
+    const list = [...listings];
+    list.sort((a, b) => {
+      let cmp = 0;
+      if (sortField === "createdAt") {
+        const aSec =
+          a.createdAt &&
+          typeof (a.createdAt as { seconds: number }).seconds === "number"
+            ? (a.createdAt as { seconds: number }).seconds
+            : 0;
+        const bSec =
+          b.createdAt &&
+          typeof (b.createdAt as { seconds: number }).seconds === "number"
+            ? (b.createdAt as { seconds: number }).seconds
+            : 0;
+        cmp = aSec - bSec;
+      } else if (sortField === "viewsCount") {
+        cmp = getListingViewsCount(a) - getListingViewsCount(b);
+      } else {
+        cmp = getListingPhoneClicksCount(a) - getListingPhoneClicksCount(b);
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return list;
+  }, [listings, sortField, sortDir]);
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir("desc");
+    }
+  };
+
+  const SortHeader = ({
+    field,
+    label,
+  }: {
+    field: SortField;
+    label: string;
+  }) => (
+    <th className="text-left p-4 font-semibold text-slate-700 dark:text-slate-300">
+      <button
+        type="button"
+        onClick={() => toggleSort(field)}
+        className="inline-flex items-center gap-1 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+      >
+        {label}
+        {sortField === field && (
+          <span className="text-emerald-600" aria-hidden>
+            {sortDir === "asc" ? "↑" : "↓"}
+          </span>
+        )}
+      </button>
+    </th>
+  );
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -254,17 +325,20 @@ export default function ListingsClient() {
                 <th className="text-left p-4 font-semibold text-slate-700 dark:text-slate-300">Title</th>
                 <th className="text-left p-4 font-semibold text-slate-700 dark:text-slate-300">Category</th>
                 <th className="text-left p-4 font-semibold text-slate-700 dark:text-slate-300">Price</th>
+                <SortHeader field="viewsCount" label="Views" />
+                <SortHeader field="phoneClicksCount" label="Phone clicks" />
                 <th className="text-left p-4 font-semibold text-slate-700 dark:text-slate-300">Location</th>
-                <th className="text-left p-4 font-semibold text-slate-700 dark:text-slate-300">Created</th>
+                <SortHeader field="createdAt" label="Created" />
                 <th className="text-left p-4 font-semibold text-slate-700 dark:text-slate-300">Status</th>
                 <th className="text-left p-4 font-semibold text-slate-700 dark:text-slate-300">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {listings.map((listing) => (
+              {sortedListings.map((listing) => (
                 <ListingTableRow
                   key={listing.id}
                   listing={listing}
+                  onShowAnalytics={() => setAnalyticsListing(listing)}
                   selected={selectedIds.has(listing.id)}
                   onToggleSelect={() => toggleSelect(listing.id)}
                   onHide={() =>
@@ -303,10 +377,11 @@ export default function ListingsClient() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {listings.map((listing) => (
+          {sortedListings.map((listing) => (
             <ListingCard
               key={listing.id}
               listing={listing}
+              onShowAnalytics={() => setAnalyticsListing(listing)}
               selected={selectedIds.has(listing.id)}
               onToggleSelect={() => toggleSelect(listing.id)}
               onHide={() =>
@@ -440,6 +515,34 @@ export default function ListingsClient() {
         />
       )}
 
+      {analyticsListing && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setAnalyticsListing(null)}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 shadow-xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                Listing analytics
+              </h2>
+              <button
+                type="button"
+                onClick={() => setAnalyticsListing(null)}
+                className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 text-sm font-medium"
+              >
+                Close
+              </button>
+            </div>
+            <ListingAnalyticsPanel listing={analyticsListing} />
+          </div>
+        </div>
+      )}
+
       {modal?.type === "feature" && (
         <ConfirmModal
           open={true}
@@ -468,6 +571,7 @@ function ListingTableRow({
   onUnhide,
   onDelete,
   onFeature,
+  onShowAnalytics,
   isBusy,
 }: {
   listing: Listing;
@@ -477,6 +581,7 @@ function ListingTableRow({
   onUnhide: () => void;
   onDelete: () => void;
   onFeature: () => void;
+  onShowAnalytics: () => void;
   isBusy: boolean;
 }) {
   const imgUrl = getListingImageUrl(listing);
@@ -509,7 +614,13 @@ function ListingTableRow({
               />
             </div>
           )}
-          <span className="truncate max-w-[200px] font-medium text-slate-900 dark:text-slate-100">{title}</span>
+          <button
+            type="button"
+            onClick={onShowAnalytics}
+            className="truncate max-w-[200px] font-medium text-slate-900 dark:text-slate-100 text-left hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+          >
+            {title}
+          </button>
         </div>
       </td>
       <td className="p-4">
@@ -521,6 +632,12 @@ function ListingTableRow({
         {listing.price != null && listing.price > 0
           ? `${listing.price} ₾`
           : "-"}
+      </td>
+      <td className="p-4 tabular-nums text-slate-700 dark:text-slate-300">
+        {getListingViewsCount(listing).toLocaleString()}
+      </td>
+      <td className="p-4 tabular-nums text-slate-700 dark:text-slate-300">
+        {getListingPhoneClicksCount(listing).toLocaleString()}
       </td>
       <td className="p-4 truncate max-w-[140px] text-slate-600 dark:text-slate-400">
         {[listing.region, listing.village].filter(Boolean).join(", ") || "-"}
@@ -590,6 +707,7 @@ function ListingCard({
   onUnhide,
   onDelete,
   onFeature,
+  onShowAnalytics,
   isBusy,
   openMenu,
   onMenuToggle,
@@ -602,6 +720,7 @@ function ListingCard({
   onUnhide: () => void;
   onDelete: () => void;
   onFeature: () => void;
+  onShowAnalytics: () => void;
   isBusy: boolean;
   openMenu: boolean;
   onMenuToggle: () => void;
@@ -717,9 +836,13 @@ function ListingCard({
         </div>
       </div>
       <div className="p-4">
-        <div className="font-semibold truncate text-slate-900 dark:text-slate-100">
+        <button
+          type="button"
+          onClick={onShowAnalytics}
+          className="font-semibold truncate text-slate-900 dark:text-slate-100 text-left w-full hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+        >
           {title}
-        </div>
+        </button>
         <div className="flex items-center gap-2 mt-2 text-sm text-slate-500 dark:text-slate-400">
           <span>{category}</span>
           <span>•</span>
@@ -728,6 +851,10 @@ function ListingCard({
               ? `${listing.price} ₾`
               : "Contact"}
           </span>
+        </div>
+        <div className="flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-400 mt-2 tabular-nums">
+          <span>{getListingViewsCount(listing).toLocaleString()} views</span>
+          <span>{getListingPhoneClicksCount(listing).toLocaleString()} phone clicks</span>
         </div>
         <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
           {formatTimeAgo(listing.createdAt)}

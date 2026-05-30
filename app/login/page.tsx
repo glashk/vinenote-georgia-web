@@ -3,11 +3,11 @@ import { Suspense } from "react";
 import LoginClient from "./LoginClient";
 
 export const metadata: Metadata = {
-  title: "Sign In - VineNote Georgia",
-  description: "Sign in to your VineNote Georgia account.",
+  title: "Sign In - Memarne",
+  description: "Sign in to your Memarne account.",
   openGraph: {
-    title: "Sign In - VineNote Georgia",
-    description: "Sign in to your VineNote Georgia account.",
+    title: "Sign In - Memarne",
+    description: "Sign in to your Memarne account.",
     url: "https://vinenote.app/login",
   },
 };

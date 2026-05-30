@@ -28,11 +28,11 @@ const MarketClient = dynamic(() => import("@/app/market/MarketClient"), {
 });
 
 export const metadata: Metadata = {
-  title: "VineNote Georgia - Market",
+  title: "Memarne - Market",
   description:
-    "Browse and buy grapes, wine, and vineyard products from Georgian winemakers. VineNote Georgia marketplace.",
+    "Browse and buy grapes, wine, and vineyard products from Georgian winemakers. Memarne marketplace.",
   openGraph: {
-    title: "VineNote Georgia - Market",
+    title: "Memarne - Market",
     description:
       "Browse and buy grapes, wine, and vineyard products from Georgian winemakers.",
     url: "https://vinenote.app",
@@ -41,13 +41,13 @@ export const metadata: Metadata = {
         url: "/Grapevines-scaled-e5b6bd5d-a447-4b5f-9da8-6c8c55461efd.png",
         width: 1200,
         height: 630,
-        alt: "VineNote Georgia - Market",
+        alt: "Memarne - Market",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "VineNote Georgia - Market",
+    title: "Memarne - Market",
     description:
       "Browse and buy grapes, wine, and vineyard products from Georgian winemakers.",
     images: ["/Grapevines-scaled-e5b6bd5d-a447-4b5f-9da8-6c8c55461efd.png"],

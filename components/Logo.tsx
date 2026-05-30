@@ -25,7 +25,7 @@ export default function Logo({ size = 48, className = "", animated = true, style
     >
       <Image
         src={logoSrc}
-        alt="VineNote Georgia Logo"
+        alt="Memarne Logo"
         width={size}
         height={size}
         className="drop-shadow-lg"

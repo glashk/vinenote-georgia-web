@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import ProfileClient from "./ProfileClient";
 
 export const metadata: Metadata = {
-  title: "Profile - VineNote Georgia",
-  description: "Your VineNote Georgia profile.",
+  title: "Profile - Memarne",
+  description: "Your Memarne profile.",
 };
 
 export default function ProfilePage() {

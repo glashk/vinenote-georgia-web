@@ -1,6 +1,6 @@
-# VineNote Georgia Landing Page
+# Memarne Landing Page
 
-A production-ready Next.js website for the VineNote Georgia mobile app. This site serves as the App Store support URL, privacy policy URL, and a simple marketing landing page.
+A production-ready Next.js website for the Memarne mobile app. This site serves as the App Store support URL, privacy policy URL, and a simple marketing landing page.
 
 ## Tech Stack
 
@@ -115,5 +115,5 @@ Edit these files to update the content.
 
 ## License
 
-© VineNote Georgia
-# vinenote-georgia-web
+© Memarne
+# memarne-landing

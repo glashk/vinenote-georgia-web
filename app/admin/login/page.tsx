@@ -1,7 +1,7 @@
 import AdminLoginClient from "./AdminLoginClient";
 
 export const metadata = {
-  title: "Admin Login - VineNote",
+  title: "Admin Login - Memarne",
   description: "Administrator sign in",
 };
 

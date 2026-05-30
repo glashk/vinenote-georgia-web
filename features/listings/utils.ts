@@ -22,6 +22,34 @@ export type ListingImageSource = {
 /** Size preference: 200 for cards, 400/600 for grid tiles (600 = sharper on large screens) */
 export type ListingImageSize = 200 | 400 | 600;
 
+/** Original upload URL for a photo (never a constructed thumb path). */
+export function getListingOriginalPhotoUrl(
+  listing: ListingImageSource | null,
+  index = 0
+): string | null {
+  if (!listing) return null;
+  return (
+    listing.photoUrls?.[index] ??
+    listing.photoUrls?.[0] ??
+    listing.imageFullUrl ??
+    listing.imageUrl ??
+    listing.image ??
+    listing.photos?.[index] ??
+    listing.photos?.[0] ??
+    listing.thumbnail ??
+    listing.mainImage ??
+    listing.photo ??
+    null
+  );
+}
+
+function distinctFallback(primary: string, ...candidates: (string | null | undefined)[]): string | null {
+  for (const c of candidates) {
+    if (c && c !== primary) return c;
+  }
+  return null;
+}
+
 /**
  * Returns the best image URL for grid/card display (prefer thumb).
  * Uses constructed thumb URL when DB lacks photoUrls200/400 but has Firebase Storage URL.
@@ -64,36 +92,43 @@ export function getListingImageWithFallback(
       listing.imageThumbUrl ??
       listing.photoUrlsThumb?.[0] ??
       null;
-  if (fromDb) return { primary: fromDb, fallback: null };
-  const full =
-    listing.imageFullUrl ??
-    listing.photoUrls?.[0] ??
-    listing.imageUrl ??
-    listing.image ??
-    listing.thumbnail ??
-    listing.photos?.[0] ??
-    listing.mainImage ??
-    listing.photo ??
-    null;
+  const full = getListingOriginalPhotoUrl(listing, 0);
+  if (fromDb) {
+    return {
+      primary: fromDb,
+      fallback: distinctFallback(
+        fromDb,
+        full,
+        getResizeProxyUrl(full, preferSize)
+      ),
+    };
+  }
   if (!full) return null;
   const proxySize = preferSize;
   if (want600) {
     const proxyUrl = getResizeProxyUrl(full, 600);
-    const thumb400 = full.includes("firebasestorage.googleapis.com") || full.includes("storage.googleapis.com")
-      ? getThumbUrl(full, 400)
-      : null;
-    return { primary: proxyUrl ?? full, fallback: thumb400 ?? null };
+    const thumb400 =
+      full.includes("firebasestorage.googleapis.com") ||
+      full.includes("storage.googleapis.com")
+        ? getThumbUrl(full, 400)
+        : null;
+    const primary = proxyUrl ?? full;
+    return { primary, fallback: distinctFallback(primary, thumb400, full) };
   }
   const thumbSize = preferSize as 200 | 400;
   if (full.includes("firebasestorage.googleapis.com") || full.includes("storage.googleapis.com")) {
     const thumb = getThumbUrl(full, thumbSize);
     if (thumb) {
       const proxyFallback = getResizeProxyUrl(full, proxySize);
-      return { primary: thumb, fallback: proxyFallback ?? full };
+      return {
+        primary: thumb,
+        fallback: distinctFallback(thumb, proxyFallback, full),
+      };
     }
   }
   const proxyFallback = getResizeProxyUrl(full, proxySize);
-  return { primary: proxyFallback ?? full, fallback: null };
+  const primary = proxyFallback ?? full;
+  return { primary, fallback: distinctFallback(primary, full) };
 }
 
 /**
@@ -132,16 +167,13 @@ export function getListingImageProgressive(
 export function getListingFullImage(listing: ListingImageSource | null): string | null {
   if (!listing) return null;
   return (
-    listing.imageFullUrl ??
-    listing.photoUrls?.[0] ??
-    listing.imageUrl ??
-    listing.image ??
+    getListingOriginalPhotoUrl(listing, 0) ??
+    listing.photoUrls400?.[0] ??
     listing.photoUrls200?.[0] ??
+    listing.image400 ??
     listing.image200 ??
-    listing.thumbnail ??
-    listing.photos?.[0] ??
-    listing.mainImage ??
-    listing.photo ??
+    listing.imageThumbUrl ??
+    listing.photoUrlsThumb?.[0] ??
     null
   );
 }
@@ -176,35 +208,36 @@ export function getListingPhotoUrlWithFallback(
       listing.photoUrls200?.[index] ??
       listing.photoUrls200?.[0] ??
       null;
-    if (fromDb) return { primary: fromDb, fallback: null };
-    const full =
-      listing.photoUrls?.[index] ??
-      listing.photoUrls?.[0] ??
-      getListingImage(listing);
+    const full = getListingOriginalPhotoUrl(listing, index);
+    if (fromDb) {
+      return {
+        primary: fromDb,
+        fallback: distinctFallback(fromDb, full, getResizeProxyUrl(full, 200)),
+      };
+    }
     if (!full) return null;
     if (full.includes("firebasestorage.googleapis.com") || full.includes("storage.googleapis.com")) {
       const thumb = getThumbUrl(full, 200);
       if (thumb) {
         const proxyFallback = getResizeProxyUrl(full, 200);
-        return { primary: thumb, fallback: proxyFallback ?? full };
+        return {
+          primary: thumb,
+          fallback: distinctFallback(thumb, proxyFallback, full),
+        };
       }
     }
     const proxyFallback = getResizeProxyUrl(full, 200);
-    return { primary: proxyFallback ?? full, fallback: null };
+    const primary = proxyFallback ?? full;
+    return { primary, fallback: distinctFallback(primary, full) };
   }
-  // For full/card display: use 600px via proxy (never 400 or full)
-  const fullUrl =
-    listing.photoUrls?.[index] ??
-    listing.photoUrls?.[0] ??
-    listing.imageFullUrl ??
-    listing.imageUrl ??
-    getListingFullImage(listing);
+  const fullUrl = getListingOriginalPhotoUrl(listing, index) ?? getListingFullImage(listing);
   if (!fullUrl) return null;
 
   const url400 =
     listing.photoUrls400?.[index] ?? (index === 0 ? listing.image400 : null);
   const proxy600 = getResizeProxyUrl(fullUrl, 600);
-  return { primary: proxy600 ?? fullUrl, fallback: url400 ?? null };
+  const primary = proxy600 ?? fullUrl;
+  return { primary, fallback: distinctFallback(primary, url400, fullUrl) };
 }
 
 /**

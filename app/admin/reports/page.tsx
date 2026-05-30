@@ -1,7 +1,7 @@
 import ReportsClient from "./ReportsClient";
 
 export const metadata = {
-  title: "Reports - VineNote Admin",
+  title: "Reports - Memarne Admin",
   description: "Moderate marketplace reports",
 };
 

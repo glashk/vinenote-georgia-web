@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide will help you deploy the VineNote Georgia landing page.
+This guide will help you deploy the Memarne landing page.
 
 ## Option 1: Deploy to Vercel (Recommended - Easiest)
 

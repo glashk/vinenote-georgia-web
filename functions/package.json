@@ -1,6 +1,6 @@
 {
-  "name": "vinenote-functions",
-  "description": "Firebase Cloud Functions for VineNote Georgia - image thumbnails",
+  "name": "memarne-functions",
+  "description": "Firebase Cloud Functions for Memarne - image thumbnails",
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",

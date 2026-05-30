@@ -37,12 +37,18 @@ import {
   Heart,
   Share2,
   CircleAlert,
-  Phone,
   Package,
 } from "lucide-react";
 import ListingImage from "@/components/ListingImage";
 import { ThumbnailImage } from "@/components/OptimizedListingImage";
 import { getListingImage, getListingImageUrl } from "@/features/listings/utils";
+import {
+  incrementListingView,
+  getListingViewsCount,
+  getListingPhoneClicksCount,
+} from "@/features/listings/analytics";
+import ListingViewsBadge from "@/components/listings/ListingViewsBadge";
+import MaskedPhoneContact from "@/components/listings/MaskedPhoneContact";
 import ListingCardSkeleton from "@/components/ListingCardSkeleton";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { GEORGIA_REGIONS } from "@/lib/georgiaRegions";
@@ -126,20 +132,82 @@ interface Listing {
   image400?: string;
   photos?: string[];
   thumbnail?: string;
+  mainImage?: string;
+  photo?: string;
   hidden?: boolean;
   status?: string;
   userId?: string;
   createdAt?: Timestamp | { seconds: number; nanoseconds?: number } | Date;
+  viewsCount?: number;
+  phoneClicksCount?: number;
+}
+
+function mapMarketListing(
+  id: string,
+  data: Record<string, unknown>
+): Listing {
+  return {
+    id,
+    variety: data.variety as string | undefined,
+    title: data.title as string | undefined,
+    description: data.description as string | undefined,
+    notes: data.notes as string | undefined,
+    price: typeof data.price === "number" ? data.price : undefined,
+    quantity: data.quantity as number | undefined,
+    unit: data.unit as string | undefined,
+    region: data.region as string | undefined,
+    village: data.village as string | undefined,
+    category: data.category as string | undefined,
+    harvestDate: data.harvestDate as string | undefined,
+    sugarBrix: data.sugarBrix as number | undefined,
+    vintageYear: data.vintageYear as number | undefined,
+    wineType: data.wineType as string | undefined,
+    phone: data.phone as string | undefined,
+    contactName: data.contactName as string | undefined,
+    photoUrls: data.photoUrls as string[] | undefined,
+    photoUrls200: data.photoUrls200 as string[] | undefined,
+    photoUrls400: data.photoUrls400 as string[] | undefined,
+    photoUrlsThumb: data.photoUrlsThumb as string[] | undefined,
+    imageUrl: data.imageUrl as string | undefined,
+    imageFullUrl: data.imageFullUrl as string | undefined,
+    imageThumbUrl: data.imageThumbUrl as string | undefined,
+    image: data.image as string | undefined,
+    image200: data.image200 as string | undefined,
+    image400: data.image400 as string | undefined,
+    photos: data.photos as string[] | undefined,
+    thumbnail: data.thumbnail as string | undefined,
+    mainImage: data.mainImage as string | undefined,
+    photo: data.photo as string | undefined,
+    hidden: data.hidden as boolean | undefined,
+    status: (data.status as string) ?? "active",
+    userId: data.userId as string | undefined,
+    createdAt: data.createdAt as Listing["createdAt"],
+    viewsCount:
+      typeof data.viewsCount === "number" ? data.viewsCount : undefined,
+    phoneClicksCount:
+      typeof data.phoneClicksCount === "number"
+        ? data.phoneClicksCount
+        : undefined,
+  };
 }
 
 function getPhotoUrls(listing: Listing | null): string[] {
   if (!listing) return [];
-  if (listing.photoUrls?.length) return listing.photoUrls;
+  if (listing.photoUrls?.length) {
+    return listing.photoUrls.filter(
+      (url): url is string => typeof url === "string" && url.length > 0
+    );
+  }
+  if (listing.photos?.length) {
+    return listing.photos.filter(
+      (url): url is string => typeof url === "string" && url.length > 0
+    );
+  }
   const single =
+    listing.imageFullUrl ??
     listing.imageUrl ??
     listing.image ??
-    listing.thumbnail ??
-    listing.photos?.[0];
+    listing.thumbnail;
   return single ? [single] : [];
 }
 
@@ -214,6 +282,7 @@ function ListingDetailView({
   onRenew,
   onRenewClick,
   renewLoading,
+  onPhoneRevealed,
 }: {
   listing: Listing | null;
   loading: boolean;
@@ -229,6 +298,7 @@ function ListingDetailView({
   onRenew?: (listingId: string) => Promise<void>;
   onRenewClick?: (listingId: string) => void;
   renewLoading?: boolean;
+  onPhoneRevealed?: () => void;
 }) {
   const photoUrls = listing ? getPhotoUrls(listing) : [];
   const photoCount = photoUrls.length;
@@ -696,6 +766,10 @@ function ListingDetailView({
             </p>
           )}
 
+          <div className="mb-4">
+            <ListingViewsBadge listing={listing} size="md" />
+          </div>
+
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span
               className="inline-flex w-fit items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-white"
@@ -775,7 +849,7 @@ function ListingDetailView({
           )}
 
           {listing.phone && (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-[#04AA6D] flex items-center justify-center text-white font-bold text-lg">
                   {(listing.contactName || "?").charAt(0).toUpperCase()}
@@ -784,18 +858,17 @@ function ListingDetailView({
                   <p className="font-semibold text-slate-900">
                     {listing.contactName || t("market.contact")}
                   </p>
-                  <p className="text-sm text-slate-500">
-                    {t("market.contact")}
-                  </p>
+                  <p className="text-sm text-slate-500">{t("market.contact")}</p>
                 </div>
               </div>
-              <a
-                href={`tel:${listing.phone}`}
-                className="inline-flex items-center justify-center gap-3 px-6 py-3 rounded-xl font-semibold text-white bg-[#04AA6D] hover:bg-[#039a5e] transition-colors"
-              >
-                <span>📞</span>
-                {listing.phone}
-              </a>
+              <MaskedPhoneContact
+                listingId={listing.id}
+                listingOwnerId={listing.userId}
+                phone={listing.phone}
+                currentUserId={currentUserId}
+                variant="detail"
+                onPhoneRevealed={onPhoneRevealed}
+              />
             </div>
           )}
         </div>
@@ -1043,45 +1116,9 @@ export default function MarketClient() {
           q,
           (snapshot) => {
             const list: Listing[] = snapshot.docs
-              .map((docSnap) => {
-                const data = docSnap.data();
-                return {
-                  id: docSnap.id,
-                  variety: data.variety,
-                  title: data.title,
-                  description: data.description,
-                  notes: data.notes,
-                  price:
-                    typeof data.price === "number" ? data.price : undefined,
-                  quantity: data.quantity,
-                  unit: data.unit,
-                  region: data.region,
-                  village: data.village,
-                  category: data.category,
-                  harvestDate: data.harvestDate,
-                  sugarBrix: data.sugarBrix,
-                  vintageYear: data.vintageYear,
-                  wineType: data.wineType,
-                  phone: data.phone,
-                  contactName: data.contactName,
-                  photoUrls: data.photoUrls,
-                  photoUrls200: data.photoUrls200,
-                  photoUrls400: data.photoUrls400,
-                  photoUrlsThumb: data.photoUrlsThumb,
-                  imageUrl: data.imageUrl,
-                  imageFullUrl: data.imageFullUrl,
-                  imageThumbUrl: data.imageThumbUrl,
-                  image: data.image,
-                  image200: data.image200,
-                  image400: data.image400,
-                  photos: data.photos,
-                  thumbnail: data.thumbnail,
-                  hidden: data.hidden,
-                  status: data.status ?? "active",
-                  userId: data.userId,
-                  createdAt: data.createdAt,
-                };
-              })
+              .map((docSnap) =>
+                mapMarketListing(docSnap.id, docSnap.data() as Record<string, unknown>)
+              )
               .filter((l) => !l.hidden && (l.status ?? "active") !== "expired");
             list.sort((a, b) => {
               const aTime =
@@ -1172,7 +1209,7 @@ export default function MarketClient() {
       e.stopPropagation();
       const base = typeof window !== "undefined" ? window.location.origin : "";
       const shareUrl = `${base}/share/${listingId}`;
-      const title = listingTitle ?? "VineNote Georgia - Market";
+      const title = listingTitle ?? "Memarne - Market";
       if (navigator.share) {
         navigator
           .share({
@@ -1248,39 +1285,9 @@ export default function MarketClient() {
       }
       const snap = await getDoc(doc(db, "marketListings", detailId));
       if (snap.exists()) {
-        const data = snap.data();
-        setListingDetail({
-          id: snap.id,
-          variety: data.variety,
-          title: data.title,
-          description: data.description,
-          notes: data.notes,
-          price: typeof data.price === "number" ? data.price : undefined,
-          quantity: data.quantity,
-          unit: data.unit,
-          region: data.region,
-          village: data.village,
-          category: data.category,
-          harvestDate: data.harvestDate,
-          sugarBrix: data.sugarBrix,
-          vintageYear: data.vintageYear,
-          wineType: data.wineType,
-          phone: data.phone,
-          contactName: data.contactName,
-          photoUrls: data.photoUrls,
-          photoUrls200: data.photoUrls200,
-          photoUrls400: data.photoUrls400,
-          imageUrl: data.imageUrl,
-          image: data.image,
-          image200: data.image200,
-          image400: data.image400,
-          photos: data.photos,
-          thumbnail: data.thumbnail,
-          hidden: data.hidden,
-          status: data.status ?? "active",
-          userId: data.userId,
-          createdAt: data.createdAt,
-        });
+        setListingDetail(
+          mapMarketListing(snap.id, snap.data() as Record<string, unknown>)
+        );
       } else {
         setListingDetail(null);
       }
@@ -1295,6 +1302,37 @@ export default function MarketClient() {
     if (detailId) loadDetail();
     else setListingDetail(null);
   }, [detailId, loadDetail]);
+
+  useEffect(() => {
+    if (!listingDetail || detailLoading) return;
+    let cancelled = false;
+    void (async () => {
+      const counted = await incrementListingView(
+        listingDetail.id,
+        listingDetail.userId,
+        user?.uid ?? null
+      );
+      if (cancelled || !counted) return;
+      const bump = (l: Listing) =>
+        l.id === listingDetail.id
+          ? { ...l, viewsCount: getListingViewsCount(l) + 1 }
+          : l;
+      setListingDetail((prev) => (prev ? bump(prev) : prev));
+      setListings((prev) => prev.map(bump));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [listingDetail?.id, detailLoading, user?.uid]);
+
+  const bumpPhoneClicks = useCallback((listingId: string) => {
+    const bump = (l: Listing) =>
+      l.id === listingId
+        ? { ...l, phoneClicksCount: getListingPhoneClicksCount(l) + 1 }
+        : l;
+    setListings((prev) => prev.map(bump));
+    setListingDetail((prev) => (prev && prev.id === listingId ? bump(prev) : prev));
+  }, []);
 
   const closeDetail = useCallback(() => {
     router.push("/");
@@ -1555,6 +1593,11 @@ export default function MarketClient() {
           favoriteIds={favoriteIds}
           favoriteToggling={favoriteToggling}
           currentUserId={user?.uid}
+          onPhoneRevealed={
+            listingDetail
+              ? () => bumpPhoneClicks(listingDetail.id)
+              : undefined
+          }
           onRenew={
             listingDetail?.userId === user?.uid ? handleRenew : undefined
           }
@@ -2482,9 +2525,10 @@ export default function MarketClient() {
                         {CATEGORY_ICONS[category] ?? "📦"}{" "}
                         {t(getCategoryLabelKey(category))}
                       </span>
-                      <span className="flex items-center gap-1 text-slate-400 text-xs">
-                        {formatTimeAgo(listing.createdAt)}
-                      </span>
+                      <div className="flex items-center gap-2 text-slate-400 text-xs">
+                        <ListingViewsBadge listing={listing} />
+                        <span>{formatTimeAgo(listing.createdAt)}</span>
+                      </div>
                     </div>
                   </div>
                 </article>
@@ -2675,9 +2719,10 @@ export default function MarketClient() {
                         {CATEGORY_ICONS[category] ?? "📦"}{" "}
                         {t(getCategoryLabelKey(category))}
                       </span>
-                      <span className="text-slate-400 text-xs">
-                        {formatTimeAgo(listing.createdAt)}
-                      </span>
+                      <div className="flex items-center gap-2 text-slate-400 text-xs">
+                        <ListingViewsBadge listing={listing} />
+                        <span>{formatTimeAgo(listing.createdAt)}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2884,9 +2929,10 @@ export default function MarketClient() {
                           {CATEGORY_ICONS[category] ?? "📦"}{" "}
                           {t(getCategoryLabelKey(category))}
                         </span>
-                        <span className="text-slate-400 text-xs">
-                          {formatTimeAgo(listing.createdAt)}
-                        </span>
+                        <div className="flex items-center gap-2 text-slate-400 text-xs">
+                          <ListingViewsBadge listing={listing} />
+                          <span>{formatTimeAgo(listing.createdAt)}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -3168,17 +3214,20 @@ export default function MarketClient() {
                             )}
 
                             {listing.phone && (
-                              <a
-                                href={`tel:${listing.phone}`}
-                                onClick={(e) => e.stopPropagation()}
-                                className="inline-flex items-center justify-center gap-1.5 w-full mt-2 px-3 py-2 rounded-lg font-semibold text-white bg-[#04AA6D] hover:bg-[#039a5e] text-xs transition-colors"
-                              >
-                                <Phone size={14} />
-                                {listing.phone}
-                              </a>
+                              <div className="w-full mt-2">
+                                <MaskedPhoneContact
+                                  listingId={listing.id}
+                                  listingOwnerId={listing.userId}
+                                  phone={listing.phone}
+                                  currentUserId={user?.uid}
+                                  variant="compact"
+                                  onPhoneRevealed={() => bumpPhoneClicks(listing.id)}
+                                />
+                              </div>
                             )}
                           </div>
                           <div className="flex flex-col items-end gap-1 mt-4 pt-4">
+                            <ListingViewsBadge listing={listing} />
                             <span className="text-slate-400 text-xs">
                               {formatTimeAgo(listing.createdAt)}
                             </span>

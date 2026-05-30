@@ -1,6 +1,6 @@
 /**
  * Vineyard block - matches Firestore vineyardBlocks collection.
- * Same schema as vinenote-georgia Expo app.
+ * Same schema as Memarne mobile app.
  */
 export interface VineyardBlock {
   id: string;

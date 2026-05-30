@@ -1,7 +1,7 @@
-# App Store Metadata for VineNote Georgia (ქართული)
+# App Store Metadata for Memarne (ქართული)
 
 ## 1️⃣ App Name
-**VineNote Georgia**
+**Memarne**
 
 ---
 
@@ -19,7 +19,7 @@
 ## 3️⃣ Promotional Text (170 characters max)
 
 **Version 1 (Recommended):**
-VineNote Georgia ეხმარება ქართველ მეღვინეეებს ვენახების, მოსავლისა და ქვევრის ოპერაციების ჩანაწერებში. შეცვალეთ რვეულები და Excel ფაილები მარტივი, ოფლაინ აპლიკაციით, რომელიც შექმნილია მცირე მარნებისა და საოჯახო ვენახებისთვის.
+Memarne ეხმარება ქართველ მეღვინეეებს ვენახების, მოსავლისა და ქვევრის ოპერაციების ჩანაწერებში. შეცვალეთ რვეულები და Excel ფაილები მარტივი, ოფლაინ აპლიკაციით, რომელიც შექმნილია მცირე მარნებისა და საოჯახო ვენახებისთვის.
 
 *Character count: 169*
 
@@ -34,11 +34,11 @@ VineNote Georgia ეხმარება ქართველ მეღვი�
 
 **FULL DESCRIPTION (ქართული):**
 
-VineNote Georgia არის მარტივი აპლიკაცია ქართველი მეღვინეეებისთვის ვენახების, მოსავლისა და ქვევრის ოპერაციების ჩასაწერად. შექმნილია მცირე მარნების, საოჯახო ვენახებისა და ტრადიციული ქვევრის მეღვინეეებისთვის, რომლებსაც სჭირდებათ მარტივი გზა მათი მეღვინეობის მონაცემების ჩასაწერადა და მართვისთვის.
+Memarne არის მარტივი აპლიკაცია ქართველი მეღვინეეებისთვის ვენახების, მოსავლისა და ქვევრის ოპერაციების ჩასაწერად. შექმნილია მცირე მარნების, საოჯახო ვენახებისა და ტრადიციული ქვევრის მეღვინეეებისთვის, რომლებსაც სჭირდებათ მარტივი გზა მათი მეღვინეობის მონაცემების ჩასაწერადა და მართვისთვის.
 
 **შეცვალეთ რვეულები და Excel ფაილები**
 
-შეწყვიტეთ რვეულებზე, გაფანტულ Excel ფაილებზე ან მეხსიერებაზე დაყრდნობა თქვენი მეღვინეობის ჩასაწერად. VineNote Georgia ინახავს თქვენს ვენახისა და ღვინის მონაცემებს ერთ ადგილას, ხელმისაწვდომს თქვენი ტელეფონიდან ან პლანშეტიდან.
+შეწყვიტეთ რვეულებზე, გაფანტულ Excel ფაილებზე ან მეხსიერებაზე დაყრდნობა თქვენი მეღვინეობის ჩასაწერად. Memarne ინახავს თქვენს ვენახისა და ღვინის მონაცემებს ერთ ადგილას, ხელმისაწვდომს თქვენი ტელეფონიდან ან პლანშეტიდან.
 
 **რა შეგიძლიათ ჩაიწეროთ**
 
@@ -62,7 +62,7 @@ VineNote Georgia არის მარტივი აპლიკაცია 
 
 **მარტივი და საიმედო**
 
-VineNote Georgia შექმნილია იმისთვის, რომ იყოს მარტივი გამოსაყენებლად, მაშინაც კი, თუ არ ხართ კომფორტული ტექნოლოგიებთან. აპს არ აქვს რეკლამა, არ აქვს მონაცემების შეგროვება და არ აქვს ფარული ხარჯები. იგი შექმნილია სპეციალურად ქართველი მეღვინეეებისთვის, რომლებსაც სჭირდებათ პრაქტიკული ინსტრუმენტი მათი ვენახებისა და ღვინის წარმოების მართვისთვის.
+Memarne შექმნილია იმისთვის, რომ იყოს მარტივი გამოსაყენებლად, მაშინაც კი, თუ არ ხართ კომფორტული ტექნოლოგიებთან. აპს არ აქვს რეკლამა, არ აქვს მონაცემების შეგროვება და არ აქვს ფარული ხარჯები. იგი შექმნილია სპეციალურად ქართველი მეღვინეეებისთვის, რომლებსაც სჭირდებათ პრაქტიკული ინსტრუმენტი მათი ვენახებისა და ღვინის წარმოების მართვისთვის.
 
 დაიწყეთ თქვენი მეღვინეობის მონაცემების ჩაწერა დღესვე.
 
@@ -86,7 +86,7 @@ VineNote Georgia შექმნილია იმისთვის, რომ
 
 **App Review Notes:**
 
-VineNote Georgia is a data management app for Georgian winemakers. The app allows users to record and track information about their vineyards, harvests, qvevri operations, and wine batches.
+Memarne is a data management app for Georgian winemakers. The app allows users to record and track information about their vineyards, harvests, qvevri operations, and wine batches.
 
 **Key Points:**
 - The app works completely offline. Users can record data without internet connectivity.
@@ -104,7 +104,7 @@ The app interface is available in both Georgian and English languages to serve t
 ## 7️⃣ What's New (Release Notes Template)
 
 **Version 1.0.0:**
-VineNote Georgia-ს პირველი გამოშვება. ჩაიწერეთ ვენახები, მოსავალი, ქვევრის ოპერაციები და ღვინის პარტიები. მუშაობს ოფლაინ ავტომატური სინქრონიზაციით. ხელმისაწვდომია ინგლისურად და ქართულად.
+Memarne-ს პირველი გამოშვება. ჩაიწერეთ ვენახები, მოსავალი, ქვევრის ოპერაციები და ღვინის პარტიები. მუშაობს ოფლაინ ავტომატური სინქრონიზაციით. ხელმისაწვდომია ინგლისურად და ქართულად.
 
 ---
 
@@ -164,5 +164,5 @@ VineNote Georgia-ს პირველი გამოშვება. ჩა�
 
 - All Georgian text uses proper Georgian script (მხედრული)
 - Technical terms like "qvevri" are kept in English as they are internationally recognized
-- The app name "VineNote Georgia" remains in English as specified
+- The app name "Memarne" remains in English as specified
 - Keywords are optimized for Georgian App Store search patterns

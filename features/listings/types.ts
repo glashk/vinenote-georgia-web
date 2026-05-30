@@ -26,6 +26,10 @@ export interface Listing {
   status?: ListingStatus;
   userId?: string;
   createdAt?: Timestamp | { seconds: number; nanoseconds?: number } | Date;
+  viewsCount?: number;
+  phoneClicksCount?: number;
+  lastViewedAt?: Timestamp | null;
+  lastPhoneClickedAt?: Timestamp | null;
 }
 
 export interface ListingsFilters {

@@ -38,6 +38,10 @@ export interface Listing {
   createdAt?: Timestamp | { seconds: number; nanoseconds?: number };
   flaggedBySystem?: boolean;
   flagReasons?: string[];
+  viewsCount?: number;
+  phoneClicksCount?: number;
+  lastViewedAt?: Timestamp | null;
+  lastPhoneClickedAt?: Timestamp | null;
 }
 
 // ─── Report ─────────────────────────────────────────────────────────────

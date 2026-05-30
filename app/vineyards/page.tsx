@@ -11,7 +11,7 @@ const VineyardsClient = dynamic(() => import("./VineyardsClient"), {
 });
 
 export const metadata: Metadata = {
-  title: "My Vineyards | VineNote Georgia",
+  title: "My Vineyards | Memarne",
   description: "Manage your vineyard blocks",
 };
 

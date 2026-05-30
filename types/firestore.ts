@@ -1,5 +1,5 @@
 /**
- * Firestore types - matches vinenote-georgia Expo app.
+ * Firestore types - matches Memarne mobile app.
  */
 
 export interface BaseDocument {

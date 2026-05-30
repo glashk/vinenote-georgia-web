@@ -64,7 +64,7 @@ export const sharePreview = functions.https.onRequest(async (req, res) => {
     const title =
       (data.variety as string) ??
       (data.title as string) ??
-      "VineNote Georgia - Market Listing";
+      "Memarne - Market Listing";
     const imageUrl = getListingImageUrl(data);
     const baseUrl = "https://vinenote.app";
     const appUrl = `${baseUrl}/?id=${listingId}`;
@@ -75,15 +75,15 @@ export const sharePreview = functions.https.onRequest(async (req, res) => {
     const metaTags = `
   <meta charset="utf-8">
   <meta property="og:title" content="${escapeHtml(title)}">
-  <meta property="og:description" content="იყიდება ${escapeHtml(title)} ქართული ღვინის მარკეტზე - VineNote Georgia"
+  <meta property="og:description" content="იყიდება ${escapeHtml(title)} ქართული ღვინის მარკეტზე - Memarne"
   <meta property="og:image" content="${escapeHtml(image)}">
   <meta property="og:url" content="${escapeHtml(appUrl)}">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${escapeHtml(title)}">
-  <meta name="twitter:description" content="${escapeHtml(title)} - VineNote Georgia">
+  <meta name="twitter:description" content="${escapeHtml(title)} - Memarne">
   <meta name="twitter:image" content="${escapeHtml(image)}">
-  <title>${escapeHtml(title)} | VineNote Georgia</title>`;
+  <title>${escapeHtml(title)} | Memarne</title>`;
 
     if (isCrawler(req.get("user-agent") || "")) {
       const html = `<!DOCTYPE html>
@@ -117,7 +117,7 @@ export const sharePreview = functions.https.onRequest(async (req, res) => {
     ${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(title)}">` : ""}
     <div class="content">
       <h1>${escapeHtml(title)}</h1>
-      <p>ნახეთ ეს განცხადება VineNote Georgia-ზე</p>
+      <p>ნახეთ ეს განცხადება Memarne-ზე</p>
       <a href="${escapeHtml(appUrl)}">გახსენით განცხადება</a>
     </div>
   </div>

@@ -1,8 +1,8 @@
 import AdminLayoutClient from "./AdminLayoutClient";
 
 export const metadata = {
-  title: "Admin - VineNote Georgia",
-  description: "VineNote admin moderation console",
+  title: "Admin - Memarne",
+  description: "Memarne admin moderation console",
   robots: { index: false, follow: false },
 };
 

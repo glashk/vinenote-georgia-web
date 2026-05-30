@@ -18,7 +18,7 @@ const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://vinenote.app"),
-  title: "VineNote Georgia - Vineyard & Qvevri Management",
+  title: "Memarne - Vineyard & Qvevri Management",
   description: "Simple vineyard & qvevri management for Georgian winemakers",
   icons: {
     icon: "/icon.png",
@@ -30,16 +30,16 @@ export const metadata: Metadata = {
       "app-id=6758243424, app-argument=https://apps.apple.com/app/vinenote-georgia/id6758243424",
   },
   openGraph: {
-    title: "VineNote Georgia - Vineyard & Qvevri Management",
+    title: "Memarne - Vineyard & Qvevri Management",
     description: "Simple vineyard & qvevri management for Georgian winemakers",
     url: "https://vinenote.app",
-    siteName: "VineNote Georgia",
+    siteName: "Memarne",
     images: [
       {
         url: "/Grapevines-scaled-e5b6bd5d-a447-4b5f-9da8-6c8c55461efd.png",
         width: 1200,
         height: 630,
-        alt: "VineNote Georgia - Vineyard Management",
+        alt: "Memarne - Vineyard Management",
       },
     ],
     locale: "en_US",
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "VineNote Georgia - Vineyard & Qvevri Management",
+    title: "Memarne - Vineyard & Qvevri Management",
     description: "Simple vineyard & qvevri management for Georgian winemakers",
     images: ["/Grapevines-scaled-e5b6bd5d-a447-4b5f-9da8-6c8c55461efd.png"],
   },

@@ -3,8 +3,10 @@
 import Image from "next/image";
 import { useState, useMemo, useEffect } from "react";
 import {
+  getListingFullImage,
   getListingImageWithFallback,
   getListingImageProgressive,
+  getListingOriginalPhotoUrl,
   getListingPhotoUrlWithFallback,
   getListingPhotoUrlProgressive,
 } from "@/features/listings/utils";
@@ -52,7 +54,9 @@ export default function ListingImage({
     if (photoIndex != null && listing) {
       if (useProgressive && variant !== "thumb") {
         const prog = getListingPhotoUrlProgressive(listing, photoIndex);
-        if (prog) return { primary: prog.low, fallback: null, progressive: prog };
+        if (prog) {
+          return { primary: prog.low, fallback: prog.high, progressive: prog };
+        }
       }
       const r = getListingPhotoUrlWithFallback(
         listing,
@@ -63,14 +67,14 @@ export default function ListingImage({
     }
     if (variant === "detail") {
       const prog = getListingImageProgressive(listing ?? null, 600);
-      if (prog) return { primary: prog.low, fallback: null, progressive: prog };
+      if (prog) return { primary: prog.low, fallback: prog.high, progressive: prog };
       const r = getListingImageWithFallback(listing ?? null, 600);
       return { primary: r?.primary ?? "", fallback: r?.fallback ?? null, progressive: null };
     }
     const preferSize = variant === "card" || variant === "thumb" ? 200 : 600;
     if (useProgressive) {
       const prog = getListingImageProgressive(listing ?? null, 600);
-      if (prog) return { primary: prog.low, fallback: null, progressive: prog };
+      if (prog) return { primary: prog.low, fallback: prog.high, progressive: prog };
     }
     const r = getListingImageWithFallback(listing ?? null, preferSize);
     return { primary: r?.primary ?? "", fallback: r?.fallback ?? null, progressive: null };
@@ -98,13 +102,33 @@ export default function ListingImage({
   }
 
   const handleError = () => {
-    if (fallback && currentSrc === primary) {
+    if (fallback && currentSrc !== fallback) {
       setCurrentSrc(fallback);
       setLoaded(false);
-    } else {
-      setErrored(true);
-      onError?.();
+      setHighLoaded(false);
+      return;
     }
+    if (progressive?.high && currentSrc !== progressive.high) {
+      setCurrentSrc(progressive.high);
+      setLoaded(false);
+      setHighLoaded(false);
+      return;
+    }
+    if (listing) {
+      const original =
+        photoIndex != null
+          ? getListingOriginalPhotoUrl(listing, photoIndex) ??
+            getListingFullImage(listing)
+          : getListingFullImage(listing);
+      if (original && currentSrc !== original) {
+        setCurrentSrc(original);
+        setLoaded(false);
+        setHighLoaded(false);
+        return;
+      }
+    }
+    setErrored(true);
+    onError?.();
   };
 
   const effectiveSizes = variant === "thumb" ? "64px" : sizes;

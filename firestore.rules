@@ -1,7 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // VineNote Georgia — user-scoped access rules.
+    // Memarne — user-scoped access rules.
     // Deploy: firebase deploy --only firestore:rules
 
     function isSignedIn() {
@@ -52,11 +52,69 @@ service cloud.firestore {
     match /inventory/{id}      { allow create: if isOwnerByRequest(); allow read, update, delete: if isOwnerByResource(); }
     match /entries/{id}        { allow create: if isOwnerByRequest(); allow read, update, delete: if isOwnerByResource(); }
 
+    function listingCoreFieldsUnchanged() {
+      return request.resource.data.userId == resource.data.userId
+        && request.resource.data.get('phone', null) == resource.data.get('phone', null)
+        && request.resource.data.get('variety', null) == resource.data.get('variety', null)
+        && request.resource.data.get('title', null) == resource.data.get('title', null)
+        && request.resource.data.get('price', null) == resource.data.get('price', null)
+        && request.resource.data.get('quantity', null) == resource.data.get('quantity', null)
+        && request.resource.data.get('status', null) == resource.data.get('status', null)
+        && request.resource.data.get('hidden', null) == resource.data.get('hidden', null)
+        && request.resource.data.get('description', null) == resource.data.get('description', null)
+        && request.resource.data.get('category', null) == resource.data.get('category', null);
+    }
+
+    function isViewAnalyticsUpdate() {
+      let diff = request.resource.data.diff(resource.data).affectedKeys();
+      let prevViews = resource.data.get('viewsCount', 0);
+      return diff.hasOnly(['viewsCount', 'lastViewedAt'])
+        && request.resource.data.viewsCount == prevViews + 1
+        && request.resource.data.lastViewedAt is timestamp
+        && request.resource.data.lastViewedAt <= request.time
+        && request.resource.data.lastViewedAt > request.time - duration.value(5, 'm')
+        && listingCoreFieldsUnchanged();
+    }
+
+    function isPhoneClickAnalyticsUpdate() {
+      let diff = request.resource.data.diff(resource.data).affectedKeys();
+      let prevClicks = resource.data.get('phoneClicksCount', 0);
+      return diff.hasOnly(['phoneClicksCount', 'lastPhoneClickedAt'])
+        && request.resource.data.phoneClicksCount == prevClicks + 1
+        && request.resource.data.lastPhoneClickedAt is timestamp
+        && request.resource.data.lastPhoneClickedAt <= request.time
+        && request.resource.data.lastPhoneClickedAt > request.time - duration.value(5, 'm')
+        && listingCoreFieldsUnchanged();
+    }
+
+    function isPublicListingAnalyticsUpdate() {
+      return isViewAnalyticsUpdate() || isPhoneClickAnalyticsUpdate();
+    }
+
+    function isValidAnalyticsEvent(listingId) {
+      return request.resource.data.type in ['view', 'phone_click']
+        && request.resource.data.listingId == listingId
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly([
+          'type', 'listingId', 'listingOwnerId', 'userId', 'createdAt', 'userAgent'
+        ]);
+    }
+
     // Market listings: public read; owner create/update/delete; admin can moderate
     match /marketListings/{id} {
       allow read: if true;
       allow create: if isOwnerByRequest();
-      allow update, delete: if isOwnerByResource() || isAdmin();
+      allow update: if isOwnerByResource() || isAdmin() || isPublicListingAnalyticsUpdate();
+      allow delete: if isOwnerByResource() || isAdmin();
+
+      match /analyticsEvents/{eventId} {
+        allow create: if isValidAnalyticsEvent(id);
+        allow read: if isAdmin()
+          || (isSignedIn()
+            && get(/databases/$(database)/documents/marketListings/$(id)).data.userId
+              == request.auth.uid);
+        allow update, delete: if false;
+      }
     }
 
     // Presence: visitor tracking (anonymous create/update; admin read)

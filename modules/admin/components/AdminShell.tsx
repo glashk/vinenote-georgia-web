@@ -100,7 +100,7 @@ export default function AdminShell({
           <div className="flex items-center justify-between">
             <div>
               <h1 className="font-semibold text-slate-800 dark:text-slate-100">
-                VineNote Admin
+                Memarne Admin
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Moderation Console

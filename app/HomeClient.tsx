@@ -5,11 +5,10 @@ import Link from "next/link";
 import Container from "@/components/Container";
 import AnimatedSection from "@/components/AnimatedSection";
 import { useLanguage } from "@/contexts/LanguageContext";
+import AppDownloadButtons from "@/components/AppDownloadButtons";
 
 export default function HomeClient() {
   const { t } = useLanguage();
-  const APP_STORE_URL =
-    "https://apps.apple.com/app/vinenote-georgia/id6758243424";
 
   const features = [
     {
@@ -139,7 +138,7 @@ export default function HomeClient() {
                       <div className="flex items-center justify-center sm:justify-start gap-3 mb-5">
                         <span className="vn-pill">
                           <span className="inline-flex w-2 h-2 rounded-full bg-vineyard-700" />
-                          VineNote Georgia
+                          Memarne
                         </span>
                       </div>
 
@@ -155,24 +154,8 @@ export default function HomeClient() {
                         {t("hero.description")}
                       </p>
 
-                      <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-center sm:justify-start gap-3">
-                        <a
-                          href={APP_STORE_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="vn-btn vn-btn-primary"
-                        >
-                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-white/20 border border-white/25 overflow-hidden shrink-0">
-                            <Image
-                              src="/logo.png"
-                              alt="VineNote Georgia app icon"
-                              width={28}
-                              height={28}
-                              className="w-full h-full object-contain"
-                            />
-                          </span>
-                          {t("cta.appStoreButton")}
-                        </a>
+                      <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-center sm:justify-start gap-3 flex-wrap">
+                        <AppDownloadButtons className="justify-center sm:justify-start" />
 
                         <Link href="/" className="vn-btn vn-btn-ghost">
                           {t("nav.market")}
@@ -194,7 +177,7 @@ export default function HomeClient() {
                       <div className="w-10 h-10 rounded-xl overflow-hidden border ">
                         <Image
                           src="/logo.png"
-                          alt="VineNote Georgia"
+                          alt="Memarne"
                           width={40}
                           height={40}
                           className="w-full h-full object-contain"
@@ -256,7 +239,7 @@ export default function HomeClient() {
             <div className="vn-section-head">
               <span className="vn-pill">
                 <span className="inline-flex w-2 h-2 rounded-full bg-vineyard-700" />
-                VineNote
+                Memarne
               </span>
               <h2 className="vn-section-title">{t("features.title")}</h2>
               <div className="vn-section-divider" />
@@ -388,7 +371,7 @@ export default function HomeClient() {
                   <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border border-white/20 bg-white/10 overflow-hidden">
                     <Image
                       src="/logo.png"
-                      alt="VineNote Georgia app icon"
+                      alt="Memarne app icon"
                       width={80}
                       height={80}
                       className="w-full h-full object-contain"
@@ -409,38 +392,17 @@ export default function HomeClient() {
                 </AnimatedSection>
 
                 <AnimatedSection delay={220}>
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
-                    <a
-                      href={APP_STORE_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="vn-btn vn-btn-primary"
-                    >
-                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-white/20 border border-white/25 overflow-hidden shrink-0">
-                        <Image
-                          src="/logo.png"
-                          alt="VineNote Georgia app icon"
-                          width={28}
-                          height={28}
-                          className="w-full h-full object-contain"
-                        />
-                      </span>
-                      {t("cta.appStoreButton")}
-                    </a>
-
+                  <div className="flex flex-col items-center gap-4">
+                    <AppDownloadButtons
+                      variant="cta"
+                      className="justify-center"
+                    />
                     <Link
                       href="/"
                       className="vn-btn bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors"
                     >
                       {t("nav.market")}
                     </Link>
-
-                    <div
-                      className="vn-btn bg-white/10 border border-white/20 text-white/80 cursor-not-allowed select-none"
-                      aria-disabled="true"
-                    >
-                      {t("cta.googlePlayComingSoon")}
-                    </div>
                   </div>
                 </AnimatedSection>
               </div>
