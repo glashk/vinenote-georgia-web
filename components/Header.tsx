@@ -62,8 +62,23 @@ export default function Header() {
     };
   }, [userMenuOpen]);
 
-  const navLinks = [
+  type NavItem = {
+    href: string;
+    label: string;
+    icon: string;
+    external?: boolean;
+  };
+
+  const browseLinks: NavItem[] = [
     { href: "/", label: t("nav.market"), icon: "market" },
+  ];
+
+  const helpLinks: NavItem[] = [
+    { href: "/about", label: t("nav.aboutUs"), icon: "about" },
+    { href: "/support", label: t("nav.support"), icon: "support" },
+  ];
+
+  const appLinks: NavItem[] = [
     { href: APP_STORE_URL, label: t("nav.app"), icon: "app", external: true },
     {
       href: GOOGLE_PLAY_URL,
@@ -71,8 +86,9 @@ export default function Header() {
       icon: "play",
       external: true,
     },
-    { href: "/about", label: t("nav.aboutUs"), icon: "about" },
-    { href: "/support", label: t("nav.support"), icon: "support" },
+  ];
+
+  const legalLinks: NavItem[] = [
     { href: "/privacy", label: t("nav.privacy"), icon: "privacy" },
   ];
 
@@ -188,6 +204,40 @@ export default function Header() {
     }, 300);
   };
 
+  const renderMobileNavItem = (link: NavItem) => {
+    const isActive = !link.external && pathname === link.href;
+    const linkProps = link.external
+      ? { target: "_blank" as const, rel: "noopener noreferrer" as const }
+      : {};
+    return (
+      <Link
+        key={link.href + link.label}
+        href={link.href}
+        aria-current={isActive ? "page" : undefined}
+        onClick={() => setMobileMenuOpen(false)}
+        {...linkProps}
+        className={[
+          "flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-colors",
+          isActive
+            ? "bg-emerald-100 text-emerald-800"
+            : "text-slate-800 hover:bg-emerald-50 hover:text-emerald-600",
+        ].join(" ")}
+      >
+        <NavIcon
+          icon={link.icon}
+          className="w-5 h-5 shrink-0 text-emerald-600"
+        />
+        {link.label}
+      </Link>
+    );
+  };
+
+  const MenuSectionLabel = ({ children }: { children: string }) => (
+    <p className="px-4 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-800/70 first:pt-0">
+      {children}
+    </p>
+  );
+
   return (
     <header className="sticky top-0 z-50">
       {/* Mobile header - light green theme */}
@@ -282,26 +332,8 @@ export default function Header() {
               </div>
             </Link>
 
-            {/* Desktop Nav - Add listings, Download app, Profile dropdown | divider | Language switcher */}
+            {/* Desktop Nav — primary action, then app downloads, then account */}
             <div className="hidden md:flex items-center gap-3">
-              <Link
-                href={APP_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 px-4 py-2.5 rounded-full text-sm font-medium text-slate-700 hover:text-vineyard-600 hover:bg-vineyard-50 transition-all duration-200"
-              >
-                <NavIcon icon="app" />
-                {t("nav.app")}
-              </Link>
-              <Link
-                href={GOOGLE_PLAY_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 px-4 py-2.5 rounded-full text-sm font-medium text-slate-700 hover:text-vineyard-600 hover:bg-vineyard-50 transition-all duration-200"
-              >
-                <NavIcon icon="play" />
-                {t("nav.googlePlay")}
-              </Link>
               <Link
                 href="/my-listings/add"
                 className="flex items-center gap-3 h-10 px-4 rounded-full bg-emerald-700 text-white font-semibold text-sm shadow-md shadow-emerald-600/25 hover:bg-emerald-800 transition-all duration-200"
@@ -320,6 +352,24 @@ export default function Header() {
                   />
                 </svg>
                 {t("market.add")}
+              </Link>
+              <Link
+                href={APP_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-4 py-2.5 rounded-full text-sm font-medium text-slate-700 hover:text-vineyard-600 hover:bg-vineyard-50 transition-all duration-200"
+              >
+                <NavIcon icon="app" />
+                {t("nav.app")}
+              </Link>
+              <Link
+                href={GOOGLE_PLAY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-4 py-2.5 rounded-full text-sm font-medium text-slate-700 hover:text-vineyard-600 hover:bg-vineyard-50 transition-all duration-200"
+              >
+                <NavIcon icon="play" />
+                {t("nav.googlePlay")}
               </Link>
               {user ? (
                 <div className="relative" ref={userMenuRef}>
@@ -376,26 +426,6 @@ export default function Header() {
                         }}
                       >
                         <Link
-                          href="/dashboard"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-vineyard-50 hover:text-vineyard-800 transition-colors"
-                        >
-                          <svg
-                            className="w-4 h-4 text-vineyard-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                            />
-                          </svg>
-                          {t("nav.myVineyard")}
-                        </Link>
-                        <Link
                           href="/my-listings"
                           onClick={() => setUserMenuOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-vineyard-50 hover:text-vineyard-800 transition-colors"
@@ -414,6 +444,26 @@ export default function Header() {
                             />
                           </svg>
                           {t("nav.myListings")}
+                        </Link>
+                        <Link
+                          href="/dashboard"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-vineyard-50 hover:text-vineyard-800 transition-colors"
+                        >
+                          <svg
+                            className="w-4 h-4 text-vineyard-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                            />
+                          </svg>
+                          {t("nav.myVineyard")}
                         </Link>
                         <Link
                           href="/profile"
@@ -556,40 +606,12 @@ export default function Header() {
                 </div>
               </div>
               <nav className="flex-1 space-y-1">
-                {navLinks.map((link) => {
-                  const isActive = !link.external && pathname === link.href;
-                  const linkProps = link.external
-                    ? {
-                        target: "_blank" as const,
-                        rel: "noopener noreferrer" as const,
-                      }
-                    : {};
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      aria-current={isActive ? "page" : undefined}
-                      onClick={() => setMobileMenuOpen(false)}
-                      {...linkProps}
-                      className={[
-                        "flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-colors",
-                        isActive
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "text-slate-800 hover:bg-emerald-50 hover:text-emerald-600",
-                      ].join(" ")}
-                    >
-                      <NavIcon
-                        icon={link.icon}
-                        className="w-5 h-5 shrink-0 text-emerald-600"
-                      />
-                      {link.label}
-                    </Link>
-                  );
-                })}
+                <MenuSectionLabel>{t("nav.browse")}</MenuSectionLabel>
+                {browseLinks.map(renderMobileNavItem)}
                 <Link
                   href="/my-listings/add"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-emerald-700 text-white font-semibold mt-4 shadow-md shadow-emerald-600/25 hover:bg-emerald-800 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-emerald-700 text-white font-semibold shadow-md shadow-emerald-600/25 hover:bg-emerald-800 transition-colors"
                 >
                   <svg
                     className="w-5 h-5"
@@ -606,35 +628,15 @@ export default function Header() {
                   </svg>
                   {t("market.add")}
                 </Link>
-              </nav>
-              <div className="pt-4 mt-4 border-t border-emerald-100 space-y-1">
-                {user ? (
+
+                {user && (
                   <>
-                    <div className="px-4 py-2 text-sm text-slate-600 truncate">
+                    <MenuSectionLabel>{t("nav.account")}</MenuSectionLabel>
+                    <div className="px-4 py-1.5 text-sm text-slate-600 truncate">
                       {user.displayName ||
                         user.email?.split("@")[0] ||
                         t("nav.profile")}
                     </div>
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-800 hover:bg-emerald-50 hover:text-emerald-600"
-                    >
-                      <svg
-                        className="w-5 h-5 text-emerald-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                        />
-                      </svg>
-                      {t("nav.myVineyard")}
-                    </Link>
                     <Link
                       href="/my-listings"
                       onClick={() => setMobileMenuOpen(false)}
@@ -654,6 +656,26 @@ export default function Header() {
                         />
                       </svg>
                       {t("nav.myListings")}
+                    </Link>
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-800 hover:bg-emerald-50 hover:text-emerald-600"
+                    >
+                      <svg
+                        className="w-5 h-5 text-emerald-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                        />
+                      </svg>
+                      {t("nav.myVineyard")}
                     </Link>
                     <Link
                       href="/profile"
@@ -695,29 +717,43 @@ export default function Header() {
                       </svg>
                       {t("more.title")}
                     </Link>
-                    <button
-                      onClick={async () => {
-                        setMobileMenuOpen(false);
-                        await signOut();
-                      }}
-                      className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-slate-800 hover:bg-red-50 hover:text-red-600"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                        />
-                      </svg>
-                      {t("nav.logOut")}
-                    </button>
                   </>
+                )}
+
+                <MenuSectionLabel>{t("nav.menuSectionHelp")}</MenuSectionLabel>
+                {helpLinks.map(renderMobileNavItem)}
+
+                <MenuSectionLabel>{t("nav.menuSectionApp")}</MenuSectionLabel>
+                {appLinks.map(renderMobileNavItem)}
+
+                <MenuSectionLabel>{t("nav.menuSectionLegal")}</MenuSectionLabel>
+                {legalLinks.map(renderMobileNavItem)}
+              </nav>
+
+              <div className="pt-4 mt-4 border-t border-emerald-100 space-y-1">
+                {user ? (
+                  <button
+                    onClick={async () => {
+                      setMobileMenuOpen(false);
+                      await signOut();
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-slate-800 hover:bg-red-50 hover:text-red-600"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
+                    </svg>
+                    {t("nav.logOut")}
+                  </button>
                 ) : (
                   <Link
                     href="/login"
